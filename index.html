@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sprinklr Pipeline — Architecture Explorer V4</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+--bg:#0a0c10;--bg2:#12151c;--bg3:#1a1e28;
+--text:#e2e4ea;--text2:#9ba1b0;--text3:#636a7e;
+--accent:#4f8ff7;--accent2:#7c6cf0;--accent3:#38c9a0;--accent4:#f59e42;--accent5:#e85d75;
+--rdl:#3b82f6;--ref:#6366f1;--odl:#14b8a6;--adl:#22c55e;--qa:#ef4444;
+--lambda:#f59e42;--s3:#4f8ff7;--rds:#38c9a0;--gsheet:#7c6cf0;
+--infra:#e879f9;--fargate:#06b6d4;--danger:#ef4444;
+--border:#2a2f3e;--radius:12px;--radius-sm:8px;
+}
+html{font-size:13.5px;scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:9999;pointer-events:none;opacity:.025;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+.hdr{padding:1.8rem 2.5rem 1.3rem;background:linear-gradient(180deg,var(--bg2),var(--bg));border-bottom:1px solid var(--border);position:relative}
+.hdr::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),var(--accent2),transparent);opacity:.4}
+.hdr h1{font-family:'Instrument Serif',serif;font-size:2.2rem;font-weight:400;background:linear-gradient(135deg,var(--text),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hdr p{color:var(--text2);margin-top:.25rem;font-size:.88rem}
+.hdr-badges{display:flex;gap:.6rem;margin-top:.5rem;flex-wrap:wrap}
+.badge{display:inline-flex;align-items:center;gap:.4rem;padding:.2rem .65rem;border-radius:18px;font-size:.68rem;font-weight:600;letter-spacing:.03em;text-transform:uppercase}
+.badge-info{background:rgba(6,182,212,.1);color:var(--fargate);border:1px solid rgba(6,182,212,.2)}
+.badge-warn{background:rgba(239,68,68,.1);color:var(--danger);border:1px solid rgba(239,68,68,.2)}
+.badge span{width:5px;height:5px;border-radius:50%;animation:pulse 2s ease-in-out infinite}
+.badge-info span{background:var(--accent3)}
+.badge-warn span{background:var(--danger)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+.tabs{display:flex;gap:2px;padding:.7rem 2.5rem 0;background:var(--bg);position:sticky;top:0;z-index:100}
+.tab{padding:.7rem 1.2rem;font-size:.78rem;font-weight:600;color:var(--text3);cursor:pointer;border:none;background:transparent;border-bottom:2px solid transparent;transition:all .25s;font-family:'DM Sans',sans-serif;letter-spacing:.02em}
+.tab:hover{color:var(--text2);background:var(--bg2)}
+.tab.active{color:var(--fargate);border-bottom-color:var(--fargate);background:var(--bg2)}
+.tab .tn{font-family:'JetBrains Mono',monospace;font-size:.58rem;color:var(--text3);margin-right:.3rem;opacity:.5}
+.tab.active .tn{color:var(--fargate);opacity:.7}
+
+.vw{display:none;padding:1.6rem 2.5rem 3rem;animation:fi .3s ease}
+.vw.active{display:block}
+@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.vi{max-width:940px;margin-bottom:1.5rem}
+.vi h2{font-family:'Instrument Serif',serif;font-size:1.65rem;font-weight:400;margin-bottom:.4rem}
+.vi p{color:var(--text2);line-height:1.6;font-size:.86rem}
+
+.callout{padding:.7rem 1rem;border-radius:var(--radius-sm);margin-bottom:1.2rem;font-size:.82rem;line-height:1.6}
+.callout-danger{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);color:#fca5a5}
+.callout-danger strong{color:var(--danger)}
+.callout-info{background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.2);color:#a5f3fc}
+.callout-info strong{color:var(--fargate)}
+
+.lg{display:flex;flex-wrap:wrap;gap:.7rem;padding:.6rem 1rem;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:1.2rem}
+.li{display:flex;align-items:center;gap:.3rem;font-size:.68rem;color:var(--text2)}
+.ld{width:8px;height:8px;border-radius:3px}
+
+.flow{display:flex;flex-direction:column;gap:.2rem;padding:.6rem 0}
+.fl{width:100%;text-align:left;padding:.55rem 0 .12rem;font-size:.63rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--text3);border-top:1px solid var(--border);margin-top:.35rem}
+.fl:first-child{border-top:none;margin-top:0}
+.fr{display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;padding:.2rem 0}
+.fa{color:var(--text3);font-size:.85rem;flex-shrink:0;font-family:'JetBrains Mono',monospace;opacity:.3}
+
+.nd{position:relative;padding:.5rem .85rem;border-radius:var(--radius-sm);cursor:pointer;transition:all .2s;min-width:105px;text-align:center;border:1px solid var(--border);background:var(--bg2)}
+.nd:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.3)}
+.nd.act{box-shadow:0 0 16px rgba(79,143,247,.12)}
+.ni{font-size:.95rem;margin-bottom:.12rem}
+.nt{font-size:.7rem;font-weight:600;line-height:1.2}
+.ns{font-size:.57rem;color:var(--text3);margin-top:.08rem;font-family:'JetBrains Mono',monospace}
+.nb{position:absolute;top:-.28rem;right:-.28rem;padding:.08rem .32rem;border-radius:6px;font-size:.48rem;font-weight:700;letter-spacing:.03em}
+
+.nd-lambda{border-color:rgba(245,158,66,.2);background:linear-gradient(135deg,rgba(245,158,66,.04),var(--bg2))}.nd-lambda:hover,.nd-lambda.act{border-color:var(--lambda)}.nd-lambda .nb{background:var(--lambda);color:#000}
+.nd-s3{border-color:rgba(79,143,247,.2);background:linear-gradient(135deg,rgba(79,143,247,.04),var(--bg2))}.nd-s3:hover,.nd-s3.act{border-color:var(--s3)}.nd-s3 .nb{background:var(--s3);color:#fff}
+.nd-rds{border-color:rgba(56,201,160,.2);background:linear-gradient(135deg,rgba(56,201,160,.04),var(--bg2))}.nd-rds:hover,.nd-rds.act{border-color:var(--rds)}.nd-rds .nb{background:var(--rds);color:#000}
+.nd-gsheet{border-color:rgba(124,108,240,.2);background:linear-gradient(135deg,rgba(124,108,240,.04),var(--bg2))}.nd-gsheet:hover,.nd-gsheet.act{border-color:var(--gsheet)}.nd-gsheet .nb{background:var(--gsheet);color:#fff}
+.nd-infra{border-color:rgba(232,121,249,.2);background:linear-gradient(135deg,rgba(232,121,249,.04),var(--bg2))}.nd-infra:hover,.nd-infra.act{border-color:var(--infra)}.nd-infra .nb{background:var(--infra);color:#000}
+.nd-fargate{border-color:rgba(6,182,212,.22);background:linear-gradient(135deg,rgba(6,182,212,.06),var(--bg2))}.nd-fargate:hover,.nd-fargate.act{border-color:var(--fargate);box-shadow:0 0 16px rgba(6,182,212,.12)}.nd-fargate .nb{background:var(--fargate);color:#000}
+.nd-step{border-color:rgba(34,197,94,.2);background:linear-gradient(135deg,rgba(34,197,94,.04),var(--bg2))}.nd-step:hover,.nd-step.act{border-color:var(--adl)}.nd-step .nb{background:var(--adl);color:#000}
+.nd-danger{border-color:rgba(239,68,68,.3);background:linear-gradient(135deg,rgba(239,68,68,.08),var(--bg2))}.nd-danger:hover,.nd-danger.act{border-color:var(--danger);box-shadow:0 0 16px rgba(239,68,68,.15)}.nd-danger .nb{background:var(--danger);color:#fff}
+.nd-gap{border-color:rgba(232,93,117,.22);background:linear-gradient(135deg,rgba(232,93,117,.05),var(--bg2))}.nd-gap:hover,.nd-gap.act{border-color:var(--accent5)}
+.nd-ok{border-color:rgba(56,201,160,.22);background:linear-gradient(135deg,rgba(56,201,160,.04),var(--bg2))}.nd-ok:hover,.nd-ok.act{border-color:var(--accent3)}
+
+.dp{margin-top:1.2rem;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;animation:su .25s ease}
+@keyframes su{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.dh{padding:.8rem 1.2rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.dh h3{font-size:.95rem;font-weight:600}
+.dc{background:none;border:none;color:var(--text3);cursor:pointer;font-size:1rem;padding:.2rem;border-radius:4px;transition:all .2s}
+.dc:hover{color:var(--text);background:var(--bg3)}
+.db{padding:1rem 1.2rem;display:grid;gap:.9rem}
+.ds h4{font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:.35rem;font-weight:600}
+.ds p{color:var(--text2);line-height:1.55;font-size:.82rem}
+.dt{width:100%;border-collapse:collapse;font-size:.76rem}
+.dt th{text-align:left;padding:.35rem .5rem;background:var(--bg3);color:var(--text2);font-weight:600;font-size:.65rem;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border)}
+.dt td{padding:.35rem .5rem;border-bottom:1px solid var(--border);color:var(--text2);font-size:.76rem;vertical-align:top}
+.dt td:first-child{font-family:'JetBrains Mono',monospace;color:var(--accent);font-size:.72rem;white-space:nowrap}
+.dt tr:last-child td{border-bottom:none}
+
+@media(max-width:768px){.hdr,.tabs,.vw{padding-left:.7rem;padding-right:.7rem}.hdr h1{font-size:1.4rem}.nd{min-width:88px;padding:.4rem .5rem}.tab{padding:.5rem .6rem;font-size:.7rem}}
+</style>
+</head>
+<body>
+<div class="hdr">
+<h1>Sprinklr Pipeline — Architecture Explorer</h1>
+<p>Amazon CORE ETL · M+C Saatchi Fluency · V4 FINAL — Critical Review Applied</p>
+<div class="hdr-badges">
+<div class="badge badge-info"><span></span>12 Lambdas → 8 Fargate Tasks (Sequential)</div>
+<div class="badge badge-warn"><span></span>3 Critical Findings from Code Review</div>
+</div>
+</div>
+<div class="tabs">
+<button class="tab active" data-v="existing"><span class="tn">01</span>Existing (Lambda)</button>
+<button class="tab" data-v="proposed"><span class="tn">02</span>Proposed (25-table)</button>
+<button class="tab" data-v="gaps"><span class="tn">03</span>Prabhat's Review</button>
+<button class="tab" data-v="modified"><span class="tn">04</span>Modified (Fargate)</button>
+</div>
+
+<!-- EXISTING -->
+<div class="vw active" id="vw-existing">
+<div class="vi"><h2>Existing: 12 Lambda Functions</h2><p>S3 event trigger chain. 9,629 lines of Python. 5 filtered_posts CSVs. Lambda 7 writes to 5 RDS tables + 3 S3 outputs. Three critical issues found in code review.</p></div>
+<div class="callout callout-danger"><strong>⚠️ CRITICAL — Race Condition:</strong> Lambda 8/9 have NO S3 trigger (not event-driven). Lambda 5 reads their output CSVs but nothing guarantees they've finished. If λ4 triggers λ5 before λ8/9 complete → λ5 reads STALE data from previous Monday. Collab read has NO try/except — will crash if file missing.</div>
+<div class="callout callout-danger"><strong>⚠️ CRITICAL — Direct DELETE:</strong> Lambda 8 runs <code>DELETE FROM sprinklr_table WHERE is_manual_tracker = 1</code> and Lambda 9 runs <code>DELETE FROM sprinklr_table WHERE Platform = 'LINE'</code> BEFORE Lambda 7 re-inserts. If λ8/9 succeed but λ5→6→7 fail → Collab/LINE data is GONE from Tableau until next Monday.</div>
+<div class="lg">
+<div class="li"><div class="ld" style="background:var(--lambda)"></div>Lambda (12)</div>
+<div class="li"><div class="ld" style="background:var(--s3)"></div>S3</div>
+<div class="li"><div class="ld" style="background:var(--rds)"></div>RDS</div>
+<div class="li"><div class="ld" style="background:var(--gsheet)"></div>Google Sheets</div>
+<div class="li"><div class="ld" style="background:var(--infra)"></div>Infra</div>
+<div class="li"><div class="ld" style="background:var(--danger)"></div>Critical Issue</div>
+</div>
+<div class="flow" id="flow-existing"></div><div id="det-existing"></div>
+</div>
+
+<!-- PROPOSED -->
+<div class="vw" id="vw-proposed">
+<div class="vi"><h2>Proposed: Original 25-Table Architecture</h2><p>ECS Fargate. Step Functions orchestration (strict sequential). EventBridge daily. 25 tables across RDL/REF/ODL/ADL/QA. Solves all 3 critical issues.</p></div>
+<div class="callout callout-info"><strong>Step Functions Flow (strict sequential):</strong> Task 0 (Validate) → Task 1 (Copy+Ingest) → Task 2 (Merge) → Task 3 (Filter Rules 1–10) → Task 4 (Collab+LINE) → Task 5 (Tags+Merge) → Task 6 (Benchmark) → Task 7 (Push+QA). No parallel tasks — Collab+LINE must complete before Tags.</div>
+<div class="lg">
+<div class="li"><div class="ld" style="background:var(--fargate)"></div>Fargate (8)</div>
+<div class="li"><div class="ld" style="background:var(--infra)"></div>Infrastructure</div>
+<div class="li"><div class="ld" style="background:var(--rdl)"></div>RDL</div>
+<div class="li"><div class="ld" style="background:var(--ref)"></div>REF</div>
+<div class="li"><div class="ld" style="background:var(--odl)"></div>ODL</div>
+<div class="li"><div class="ld" style="background:var(--adl)"></div>ADL</div>
+<div class="li"><div class="ld" style="background:var(--qa)"></div>QA</div>
+</div>
+<div class="flow" id="flow-proposed"></div><div id="det-proposed"></div>
+</div>
+
+<!-- GAPS -->
+<div class="vw" id="vw-gaps">
+<div class="vi"><h2>Prabhat's Review + Critical Findings</h2><p>5 arguments defeated, 3 weakened, 6 hold strong. Plus 3 critical issues found in source code review that independently justify the architecture change regardless of schema debate.</p></div>
+<div class="lg">
+<div class="li"><div class="ld" style="background:var(--accent5)"></div>Defeated</div>
+<div class="li"><div class="ld" style="background:var(--accent4)"></div>Weakened</div>
+<div class="li"><div class="ld" style="background:var(--accent3)"></div>Holds</div>
+<div class="li"><div class="ld" style="background:var(--danger)"></div>Critical (from code review)</div>
+</div>
+<div class="flow" id="flow-gaps"></div><div id="det-gaps"></div>
+</div>
+
+<!-- MODIFIED -->
+<div class="vw" id="vw-modified">
+<div class="vi"><h2>Modified: 8 Fargate Tasks · Strict Sequential · Schemas</h2><p>All 12 Lambdas → 8 Fargate tasks. Step Functions: strict sequential (no parallel). Collab+LINE completes BEFORE Tags (fixes race condition). DELETE+INSERT in single task (fixes data loss risk). ~12 tables Phase 1.</p></div>
+<div class="callout callout-info"><strong>Step Functions (STRICT SEQUENTIAL):</strong> Task 0 → Task 1 → Task 2 → Task 3 → <strong>Task 4 (Collab+LINE) → Task 5 (Tags)</strong> → Task 6 → Task 7. Task 4 MUST complete before Task 5 starts (λ5 reads λ8/9 output). No parallel tasks.</div>
+<div class="lg">
+<div class="li"><div class="ld" style="background:var(--infra)"></div>Infrastructure</div>
+<div class="li"><div class="ld" style="background:var(--fargate)"></div>Fargate (8)</div>
+<div class="li"><div class="ld" style="background:var(--ref)"></div>REF</div>
+<div class="li"><div class="ld" style="background:var(--qa)"></div>QA</div>
+<div class="li"><div class="ld" style="background:var(--adl)"></div>ADL</div>
+<div class="li"><div class="ld" style="background:var(--s3)"></div>S3 (kept)</div>
+</div>
+<div class="flow" id="flow-modified"></div><div id="det-modified"></div>
+</div>
+
+<script>
+const D={
+existing:{rows:[
+{label:'DATA SOURCES',nodes:[
+{id:'e1',type:'s3',icon:'📦',title:'Sprinklr S3',sub:'23 files · 4 folders',badge:'SRC'},
+{id:'e2',type:'s3',icon:'💰',title:'Paid (Mon)',sub:'Paid_Data_9',badge:'MON'},
+{id:'e3',type:'gsheet',icon:'📊',title:'Collab',sub:'2 Google Sheets',badge:'MON'},
+{id:'e4',type:'gsheet',icon:'💬',title:'LINE',sub:'1 Google Sheet',badge:'MON'},
+]},
+{label:'INFRASTRUCTURE — S3 TRIGGERS + ALERTS',nodes:[
+{id:'e5',type:'infra',icon:'⚡',title:'S3 Event Chain',sub:'done.txt relay',badge:'TRIG'},
+{id:'e6',type:'infra',icon:'⏱️',title:'240s Sleep ×2',sub:'λ2a + λ2b',badge:'WASTE'},
+{id:'e7',type:'infra',icon:'📧',title:'SES Email',sub:'Alerts (fragile)',badge:'SES'},
+{id:'e8',type:'infra',icon:'📋',title:'CloudWatch',sub:'No dashboard',badge:'CW'},
+]},
+{label:'DAILY: λ1 (1,496) → λ2a/2b (266+380) → λ2c (581) → λ3 (321)',nodes:[
+{id:'e9',type:'lambda',icon:'🛡️',title:'Lambda 1',sub:'Validate · 1,496 lines',badge:'λ1'},
+{id:'e10',type:'lambda',icon:'📋',title:'Lambda 2a/2b',sub:'Copy · 240s sleep each',badge:'λ2'},
+{id:'e11',type:'lambda',icon:'🔗',title:'Lambda 2c',sub:'Post ID · 581 lines',badge:'λ2c'},
+{id:'e12',type:'lambda',icon:'🔀',title:'Lambda 3',sub:'Merge · gc.collect() · 10GB',badge:'λ3'},
+]},
+{label:'S3 DATA FLOW: master_table → weeklybackup → monthlybackeup → for_tagging → finalmaster → tableau_layer',nodes:[
+{id:'e13',type:'s3',icon:'📄',title:'master_table.csv',sub:'pull_date ✅ · 3mo slice',badge:'CSV'},
+{id:'e14',type:'s3',icon:'💾',title:'weeklybackup/',sub:'→ triggers λ3b',badge:'MON'},
+{id:'e15',type:'s3',icon:'📊',title:'5 Mapping Files',sub:'No audit trail',badge:'XLSX'},
+]},
+{label:'⚠️ CRITICAL: λ8/9 NO S3 TRIGGER — Race condition with λ5',nodes:[
+{id:'e16',type:'danger',icon:'🚨',title:'Race Condition',sub:'λ8/9 not S3-triggered',badge:'BUG'},
+{id:'e17',type:'danger',icon:'💀',title:'Direct DELETE',sub:'λ8: DELETE is_manual=1',badge:'RISK'},
+{id:'e18',type:'danger',icon:'💀',title:'Direct DELETE',sub:'λ9: DELETE Platform=LINE',badge:'RISK'},
+]},
+{label:'MONDAY: λ3b (258) → λ4 (1,242) → [λ8 (744) + λ9 (1,206)] → λ5 (1,203) → λ6 (476) → λ7 (1,456)',nodes:[
+{id:'e19',type:'lambda',icon:'🗺️',title:'Lambda 3b',sub:'Permalink · 258 lines',badge:'λ3b'},
+{id:'e20',type:'lambda',icon:'🧹',title:'Lambda 4',sub:'Rules 1–6 · 1,242 lines',badge:'λ4'},
+{id:'e21',type:'lambda',icon:'🤝',title:'Lambda 8',sub:'Collab · 744 lines',badge:'λ8'},
+{id:'e22',type:'lambda',icon:'💬',title:'Lambda 9',sub:'LINE · 1,206 lines',badge:'λ9'},
+{id:'e23',type:'lambda',icon:'🏷️',title:'Lambda 5',sub:'Tags+R7–8 · 1,203 lines',badge:'λ5'},
+{id:'e24',type:'lambda',icon:'📊',title:'Lambda 6',sub:'Bench+R9–10 · 476 lines',badge:'λ6'},
+{id:'e25',type:'lambda',icon:'🚀',title:'Lambda 7',sub:'Push+R11–21 · 1,456 lines',badge:'λ7'},
+]},
+{label:'FILTERED POSTS → S3 (5 separate CSVs per Monday)',nodes:[
+{id:'e26',type:'s3',icon:'🔍',title:'lambda_4_*.csv',sub:'Rules 1–6',badge:'FILT'},
+{id:'e27',type:'s3',icon:'🔍',title:'lambda_5_*.csv',sub:'Rules 7–8',badge:'FILT'},
+{id:'e28',type:'s3',icon:'🔍',title:'lambda_6_*.csv',sub:'Rules 9–10',badge:'FILT'},
+{id:'e29',type:'s3',icon:'🔍',title:'lambda_7_*.csv',sub:'Rules 11–21',badge:'FILT'},
+{id:'e30',type:'s3',icon:'🔍',title:'lambda_8_dedup.csv',sub:'Collab dedup',badge:'FILT'},
+]},
+{label:'λ7 → RDS (5 tables) + S3 (3 outputs) + SES',nodes:[
+{id:'e31',type:'rds',icon:'🗄️',title:'sprinklr_table',sub:'UPSERT post_id_key',badge:'MAIN'},
+{id:'e32',type:'rds',icon:'🔍',title:'sprinklr_lookup_check',sub:'UPSERT Lookup Key',badge:'CHECK'},
+{id:'e33',type:'rds',icon:'🚫',title:'blacklist + branded',sub:'Append-only tables',badge:'QA'},
+{id:'e34',type:'s3',icon:'📋',title:'check/finalsql_*',sub:'Full snapshot',badge:'HIST'},
+{id:'e35',type:'s3',icon:'📊',title:'dupes_reports/',sub:'4 dedup SQL results',badge:'DUPES'},
+{id:'e36',type:'rds',icon:'📈',title:'Tableau',sub:'MONDAY ONLY',badge:'OUT'},
+]},
+],details:{
+e1:{title:'Sprinklr S3',type:'Source',typeColor:'var(--s3)',desc:'9 daily JSONs + 7 tag files + paid weekly. Bucket: amazon-global-gsmc-sprinklr. 23 files validated.',table:[]},
+e2:{title:'Paid Data (Mon)',type:'Source',typeColor:'var(--s3)',desc:'Paid_Data_9_FluencyWeekly.json. Joined via adjectivemapping.xlsx on AD_OBJECTIVE.',table:[]},
+e3:{title:'Collab Tracker',type:'Google Sheets',typeColor:'var(--gsheet)',desc:'2 sheets (hardcoded URLs per year). λ8: 4 priority rules (Sprinklr > Collab Organic > Collab Boosted). Paid always additive.',table:[]},
+e4:{title:'LINE Tracker',type:'Google Sheets',typeColor:'var(--gsheet)',desc:'1 sheet, 2 tabs. λ9: sci notation fix, SUM by Post URL, DELETE→re-INSERT. is_manual_tracker=2.',table:[]},
+e5:{title:'S3 Event Trigger Chain',type:'Infrastructure',typeColor:'var(--infra)',desc:'done.txt relay: λ1→λ2a/2b (done.txt)→λ3 (done.txt)→weeklybackup→λ3b→monthlybackeup→λ4→for_tagging→λ5→finalmaster→λ6→tableau_layer→λ7. If any Lambda fails → chain silently stalls. Typo in "monthlybackeup" is intentional.',table:[]},
+e6:{title:'240s Hardcoded Sleep',type:'Infrastructure',typeColor:'var(--infra)',desc:'λ2a line 248: time.sleep(240). λ2b line 346: time.sleep(240). 4 minutes wasted per run × 365 days = 24+ hours/year billed idle.',table:[]},
+e7:{title:'SES Email',type:'Infrastructure',typeColor:'var(--infra)',desc:'λ1: validation failures. λ7: dedup watch. Recipients: prabhat, david, asad. If SES fails → only CloudWatch print.',table:[]},
+e8:{title:'CloudWatch',type:'Infrastructure',typeColor:'var(--infra)',desc:'All Lambda print() statements. No structured dashboard. Finding errors = manual log group navigation.',table:[]},
+e9:{title:'Lambda 1 — Validate (1,496 lines)',type:'Lambda',typeColor:'var(--lambda)',desc:'Validates 23 files against expected_file_structure. COLUMN_MAPPINGS_sprinklr.json. Backs up to copy_production_data/ BEFORE validation. Tag fallback: lambda_for_missing_tags. SES alert on failure.',table:[]},
+e10:{title:'Lambda 2a/2b — Copy + 240s Sleep',type:'Lambda',typeColor:'var(--lambda)',desc:'λ2a (266 lines): copies 4 folders, done.txt, 240s sleep. λ2b (380 lines): copies with tag validation, 240s sleep. Both waste 4 minutes per run.',table:[]},
+e11:{title:'Lambda 2c — Post ID (581 lines)',type:'Lambda',typeColor:'var(--lambda)',desc:'Parallel with 2a/2b. post_id ↔ permalink mapping. Less critical with stable post_id from Sprinklr.',table:[]},
+e12:{title:'Lambda 3 — Merge (321 lines)',type:'Lambda',typeColor:'var(--lambda)',desc:'Reads 9 GOOD_FILES. Appends to master_table.csv. pull_date ✅. gc.collect() at lines 252, 313. Monday: merge paid, filter_data(), weeklybackup/.',table:[]},
+e13:{title:'master_table.csv',type:'S3',typeColor:'var(--s3)',desc:'Central data. pull_date present. row_number running counter. 3-month slice by Prabhat.',table:[]},
+e14:{title:'weeklybackup/',type:'S3',typeColor:'var(--s3)',desc:'Monday backup triggers entire Monday chain via S3 event → λ3b.',table:[]},
+e15:{title:'5 Mapping Files',type:'S3',typeColor:'var(--s3)',desc:'account_metadataa.xlsx (λ7 uses this, NOT countrymapping.xlsx), platformmapping.xlsx, twitter_mapping.xlsx, Blacklist.csv, SQLTableNovember5thCleaned.xlsx. No audit trail.',table:[]},
+e16:{title:'🚨 RACE CONDITION: λ8/9 vs λ5',type:'Critical Bug',typeColor:'var(--danger)',desc:'Lambda 8 and Lambda 9 are NOT S3-event triggered. They don\'t parse event["Records"]. They must be invoked directly (EventBridge/manual). But Lambda 5 reads their output: core_manual_tracker/processed_data.csv (from λ8) and core_line_tracker/processed_line_data.csv (from λ9). Lambda 5 is triggered by for_tagging/ from Lambda 4. NOTHING guarantees λ8/9 finish before λ5 reads their CSVs. If λ4 triggers λ5 before λ8/9 complete → λ5 reads STALE data from previous Monday. Worse: Collab file read has NO try/except — will crash if file doesn\'t exist.',table:[['λ8 trigger','NOT S3 — no event["Records"] parsing'],['λ9 trigger','NOT S3 — no event["Records"] parsing'],['λ5 reads','processed_data.csv (from λ8) — NO try/except'],['λ5 reads','processed_line_data.csv (from λ9) — HAS try/except'],['Risk','Stale data or crash on missing file']]},
+e17:{title:'🚨 λ8 DELETE FROM sprinklr_table',type:'Critical Risk',typeColor:'var(--danger)',desc:'Lambda 8 runs DELETE FROM sprinklr_table WHERE is_manual_tracker = 1 at the START of its execution (line 289: remove_manual_tracker_rows). This deletes ALL existing Collab rows. Then λ8 writes processed_data.csv for λ5 to eventually re-insert via λ7. If λ5→6→7 chain fails after λ8 deletes → Collab data is GONE from Tableau until next Monday. No transaction spans across Lambdas.',table:[['Line 289','remove_manual_tracker_rows(table_name)'],['SQL','DELETE FROM sprinklr_table WHERE is_manual_tracker = 1'],['Risk','DELETE succeeds → λ5/6/7 fails → data lost until next Monday'],['Mitigation','λ8 backs up table first, but restore is manual']]},
+e18:{title:'🚨 λ9 DELETE FROM sprinklr_table',type:'Critical Risk',typeColor:'var(--danger)',desc:'Lambda 9 runs DELETE FROM sprinklr_table WHERE Platform = \'LINE\' at the start (line 1114). Same risk as λ8: if downstream chain fails, LINE data gone from Tableau.',table:[['Line 1114','delete_existing_line_rows(table_name)'],['SQL','DELETE FROM sprinklr_table WHERE "Platform" = \'LINE\''],['Risk','Same as λ8 — data loss if downstream fails']]},
+e19:{title:'Lambda 3b — Permalink (258)',type:'Lambda',typeColor:'var(--lambda)',desc:'Loads lookup_by_permalink.csv. Updates stale permalinks. Writes monthlybackeup/mapped_data_*.csv (triggers λ4).',table:[]},
+e20:{title:'Lambda 4 — Rules 1–6 (1,242)',type:'Lambda',typeColor:'var(--lambda)',desc:'Rule 1: MESSAGE_TYPE (paid exempt). Rule 2: no text (1 Reel exempt). Rule 3: file extension only. Rule 4: cover photo/phone. Rule 5a: impressions<250. Rule 5b: 250-499+<50 engagements (2026+). Rule 6: LI dark post. Output: for_tagging/ → triggers λ5.',table:[]},
+e21:{title:'Lambda 8 — Collab (744)',type:'Lambda',typeColor:'var(--lambda)',desc:'NOT S3-triggered. Reads 2 Google Sheets. DELETES all is_manual_tracker=1 from sprinklr_table. 4 priority rules. Writes processed_data.csv.',table:[]},
+e22:{title:'Lambda 9 — LINE (1,206)',type:'Lambda',typeColor:'var(--lambda)',desc:'NOT S3-triggered. Reads Google Sheet. DELETES all Platform=LINE from sprinklr_table. Sci notation fix. SUM aggregation. Writes processed_line_data.csv.',table:[]},
+e23:{title:'Lambda 5 — Tags+Rules 7–8 (1,203)',type:'Lambda',typeColor:'var(--lambda)',desc:'Triggered by for_tagging/ from λ4. READS λ8/λ9 output CSVs (race condition). Rule 7: country exclusion (AT/BE/NL/PL/SE/TR/SG/CN). Rule 8: deleted posts (LINE exempt). Writes finalmaster/cleaned_master_tab_*.csv.',table:[]},
+e24:{title:'Lambda 6 — Bench+Rules 9–10 (476)',type:'Lambda',typeColor:'var(--lambda)',desc:'Triggered by finalmaster/ from λ5. Rule 9: null/empty Country. Rule 10: zero spend paid. Matcher + benchmarks. 2× row doubling (Median+Average). Writes tableau_layer/masterbenchmarks_*.csv.',table:[]},
+e25:{title:'Lambda 7 — Push+Rules 11–21 (1,456)',type:'Lambda',typeColor:'var(--lambda)',desc:'Triggered by tableau_layer/ from λ6. Translation (deep_translator, FREE). Comment sentiment merge. LI Global split. Paid date -7d. Rules 11–21. UPSERTs to sprinklr_table (post_id_key) + sprinklr_lookup_check (Lookup Key). Appends blacklist_table + is_branded_true_table. 4 dedup SQL queries. check/ + filtered_posts/ + dupes_reports/.',table:[['Rule 11','Published ≤ 2023-09-04 (except WeChat)'],['Rule 12','MENA removed'],['Rule 13','Amazon News X-EU removed'],['Rules 14–16','US/India/Europe msg filters (manual tracker exempt)'],['Rule 17','APAC X Sent Reply'],['Rule 18','APAC author exclusion (manual tracker exempt)'],['Rule 19','Branded + all Global + is_manual_tracker=0'],['Rule 20','Blacklist.csv'],['Rule 21','XCM Post Messages (values_to_remove list)']]},
+e26:{title:'filtered_posts/lambda_4_*.csv',type:'S3',typeColor:'var(--s3)',desc:'Rules 1–6.',table:[]},
+e27:{title:'filtered_posts/lambda_5_*.csv',type:'S3',typeColor:'var(--s3)',desc:'Rule 7 (country exclusion) + Rule 8 (deleted posts, LINE exempt).',table:[]},
+e28:{title:'filtered_posts/lambda_6_*.csv',type:'S3',typeColor:'var(--s3)',desc:'Rule 9 (null Country) + Rule 10 (zero spend).',table:[]},
+e29:{title:'filtered_posts/lambda_7_*.csv',type:'S3',typeColor:'var(--s3)',desc:'Rules 11–21.',table:[]},
+e30:{title:'filtered_posts/lambda_8_dedup.csv',type:'S3',typeColor:'var(--s3)',desc:'Collab dedup decisions + debug/sprinklr_rows_dropped.csv.',table:[]},
+e31:{title:'sprinklr_table',type:'RDS',typeColor:'var(--rds)',desc:'Main Tableau table. UPSERT on post_id_key. ~156 columns. Also directly modified by λ8 (DELETE is_manual=1) and λ9 (DELETE Platform=LINE).',table:[]},
+e32:{title:'sprinklr_lookup_check',type:'RDS',typeColor:'var(--rds)',desc:'Same structure. UPSERT on Lookup Key. Alternative dedup view.',table:[]},
+e33:{title:'blacklist + branded tables',type:'RDS',typeColor:'var(--rds)',desc:'blacklist_table: append Rule 20 rows. is_branded_true_table: append Rule 19 rows.',table:[]},
+e34:{title:'check/finalsql_*.csv',type:'S3',typeColor:'var(--s3)',desc:'Full dataset snapshot. Prabhat\'s history mechanism.',table:[]},
+e35:{title:'dupes_reports/',type:'S3',typeColor:'var(--s3)',desc:'4 dedup SQL query results as dated text files.',table:[]},
+e36:{title:'Tableau — MONDAY ONLY',type:'Output',typeColor:'var(--rds)',desc:'Reads sprinklr_table. Up to 6-day delay.',table:[]},
+}},
+
+proposed:{rows:[
+{label:'INFRASTRUCTURE',nodes:[
+{id:'p1',type:'infra',icon:'🗓️',title:'EventBridge',sub:'Daily 7AM UTC',badge:'SCHED'},
+{id:'p2',type:'infra',icon:'🔀',title:'Step Functions',sub:'STRICT sequential',badge:'ORCH'},
+{id:'p3',type:'infra',icon:'🐳',title:'ECS Fargate',sub:'8 tasks · Docker',badge:'COMPUTE'},
+{id:'p4',type:'infra',icon:'📧',title:'SNS→SES+Slack',sub:'Alerts',badge:'ALERT'},
+{id:'p5',type:'infra',icon:'📦',title:'ECR',sub:'Docker registry',badge:'DEPLOY'},
+]},
+{label:'TASK 0: VALIDATE (λ1) → rdl.schema_validation_log',nodes:[
+{id:'p6',type:'fargate',icon:'🛡️',title:'Task 0: Validate',sub:'λ1 containerised',badge:'T0'},
+{id:'p7',type:'step',icon:'📚',title:'REF Schema (5)',sub:'Git-versioned mappings',badge:'REF'},
+]},
+{label:'TASK 1: COPY+INGEST (λ2a+2b+2c) → RDL',nodes:[
+{id:'p8',type:'fargate',icon:'📋',title:'Task 1: Copy+Ingest',sub:'No 240s sleep',badge:'T1'},
+{id:'p9',type:'step',icon:'🗄️',title:'RDL Schema (6)',sub:'JSONB immutable',badge:'RDL'},
+]},
+{label:'TASK 2: MERGE (λ3+3b) → master_table + ODL',nodes:[
+{id:'p10',type:'fargate',icon:'🔀',title:'Task 2: Merge',sub:'No gc.collect()',badge:'T2'},
+]},
+{label:'TASK 3: FILTER+ENRICH (λ4+λ5 partial+λ6 partial) → QA',nodes:[
+{id:'p11',type:'fargate',icon:'🧹',title:'Task 3: Filter',sub:'Rules 1–10',badge:'T3'},
+{id:'p12',type:'step',icon:'🚨',title:'QA Schema (4)',sub:'filtered_posts + runs',badge:'QA'},
+]},
+{label:'TASK 4: COLLAB+LINE (λ8+λ9) — MUST complete before Task 5',nodes:[
+{id:'p13',type:'fargate',icon:'🤝',title:'Task 4: Collab+LINE',sub:'Monday · DELETE+INSERT atomic',badge:'T4'},
+]},
+{label:'TASK 5: TAGS+MERGE (λ5 tag logic) — reads Task 4 output',nodes:[
+{id:'p14',type:'fargate',icon:'🏷️',title:'Task 5: Tags',sub:'Reads Collab+LINE CSVs',badge:'T5'},
+{id:'p15',type:'step',icon:'🗄️',title:'ODL Schema (6)',sub:'SCD Type 2',badge:'ODL'},
+]},
+{label:'TASK 6: BENCHMARK (λ6) → ADL',nodes:[
+{id:'p16',type:'fargate',icon:'📊',title:'Task 6: Benchmark',sub:'No row doubling',badge:'T6'},
+{id:'p17',type:'step',icon:'🗄️',title:'ADL Schema (4)',sub:'posts_current',badge:'ADL'},
+]},
+{label:'TASK 7: PUSH+QA (λ7) → TABLEAU DAILY',nodes:[
+{id:'p18',type:'fargate',icon:'🚀',title:'Task 7: Push+QA',sub:'No timeout risk',badge:'T7'},
+{id:'p19',type:'rds',icon:'📈',title:'Tableau',sub:'DAILY',badge:'OUT'},
+]},
+],details:{
+p1:{title:'EventBridge',type:'Infra',typeColor:'var(--infra)',desc:'Daily 7AM UTC. Free tier. Replaces Monday-only S3 gate.',table:[]},
+p2:{title:'Step Functions — STRICT SEQUENTIAL',type:'Infra',typeColor:'var(--infra)',desc:'T0→T1→T2→T3→T4→T5→T6→T7. NO parallel tasks. T4 (Collab+LINE) MUST complete before T5 (Tags) because λ5 reads λ8/9 output. Fixes the race condition. On failure: records step_reached, fires SNS, stops.',table:[['Critical Fix','T4 before T5 — guaranteed ordering (fixes race condition)'],['On Failure','Record step + SNS alert + stop cleanly'],['Replaces','S3 done.txt chain + 240s sleep + silent stalling']]},
+p3:{title:'ECS Fargate — 8 Tasks',type:'Infra',typeColor:'var(--infra)',desc:'Docker containers. No 15-min timeout. No 10GB memory ceiling. ~$2/year.',table:[['T0','Validate (λ1)'],['T1','Copy+Ingest (λ2a+2b+2c — no 240s)'],['T2','Merge (λ3+3b — no gc.collect())'],['T3','Filter (λ4+partial λ5+partial λ6)'],['T4','Collab+LINE (λ8+λ9 — Monday)'],['T5','Tags (λ5 tag logic)'],['T6','Benchmark (λ6)'],['T7','Push+QA (λ7 — no timeout)']]},
+p4:{title:'SNS→SES+Slack',type:'Infra',typeColor:'var(--infra)',desc:'Two tiers: critical (pipeline stopped) + warning (partial success).',table:[]},
+p5:{title:'ECR',type:'Infra',typeColor:'var(--infra)',desc:'Docker image registry. CI/CD: merge→build→push→Fargate pulls.',table:[]},
+p6:{title:'Task 0: Validate',type:'Fargate',typeColor:'var(--fargate)',desc:'λ1 containerised. Writes rdl.schema_validation_log.',table:[]},
+p7:{title:'REF Schema (5)',type:'REF',typeColor:'var(--ref)',desc:'ref.country_mapping (replaces account_metadataa.xlsx), ref.platform_mapping, ref.twitter_account_mapping, ref.blacklist, ref.url_corrections. Git-versioned.',table:[]},
+p8:{title:'Task 1: Copy+Ingest',type:'Fargate',typeColor:'var(--fargate)',desc:'Merges λ2a+2b+2c. No 240s sleep — S3 waiter or Step Functions Wait state. JSONB insert → RDL.',table:[]},
+p9:{title:'RDL Schema (6)',type:'RDL',typeColor:'var(--rdl)',desc:'sprinklr_raw_pulls, sprinklr_raw_posts (JSONB), tag_pull_raw, post_id_lookup, manual_tracker_raw, schema_validation_log.',table:[]},
+p10:{title:'Task 2: Merge',type:'Fargate',typeColor:'var(--fargate)',desc:'λ3+3b merged. No gc.collect() — configurable memory. Keeps master_table.csv.',table:[]},
+p11:{title:'Task 3: Filter+Enrich',type:'Fargate',typeColor:'var(--fargate)',desc:'λ4 Rules 1–6 + λ5 Rules 7–8 + λ6 Rules 9–10. All → qa.filtered_posts.',table:[]},
+p12:{title:'QA Schema (4)',type:'QA',typeColor:'var(--qa)',desc:'pipeline_runs, filtered_posts (all 21 rules), duplicate_checks, data_quality_issues.',table:[]},
+p13:{title:'Task 4: Collab+LINE',type:'Fargate',typeColor:'var(--fargate)',desc:'λ8+λ9 merged. Monday only. CRITICAL: DELETE+INSERT wrapped in single task. If task fails → Step Functions stops before T5, no stale data. Fixes the cross-Lambda DELETE risk.',table:[['Critical Fix','DELETE + CSV write in single task — atomic operation'],['Before','λ8 DELETEs from sprinklr_table → λ5 re-inserts via λ7 (hours later, across 3 Lambdas)'],['After','Task 4 DELETEs + writes CSV → Task 5 reads CSV (guaranteed by Step Functions ordering)']]},
+p14:{title:'Task 5: Tags+Merge',type:'Fargate',typeColor:'var(--fargate)',desc:'λ5 tag logic. Reads Collab+LINE CSVs from Task 4 (guaranteed complete). Fixes race condition.',table:[['Critical Fix','Reads Task 4 output — guaranteed complete by Step Functions']]},
+p15:{title:'ODL Schema (6)',type:'ODL',typeColor:'var(--odl)',desc:'post_metrics_daily, post_attributes (SCD Type 2), permalink_aliases, manual_tracker_posts, post_translations, comment_sentiment.',table:[]},
+p16:{title:'Task 6: Benchmark',type:'Fargate',typeColor:'var(--fargate)',desc:'λ6 logic. No row doubling. adl.benchmarks with PK.',table:[]},
+p17:{title:'ADL Schema (4)',type:'ADL',typeColor:'var(--adl)',desc:'posts_current, benchmarks, metric_changes, daily_aggregates.',table:[]},
+p18:{title:'Task 7: Push+QA',type:'Fargate',typeColor:'var(--fargate)',desc:'λ7 containerised. No 15-min timeout. Rules 11–21. All S3 outputs kept.',table:[]},
+p19:{title:'Tableau — DAILY',type:'Output',typeColor:'var(--rds)',desc:'adl.posts_current. Same 156 columns. DAILY updates.',table:[]},
+}},
+
+gaps:{rows:[
+{label:'🚨 CRITICAL FINDINGS (from source code review)',nodes:[
+{id:'g1',type:'danger',icon:'🚨',title:'Race Condition',sub:'λ8/9 not S3-triggered'},
+{id:'g2',type:'danger',icon:'💀',title:'Direct DELETE Risk',sub:'λ8/9 delete before λ7 re-inserts'},
+{id:'g3',type:'danger',icon:'⏱️',title:'240s Sleep Waste',sub:'24+ hrs/yr billed idle'},
+]},
+{label:'DEFEATED ❌ (Prabhat is right)',nodes:[
+{id:'g4',type:'gap',icon:'❌',title:'No History',sub:'pull_date + check/ CSVs'},
+{id:'g5',type:'gap',icon:'❌',title:'Translation $94',sub:'deep_translator FREE'},
+{id:'g6',type:'gap',icon:'❌',title:'Duplicates',sub:'Stable post_id'},
+{id:'g7',type:'gap',icon:'❌',title:'CSV Growth',sub:'3-month slice'},
+{id:'g8',type:'gap',icon:'❌',title:'Tag Issues',sub:'Handled in pipeline'},
+]},
+{label:'WEAKENED ⚠️ → Phase 2',nodes:[
+{id:'g9',type:'gap',icon:'⚠️',title:'SCD Type 2',sub:'Phase 2'},
+{id:'g10',type:'gap',icon:'⚠️',title:'JSONB Store',sub:'Phase 2'},
+{id:'g11',type:'gap',icon:'⚠️',title:'25 Tables',sub:'Trim to ~12'},
+]},
+{label:'STILL HOLDS ✅',nodes:[
+{id:'g12',type:'ok',icon:'✅',title:'Daily Tableau',sub:'S3 chain limit'},
+{id:'g13',type:'ok',icon:'✅',title:'qa.filtered_posts',sub:'5 CSVs → 1 table'},
+{id:'g14',type:'ok',icon:'✅',title:'qa.pipeline_runs',sub:'Health visibility'},
+{id:'g15',type:'ok',icon:'✅',title:'REF Auditability',sub:'Git-versioned'},
+{id:'g16',type:'ok',icon:'✅',title:'Schema Structure',sub:'RDL/REF/ODL/ADL/QA'},
+{id:'g17',type:'ok',icon:'✅',title:'Step Functions',sub:'Fixes all 3 critical issues'},
+]},
+],details:{
+g1:{title:'🚨 Race Condition: λ8/9 vs λ5',type:'Critical',typeColor:'var(--danger)',desc:'Lambda 8 and 9 are NOT S3-event triggered. Lambda 5 reads their output CSVs (processed_data.csv from λ8, processed_line_data.csv from λ9). Lambda 5 is triggered by for_tagging/ from Lambda 4. Nothing guarantees λ8/9 complete before λ5 starts. Collab file read in λ5 has NO try/except — will crash if file missing. LINE read has try/except but would use stale data.',table:[['λ8 trigger','NOT S3-triggered (no event["Records"])'],['λ9 trigger','NOT S3-triggered'],['λ5 reads λ8','processed_data.csv — NO try/except (crash risk)'],['λ5 reads λ9','processed_line_data.csv — HAS try/except (stale data risk)'],['Fix','Step Functions: Task 4 (Collab+LINE) → Task 5 (Tags) — guaranteed ordering']]},
+g2:{title:'🚨 Direct DELETE from sprinklr_table',type:'Critical',typeColor:'var(--danger)',desc:'λ8: DELETE FROM sprinklr_table WHERE is_manual_tracker = 1 (all Collab rows). λ9: DELETE FROM sprinklr_table WHERE Platform = \'LINE\' (all LINE rows). These DELETEs happen at the START of λ8/9. Re-insertion happens hours later via λ5→6→7. If λ5/6/7 chain fails → Collab+LINE data GONE from Tableau until next Monday. Backups exist but restore is manual.',table:[['λ8 DELETE','WHERE is_manual_tracker = 1 (line 289)'],['λ9 DELETE','WHERE "Platform" = \'LINE\' (line 1114)'],['Re-insert','Via λ5→λ6→λ7 (3 Lambdas later, hours later)'],['Risk','DELETE succeeds, downstream fails → data lost'],['Fix','Single Fargate task: DELETE + INSERT in same transaction, or defer DELETE until Task 7']]},
+g3:{title:'🚨 240s Sleep = Wasted Billing',type:'Critical',typeColor:'var(--danger)',desc:'λ2a (line 248) and λ2b (line 346) both have time.sleep(240). 4 minutes × 2 × 365 = 48+ hours/year of billed Lambda compute doing nothing. Fargate: use S3 waiter or Step Functions Wait state — no billed idle time.',table:[]},
+g4:{title:'❌ No History',type:'Defeated',typeColor:'var(--accent5)',desc:'pull_date exists. check/finalsql_*.csv snapshots. sprinklr_lookup_check alternative view.',table:[]},
+g5:{title:'❌ Translation Cost',type:'Defeated',typeColor:'var(--accent5)',desc:'deep_translator is free. $0.',table:[]},
+g6:{title:'❌ Duplicates',type:'Defeated',typeColor:'var(--accent5)',desc:'Sprinklr now provides stable post_id.',table:[]},
+g7:{title:'❌ CSV Growth',type:'Defeated',typeColor:'var(--accent5)',desc:'Prabhat slices every 3 months.',table:[]},
+g8:{title:'❌ Tag Issues',type:'Defeated',typeColor:'var(--accent5)',desc:'Handled in existing pipeline.',table:[]},
+g9:{title:'⚠️ SCD Type 2',type:'Phase 2',typeColor:'var(--accent4)',desc:'Nice-to-have. Add when someone asks for historical tag state.',table:[]},
+g10:{title:'⚠️ JSONB Store',type:'Phase 2',typeColor:'var(--accent4)',desc:'Good insurance. check/ CSVs serve for now.',table:[]},
+g11:{title:'⚠️ 25 Tables → ~12',type:'Trim',typeColor:'var(--accent4)',desc:'Drop: permalink_aliases, post_translations, comment_sentiment, daily_aggregates. Phase 2: RDL + ODL.',table:[]},
+g12:{title:'✅ Daily Tableau',type:'Holds',typeColor:'var(--accent3)',desc:'Monday-only is S3 chain limitation. EventBridge + Step Functions = daily.',table:[]},
+g13:{title:'✅ qa.filtered_posts',type:'Holds',typeColor:'var(--accent3)',desc:'Currently 5 CSVs across λ4/5/6/7/8. One Postgres table with all 21 rules.',table:[['λ4','Rules 1–6'],['λ5','Rules 7–8'],['λ6','Rules 9–10'],['λ7','Rules 11–21'],['λ8','Collab dedup'],['Proposed','1 table: qa.filtered_posts']]},
+g14:{title:'✅ qa.pipeline_runs',type:'Holds',typeColor:'var(--accent3)',desc:'No single health view exists today.',table:[]},
+g15:{title:'✅ REF Auditability',type:'Holds',typeColor:'var(--accent3)',desc:'5 files editable with zero trail. λ7 uses account_metadataa.xlsx not countrymapping.xlsx.',table:[]},
+g16:{title:'✅ Schema Structure',type:'Holds',typeColor:'var(--accent3)',desc:'5 tables in public schema with no naming convention → named schemas with governance.',table:[]},
+g17:{title:'✅ Step Functions',type:'Holds (fixes all 3 critical issues)',typeColor:'var(--accent3)',desc:'(1) Guaranteed ordering: Task 4 before Task 5 — fixes race condition. (2) Single task for DELETE+INSERT — fixes data loss risk. (3) No 240s sleep — Fargate uses async polling. Independently justified even without schema changes.',table:[]},
+}},
+
+modified:{rows:[
+{label:'INFRASTRUCTURE',nodes:[
+{id:'m1',type:'infra',icon:'🗓️',title:'EventBridge',sub:'Daily 7AM UTC',badge:'SCHED'},
+{id:'m2',type:'infra',icon:'🔀',title:'Step Functions',sub:'T0→1→2→3→4→5→6→7',badge:'ORCH'},
+{id:'m3',type:'infra',icon:'📧',title:'SNS→SES+Slack',sub:'Alerts',badge:'ALERT'},
+{id:'m4',type:'infra',icon:'📦',title:'ECR',sub:'Docker images',badge:'DEPLOY'},
+]},
+{label:'TASK 0: VALIDATE (λ1 → Fargate)',nodes:[
+{id:'m5',type:'fargate',icon:'🛡️',title:'Task 0: Validate',sub:'1,496 lines containerised',badge:'T0'},
+{id:'m6',type:'step',icon:'⚠️',title:'qa.data_quality_issues',sub:'Schema drift',badge:'QA'},
+]},
+{label:'TASK 1: COPY+INGEST (λ2a+2b+2c → single Fargate task)',nodes:[
+{id:'m7',type:'fargate',icon:'📋',title:'Task 1: Copy+Ingest',sub:'3 Lambdas → 1 task · No 240s',badge:'T1'},
+]},
+{label:'TASK 2: MERGE (λ3+3b → Fargate)',nodes:[
+{id:'m8',type:'fargate',icon:'🔀',title:'Task 2: Merge',sub:'No gc.collect() needed',badge:'T2'},
+{id:'m9',type:'s3',icon:'📄',title:'master_table.csv',sub:'Kept · pull_date ✅',badge:'KEEP'},
+]},
+{label:'TASK 3: FILTER+ENRICH (λ4 + λ5 Rules 7–8 + λ6 Rules 9–10 → Fargate)',nodes:[
+{id:'m10',type:'fargate',icon:'🧹',title:'Task 3: Filter',sub:'Rules 1–10 consolidated',badge:'T3'},
+{id:'m11',type:'step',icon:'🔍',title:'qa.filtered_posts',sub:'All 21 rules · 1 table',badge:'QA'},
+]},
+{label:'⬇️ TASK 4: COLLAB+LINE (λ8+λ9 → Fargate) — MUST complete before Task 5',nodes:[
+{id:'m12',type:'fargate',icon:'🤝',title:'Task 4: Collab+LINE',sub:'Monday · DELETE+CSV atomic',badge:'T4'},
+]},
+{label:'⬇️ TASK 5: TAGS+MERGE (λ5 tag logic → Fargate) — reads Task 4 output ✅',nodes:[
+{id:'m13',type:'fargate',icon:'🏷️',title:'Task 5: Tags+Merge',sub:'Guaranteed: T4 done first',badge:'T5'},
+]},
+{label:'TASK 6: BENCHMARK (λ6 → Fargate)',nodes:[
+{id:'m14',type:'fargate',icon:'📊',title:'Task 6: Benchmark',sub:'adl.benchmarks PK',badge:'T6'},
+{id:'m15',type:'step',icon:'📊',title:'adl.benchmarks',sub:'PK prevents inflation',badge:'ADL'},
+]},
+{label:'TASK 7: PUSH+QA (λ7 → Fargate)',nodes:[
+{id:'m16',type:'fargate',icon:'🚀',title:'Task 7: Push+QA',sub:'No timeout · 1,456 lines',badge:'T7'},
+{id:'m17',type:'step',icon:'💚',title:'qa.pipeline_runs',sub:'Health calendar',badge:'QA'},
+{id:'m18',type:'step',icon:'📊',title:'qa.duplicate_checks',sub:'Dedup trends',badge:'QA'},
+]},
+{label:'REF SCHEMA — 5 auditable mappings (Git-versioned)',nodes:[
+{id:'m19',type:'step',icon:'🌍',title:'ref.country_mapping',sub:'→ account_metadataa.xlsx',badge:'REF'},
+{id:'m20',type:'step',icon:'📱',title:'ref.(4 more)',sub:'platform+twitter+blacklist+urls',badge:'REF'},
+]},
+{label:'ADL SCHEMA — Tableau-facing (renamed existing)',nodes:[
+{id:'m21',type:'rds',icon:'🗄️',title:'adl.posts_current',sub:'= sprinklr_table',badge:'ADL'},
+{id:'m22',type:'rds',icon:'🔍',title:'adl.lookup_check',sub:'= sprinklr_lookup_check',badge:'ADL'},
+]},
+{label:'S3 OUTPUTS — ALL KEPT',nodes:[
+{id:'m23',type:'s3',icon:'📋',title:'check/ + filtered/ + dupes/',sub:'All S3 outputs preserved',badge:'KEEP'},
+]},
+{label:'PHASE 2 — RDL+ODL (when value proven)',nodes:[
+{id:'m24',type:'fargate',icon:'💎',title:'rdl.sprinklr_raw_posts',sub:'JSONB store',badge:'P2'},
+{id:'m25',type:'fargate',icon:'📊',title:'odl.post_metrics_daily',sub:'DB snapshots',badge:'P2'},
+{id:'m26',type:'fargate',icon:'🏷️',title:'odl.post_attributes',sub:'SCD Type 2',badge:'P2'},
+]},
+{label:'OUTPUT',nodes:[
+{id:'m27',type:'rds',icon:'📈',title:'Tableau — DAILY',sub:'1 connection string change',badge:'OUT'},
+]},
+],details:{
+m1:{title:'EventBridge',type:'Infra',typeColor:'var(--infra)',desc:'Daily 7AM UTC. $0. Replaces Monday gate.',table:[]},
+m2:{title:'Step Functions — STRICT SEQUENTIAL',type:'Infra',typeColor:'var(--infra)',desc:'T0→T1→T2→T3→T4→T5→T6→T7. STRICT sequential — no parallel. T4 (Collab+LINE) completes before T5 (Tags) starts. Fixes race condition. On failure: record step + SNS + stop.',table:[['T0→T1→T2→T3','Validate → Copy → Merge → Filter'],['T4→T5','Collab+LINE → Tags (GUARANTEED ORDER)'],['T6→T7','Benchmark → Push+QA'],['On Failure','Step Functions records step_reached + SNS alert'],['Fixes','Race condition, silent stalling, 240s sleep']]},
+m3:{title:'SNS→SES+Slack',type:'Infra',typeColor:'var(--infra)',desc:'Critical: pipeline stopped → email+Slack. Warning: partial → email only.',table:[]},
+m4:{title:'ECR',type:'Infra',typeColor:'var(--infra)',desc:'Docker images. CI/CD pipeline.',table:[]},
+m5:{title:'Task 0: Validate (λ1)',type:'Fargate',typeColor:'var(--fargate)',desc:'1,496 lines containerised. Same validation logic. Writes qa.data_quality_issues. On failure: Step Functions stops + SNS.',table:[]},
+m6:{title:'qa.data_quality_issues',type:'QA',typeColor:'var(--qa)',desc:'PK: (run_id, issue_type, file_name). Schema drift, missing files, unmapped accounts.',table:[]},
+m7:{title:'Task 1: Copy+Ingest (λ2a+2b+2c)',type:'Fargate',typeColor:'var(--fargate)',desc:'3 Lambdas → 1 Fargate task. No 240s sleep — S3 waiter or Step Functions Wait. Eliminates 48+ min/day billed idle. Copy + validate tags + post_id lookup all in one container.',table:[['Merges','λ2a (266) + λ2b (380) + λ2c (581) = ~1,227 lines'],['Eliminates','240s × 2 = 8 min/run billed idle'],['Uses','S3 waiter or Step Functions Wait state instead of sleep']]},
+m8:{title:'Task 2: Merge (λ3+3b)',type:'Fargate',typeColor:'var(--fargate)',desc:'λ3 (321) + λ3b (258) merged. No gc.collect() — Fargate has configurable memory. Keeps master_table.csv + weeklybackup/ + monthlybackeup/ outputs.',table:[]},
+m9:{title:'master_table.csv — Kept',type:'S3',typeColor:'var(--s3)',desc:'Prabhat\'s workflow. pull_date ✅. 3-month slice. No changes.',table:[]},
+m10:{title:'Task 3: Filter+Enrich (Rules 1–10)',type:'Fargate',typeColor:'var(--fargate)',desc:'Consolidates λ4 (Rules 1–6) + λ5 Rules 7–8 + λ6 Rules 9–10. All filtered posts → qa.filtered_posts + existing CSVs (additive). Country/platform from ref.* tables.',table:[['Rules 1–6','From λ4 (noise filtering)'],['Rule 7','Country exclusion: AT/BE/NL/PL/SE/TR/SG/CN (from λ5)'],['Rule 8','Deleted posts removed, LINE exempt (from λ5)'],['Rule 9','Null/empty Country (from λ6)'],['Rule 10','Zero spend paid (from λ6)'],['Writes','qa.filtered_posts + filtered_posts/*.csv (both)']]},
+m11:{title:'qa.filtered_posts',type:'QA',typeColor:'var(--qa)',desc:'PK: (post_id, filter_rule, run_id). All 21 rules from Tasks 3+7, plus Collab dedup from Task 4. Replaces 5 separate CSVs as queryable source. CSVs still written.',table:[]},
+m12:{title:'Task 4: Collab+LINE (λ8+λ9) — CRITICAL FIX',type:'Fargate',typeColor:'var(--fargate)',desc:'λ8 (744) + λ9 (1,206) merged into single Fargate task. Monday only. CRITICAL: DELETE from sprinklr_table + write CSV output happen in the SAME task. If task fails → Step Functions stops before Task 5. No stale data. No cross-Lambda DELETE risk. Google Sheets API calls safe from Lambda 15-min timeout.',table:[['Fixes','Race condition — Task 5 waits for Task 4 (guaranteed by Step Functions)'],['Fixes','DELETE risk — DELETE+CSV write in single task'],['Fixes','Google Sheets timeout — no 15-min Lambda limit'],['DELETE logic','Same as existing: DELETE is_manual=1, DELETE Platform=LINE'],['Output','processed_data.csv + processed_line_data.csv → read by Task 5']]},
+m13:{title:'Task 5: Tags+Merge (λ5 tag logic) — RACE CONDITION FIXED',type:'Fargate',typeColor:'var(--fargate)',desc:'λ5 tag merge logic. Reads Collab CSV (from Task 4) and LINE CSV (from Task 4). GUARANTEED by Step Functions that Task 4 is complete. Fixes the race condition where λ5 could read stale/missing files.',table:[['Reads','processed_data.csv — GUARANTEED exists (Task 4 complete)'],['Reads','processed_line_data.csv — GUARANTEED exists (Task 4 complete)'],['Before','λ5 read λ8/9 output with no ordering guarantee → stale data or crash'],['After','Step Functions: T4 done → T5 starts → files guaranteed fresh']]},
+m14:{title:'Task 6: Benchmark (λ6)',type:'Fargate',typeColor:'var(--fargate)',desc:'λ6 benchmark logic. Writes adl.benchmarks with PK (matcher, benchmark_type).',table:[]},
+m15:{title:'adl.benchmarks',type:'ADL',typeColor:'var(--adl)',desc:'PK: (matcher, benchmark_type). Re-runs can\'t inflate scores.',table:[]},
+m16:{title:'Task 7: Push+QA (λ7)',type:'Fargate',typeColor:'var(--fargate)',desc:'1,456 lines containerised. No 15-min timeout (translation safe). Rules 11–21. UPSERTs to adl.posts_current + adl.lookup_check. Writes qa.duplicate_checks + qa.pipeline_runs. ALL existing S3 outputs kept.',table:[['Rules','11–21 (unchanged)'],['Writes RDS','adl.posts_current, adl.lookup_check, blacklist_table, is_branded_true_table'],['Writes QA','qa.filtered_posts (Rules 11–21), qa.duplicate_checks, qa.pipeline_runs'],['Writes S3','check/, filtered_posts/, dupes_reports/ — all kept']]},
+m17:{title:'qa.pipeline_runs',type:'QA',typeColor:'var(--qa)',desc:'PK: run_id. One row per execution. Green/red calendar in Tableau.',table:[]},
+m18:{title:'qa.duplicate_checks',type:'QA',typeColor:'var(--qa)',desc:'PK: (run_id, check_type). Same 4 dedup queries. Trend tracking.',table:[]},
+m19:{title:'ref.country_mapping',type:'REF',typeColor:'var(--ref)',desc:'Replaces account_metadataa.xlsx (λ7 uses this, NOT countrymapping.xlsx). Git-versioned.',table:[]},
+m20:{title:'ref.(platform+twitter+blacklist+urls)',type:'REF',typeColor:'var(--ref)',desc:'4 more REF tables. All Git-versioned with updated_at/updated_by.',table:[]},
+m21:{title:'adl.posts_current',type:'ADL',typeColor:'var(--adl)',desc:'= sprinklr_table renamed. ALTER TABLE sprinklr_table SET SCHEMA adl; RENAME TO posts_current. Same 156 columns.',table:[]},
+m22:{title:'adl.lookup_check',type:'ADL',typeColor:'var(--adl)',desc:'= sprinklr_lookup_check renamed.',table:[]},
+m23:{title:'S3 Outputs — All Kept',type:'S3',typeColor:'var(--s3)',desc:'check/finalsql_*.csv, filtered_posts/*.csv (all 5), dupes_reports/*.txt. qa.* tables are ADDITIVE.',table:[]},
+m24:{title:'Phase 2: rdl.sprinklr_raw_posts',type:'Phase 2',typeColor:'var(--fargate)',desc:'JSONB immutable store. Add when pipeline replay needed.',table:[]},
+m25:{title:'Phase 2: odl.post_metrics_daily',type:'Phase 2',typeColor:'var(--fargate)',desc:'Dated DB snapshots. Add when needed.',table:[]},
+m26:{title:'Phase 2: odl.post_attributes',type:'Phase 2',typeColor:'var(--fargate)',desc:'SCD Type 2. Add when someone asks for historical tag state.',table:[]},
+m27:{title:'Tableau — DAILY',type:'Output',typeColor:'var(--rds)',desc:'adl.posts_current. Same dashboards. One connection string change. DAILY instead of Monday only.',table:[]},
+}},
+};
+
+function renderFlow(k){const c=document.getElementById('flow-'+k);const d=D[k];c.innerHTML='';d.rows.forEach(r=>{const l=document.createElement('div');l.className='fl';l.textContent=r.label;c.appendChild(l);const row=document.createElement('div');row.className='fr';r.nodes.forEach((n,i)=>{if(i>0){const a=document.createElement('span');a.className='fa';a.textContent='→';row.appendChild(a)}const e=document.createElement('div');e.className=`nd ${n.type?'nd-'+n.type:''}`;e.dataset.id=n.id;e.dataset.v=k;e.innerHTML=`<div class="ni">${n.icon}</div><div class="nt">${n.title}</div><div class="ns">${n.sub}</div>${n.badge?`<div class="nb">${n.badge}</div>`:''}`;e.addEventListener('click',()=>sd(k,n.id,e));row.appendChild(e)});c.appendChild(row)})}
+function sd(k,id,el){const c=document.getElementById('det-'+k);const i=D[k].details[id];if(!i)return;document.getElementById('flow-'+k).querySelectorAll('.nd').forEach(n=>n.classList.remove('act'));el.classList.add('act');let t='';if(i.table&&i.table.length)t=`<div class="ds"><h4>Details</h4><table class="dt">${i.table.map(([a,b])=>`<tr><td>${a}</td><td>${b}</td></tr>`).join('')}</table></div>`;c.innerHTML=`<div class="dp"><div class="dh"><div><h3>${i.title}</h3><span style="display:inline-block;margin-top:.2rem;padding:.1rem .4rem;border-radius:6px;font-size:.6rem;font-weight:600;background:${i.typeColor}18;color:${i.typeColor};border:1px solid ${i.typeColor}35">${i.type}</span></div><button class="dc" onclick="this.closest('.dp').remove()">✕</button></div><div class="db"><div class="ds"><h4>Description</h4><p>${i.desc}</p></div>${t}</div></div>`;c.scrollIntoView({behavior:'smooth',block:'nearest'})}
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.vw').forEach(x=>x.classList.remove('active'));t.classList.add('active');document.getElementById('vw-'+t.dataset.v).classList.add('active')}));
+['existing','proposed','gaps','modified'].forEach(renderFlow);
+</script>
+</body>
+</html>
