@@ -307,7 +307,9 @@ let y=20;const positions={};
 // Calculate heights
 const schemaHeights={};
 Object.entries(schemas).forEach(([s,tables])=>{
-  schemaHeights[s]=40+tables.length*(tH+4)+pad;
+  const cols=Math.min(tables.length,s==='ADL'?4:s==='QA'?4:6);
+  const rows=Math.ceil(tables.length/cols);
+  schemaHeights[s]=40+rows*(tH+4)+pad;
 });
 const totalH=Object.values(schemaHeights).reduce((a,b)=>a+b,0)+Object.keys(schemas).length*schemaGap+40;
 
@@ -321,7 +323,7 @@ const schemaPositions={};
 Object.entries(schemas).forEach(([schema,tables])=>{
   const col=colors[schema];const bg=bgColors[schema];
   const sH=schemaHeights[schema];
-  const cols=Math.min(tables.length,schema==='ADL'?6:6);
+  const cols=Math.min(tables.length,schema==='ADL'?4:schema==='QA'?4:6);
   const rows=Math.ceil(tables.length/cols);
   const sW=cols*(tW+pad)+pad;
   const x=(W-sW)/2;
@@ -422,7 +424,7 @@ c.scrollIntoView({behavior:'smooth',block:'nearest'});
 // ARCHITECTURE FLOW DIAGRAM — SVG
 // ════════════════════════════════════════════
 function renderArchDiagram(){
-const W=1100,H=1200;
+const W=1100,H=1340;
 let svg=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="font-family:'DM Sans',sans-serif">`;
 svg+=`<rect width="${W}" height="${H}" fill="#0a0c10"/>`;
 
@@ -454,12 +456,12 @@ svg+=`<text x="732" y="${infraY+44}" fill="#9ba1b0" font-size="8">→ ECS Fargat
 const tasks=[
   {t:'T0: Validate',sub:'23 files · COLUMN_MAPPINGS',y:210,db:[{s:'RDL',n:'schema_validation_log'},{s:'QA',n:'data_quality_issues'}]},
   {t:'T1: Copy+Ingest',sub:'No 240s sleep · JSONB archive',y:290,db:[{s:'RDL',n:'sprinklr_raw_posts'},{s:'RDL',n:'tag_pull_raw'},{s:'RDL',n:'sprinklr_raw_pulls'}]},
-  {t:'T2: Merge',sub:'No gc.collect() · keeps CSV',y:385,db:[{s:'ODL',n:'post_metrics_daily'}]},
-  {t:'T3: Collab+LINE',sub:'Monday · before filters · modular',y:460,db:[{s:'RDL',n:'manual_tracker_raw'},{s:'ODL',n:'manual_tracker_posts'}],highlight:true},
-  {t:'T4: Filter Rules 1–10',sub:'Reads ref.* · all → qa.filtered_posts',y:550,db:[{s:'QA',n:'filtered_posts'},{s:'REF',n:'country_mapping'},{s:'REF',n:'blacklist'},{s:'REF',n:'country_language_map'}]},
-  {t:'T5: Tags+Merge',sub:'Reads T3 output (guaranteed)',y:645,db:[{s:'ODL',n:'post_attributes'}]},
-  {t:'T6: Benchmark',sub:'PK constraint · no row doubling',y:720,db:[{s:'ADL',n:'benchmarks'},{s:'ADL',n:'metric_changes'},{s:'ADL',n:'daily_aggregates'}]},
-  {t:'T7: Push+QA+MBS',sub:'Rules 11–21 · MBS override · dedup',y:810,db:[{s:'ADL',n:'posts_current'},{s:'ADL',n:'lookup_check'},{s:'QA',n:'pipeline_runs'},{s:'QA',n:'duplicate_checks'},{s:'REF',n:'manual_overrides'},{s:'ADL',n:'blacklist_table (legacy)'},{s:'ADL',n:'is_branded_true (legacy)'}]},
+  {t:'T2: Merge',sub:'No gc.collect() · keeps CSV',y:400,db:[{s:'ODL',n:'post_metrics_daily'}]},
+  {t:'T3: Collab+LINE',sub:'Monday · before filters · modular',y:480,db:[{s:'RDL',n:'manual_tracker_raw'},{s:'ODL',n:'manual_tracker_posts'}],highlight:true},
+  {t:'T4: Filter Rules 1–10',sub:'Reads ref.* · all → qa.filtered_posts',y:580,db:[{s:'QA',n:'filtered_posts'},{s:'REF',n:'country_mapping'},{s:'REF',n:'blacklist'},{s:'REF',n:'country_language_map'}]},
+  {t:'T5: Tags+Merge',sub:'Reads T3 output (guaranteed)',y:710,db:[{s:'ODL',n:'post_attributes'}]},
+  {t:'T6: Benchmark',sub:'PK constraint · no row doubling',y:800,db:[{s:'ADL',n:'benchmarks'},{s:'ADL',n:'metric_changes'},{s:'ADL',n:'daily_aggregates'}]},
+  {t:'T7: Push+QA+MBS',sub:'Rules 11–21 · MBS override · dedup',y:920,db:[{s:'ADL',n:'posts_current'},{s:'ADL',n:'lookup_check'},{s:'QA',n:'pipeline_runs'},{s:'QA',n:'duplicate_checks'},{s:'REF',n:'manual_overrides'}]},
 ];
 
 tasks.forEach((task,i)=>{
@@ -497,7 +499,7 @@ tasks.forEach((task,i)=>{
 });
 
 // S3 outputs
-const s3Y=960;
+const s3Y=1090;
 svg+=`<text x="${taskX}" y="${s3Y}" fill="#636a7e" font-size="9" font-weight="700" letter-spacing="1.5" font-family="'Sora',sans-serif">S3 OUTPUTS (ALL KEPT)</text>`;
 const s3s=['check/finalsql_*.csv','filtered_posts/*.csv (×5)','dupes_reports/*.txt','master_table.csv'];
 s3s.forEach((s,i)=>{
@@ -523,13 +525,13 @@ refs.forEach((r,i)=>{
 });
 
 // Tableau
-const tabY=1115;
+const tabY=1250;
 svg+=`<rect x="${W/2-120}" y="${tabY}" width="240" height="48" rx="8" fill="#22c55e0c" stroke="#22c55e" stroke-opacity=".35"/>`;
 svg+=`<text x="${W/2}" y="${tabY+20}" text-anchor="middle" fill="#22c55e" font-size="12" font-weight="700" font-family="'Sora',sans-serif">📈 Tableau — DAILY</text>`;
 svg+=`<text x="${W/2}" y="${tabY+35}" text-anchor="middle" fill="#9ba1b0" font-size="8">adl.posts_current (156 columns)</text>`;
 
 // Arrow from T7 to Tableau
-svg+=`<line x1="${taskX+taskW/2}" y1="${810+taskH}" x2="${W/2}" y2="${tabY}" stroke="#22c55e" stroke-opacity=".5" stroke-width="2.5"/>`;
+svg+=`<line x1="${taskX+taskW/2}" y1="${920+taskH}" x2="${W/2}" y2="${tabY}" stroke="#22c55e" stroke-opacity=".5" stroke-width="2.5"/>`;
 svg+=`<polygon points="${W/2-5},${tabY-5} ${W/2+5},${tabY-5} ${W/2},${tabY+1}" fill="#22c55e" fill-opacity=".6"/>`;
 
 svg+=`</svg>`;
