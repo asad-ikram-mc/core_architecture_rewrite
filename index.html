@@ -87,6 +87,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .svg-wrap svg .erd-node:hover rect{stroke-opacity:.8!important;filter:brightness(1.3)}
 
 @media(max-width:768px){.hero,.tabs,.vw{padding-left:1rem;padding-right:1rem}.hero h1{font-size:1.6rem}.nd{min-width:100px;padding:.5rem .7rem}.tab{padding:.55rem .7rem;font-size:.8rem}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 </style>
 </head>
 <body>
@@ -102,6 +103,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 <button class="tab" data-v="new"><span class="tn">02</span>New Architecture</button>
 <button class="tab" data-v="erd"><span class="tn">03</span>Database ERD</button>
 <button class="tab" data-v="diagram"><span class="tn">04</span>Architecture Diagram</button>
+<button class="tab" data-v="analyst"><span class="tn">05</span>Analyst View</button>
 </div>
 
 <div class="vw active" id="vw-existing">
@@ -124,8 +126,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 </div>
 
 <div class="vw" id="vw-diagram">
-<div class="vi"><h2>New Architecture — Full Flow Diagram</h2><p>Data sources at top, Tableau at bottom. Each Fargate task shows what it reads and writes. Database schemas shown alongside the pipeline flow.</p></div>
+<div class="vi"><h2>New Architecture — Full Flow Diagram</h2><p>Data sources at top, Tableau at bottom. Click any task or database table for a detailed explanation.</p></div>
 <div class="svg-wrap" id="arch-svg"></div>
+<div id="det-diagram"></div>
+</div>
+
+<div class="vw" id="vw-analyst">
+<div class="vi"><h2>Analyst View — What Changes For You</h2><p>You won't touch a pipeline, a database, or a Lambda. Here's what the new architecture means for the person opening Tableau every morning.</p></div>
+<div id="analyst-content"></div>
 </div>
 
 <script>
@@ -423,6 +431,383 @@ c.scrollIntoView({behavior:'smooth',block:'nearest'});
 // ════════════════════════════════════════════
 // ARCHITECTURE FLOW DIAGRAM — SVG
 // ════════════════════════════════════════════
+// ════════════════════════════════════════════
+// ARCH DIAGRAM DETAIL DATA + CLICK
+// ════════════════════════════════════════════
+const AD={
+src_sprinklr:{title:'Sprinklr S3 Bucket',story:'Every morning Sprinklr packages Amazon\'s social media data — likes, comments, impressions across 13 countries — into 23 files.',tech:'23 files across 4 S3 prefixes: RAWDATA/Fluency-Monthly/ (9 daily), RAWDATA/Tag-Pull/ (4 tag files), RAWDATA/Fluency-Tags-Only-Pull/ (3 files, EU5 editorial), RAWDATA/Fluency-Weekly/ (paid+follower, Monday). Bucket: amazon-global-gsmc-sprinklr.'},
+src_paid:{title:'Paid Data',story:'On Mondays, advertising performance data arrives — spend, reach, clicks for every boosted post.',tech:'Paid_Data_9_FluencyWeekly.json (25 cols). Joined via adjectivemapping.xlsx on AD_OBJECTIVE.'},
+src_collab:{title:'Collab + LINE Trackers',story:'Some Amazon posts are by influencers on their own accounts — Sprinklr doesn\'t track those. LINE (Japan messaging app) isn\'t in Sprinklr either. Both tracked in Google Sheets.',tech:'Collab: 2 Google Sheets (hardcoded URLs per year). LINE: 1 sheet (2 tabs). Task 3 processes both on Mondays.'},
+src_tags:{title:'Tag Pull Files',story:'Tags label each post with topics like "Sustainability" or "Working at Amazon". 7 tag files arrive daily from Sprinklr.',tech:'4 Tag-Pull files + 3 Fluency-Tags-Only-Pull files. Tags-Only includes EU5 editorial fields (53 cols vs 38 cols).'},
+infra:{title:'Infrastructure',story:'A reliable alarm at 7AM. A conductor ensuring each step runs in order. Workshops with no size limits. If anything goes wrong, email AND Slack fire immediately.',tech:'EventBridge Scheduler (daily 7AM, free tier) → Step Functions Standard ($0.14/yr, sequential T0→T7) → ECS Fargate (8 Docker tasks, ~$1.21/yr) → SNS→SES+Slack (2-tier: CRITICAL/WARNING).'},
+t0:{title:'T0: Validate — The Quality Gate',story:'The inspector checks every file. Every result — pass or fail — is written to a permanent record, not just an email.',tech:'Lambda 1 logic containerised. Validates 23 files against expected_file_structure. Applies COLUMN_MAPPINGS_sprinklr.json. Tag fallback: today → latest → backup. Writes rdl.schema_validation_log + qa.data_quality_issues.',why:'Schema drift becomes a visible trend. "Has Sprinklr been adding columns over 3 months?" is a query.'},
+t1:{title:'T1: Copy + Ingest — No More Napping',story:'The delivery moves to the workshop without the 4-minute nap. Every piece of raw data is archived as immutable JSONB — replay from here if anything goes wrong downstream.',tech:'Merges λ2a+λ2b+λ2c (~600 lines). Replaces time.sleep(240) with boto3 S3 waiter. Writes rdl.sprinklr_raw_posts (JSONB), rdl.tag_pull_raw, rdl.sprinklr_raw_pulls. Atomic transaction. INSERT...ON CONFLICT DO NOTHING.',why:'Eliminates 48+ hrs/yr billed idle. Creates JSONB archive for pipeline replay.'},
+t2:{title:'T2: Merge — Bigger Desk',story:'Today\'s data goes into the master ledger. No more clearing space mid-work. A clean copy also goes into the time-series database.',tech:'Lambda 3+3b merged. Fargate memory configurable — no gc.collect(). Writes master_table.csv (backward compat) + odl.post_metrics_daily (PK: post_id, pull_date, is_paiddata).',why:'"What were impressions on March 3rd?" becomes a one-line SQL query.'},
+t3:{title:'T3: Collab + LINE — Before Filters',story:'Daniel\'s requirement: Collab ingestion happens BEFORE filters. Duplicates need checking against ALL data. Step is isolated for modular expansion toward a data entry app.',tech:'Lambda 8+9 merged. Monday only. Atomic DELETE+INSERT in same task. 4 Collab priority rules. LINE scientific notation fix + SUM aggregation. Writes rdl.manual_tracker_raw + odl.manual_tracker_posts.',why:'Fixes race condition: λ5 read λ8/9 CSVs with no ordering guarantee. Collab read had NO try/except.'},
+t4:{title:'T4: Filter — 10 Rules, One Log',story:'Admin posts, empty posts, low-impression posts, excluded countries, deleted posts, null country, zero spend — all removed and logged in one place.',tech:'Consolidates λ4 R1–6 + λ5 R7–8 + λ6 R9–10. R5 two tiers: R5a <250 impr, R5b (2026+) 250–499 + <50 eng. All → qa.filtered_posts + S3 CSVs. Reads ref.country_mapping, ref.platform_mapping, ref.blacklist, ref.url_corrections, ref.country_language_map.',why:'"Why is this post missing?" = check 3 CSVs from 3 Lambdas → now one SQL query.'},
+t5:{title:'T5: Tags + Merge',story:'The tagging team labels every post. Step Functions guarantees Task 3 finished first — no more race condition. Tags are versioned with SCD Type 2.',tech:'Reads T3 CSVs (guaranteed). Merges tags by PERMALINK from latest_tag_mapping/. Writes odl.post_attributes (SCD Type 2: valid_from/valid_to/is_current).',why:'λ5 read λ8/9 CSVs with NO ordering guarantee and Collab read had NO try/except — crash risk every Monday. Fixed.'},
+t6:{title:'T6: Benchmark — Is This Post Good?',story:'Scores every post against its peers. PK constraint prevents re-run inflation. Single row per post (no doubling). WoW change tracker built in.',tech:'Matcher = Country+Platform+Delivery+Quarter. adl.benchmarks PK (matcher, benchmark_type) prevents duplicates. Single row: median_vs_benchmark + mean_vs_benchmark. adl.metric_changes tracks WoW shifts. REFRESH MATERIALIZED VIEW CONCURRENTLY on adl.daily_aggregates.',why:'No row doubling halves table size. "Which posts improved since last Monday?" — insight that doesn\'t exist today.'},
+t7:{title:'T7: Push + QA + MBS Override',story:'Translate, score sentiment, apply 11 more filters, push to Tableau. Then apply pending MBS corrections automatically — no more manual SQL scripts.',tech:'Lambda 7 (1,456 lines) containerised. No timeout risk. deep_translator (free). Rules 11–21 (manual tracker exempt 14–19). UPSERT via adl.import_staging. After: reads ref.manual_overrides WHERE is_applied=false, applies each, marks done. 4 dedup queries → qa.duplicate_checks.',why:'MBS quarterly updates (~954 rows) and ad-hoc fixes (Spain LinkedIn geotargeting) automated. ref.manual_overrides: team adds rows, Task 7 applies every run.'},
+tableau:{title:'Tableau — DAILY',story:'The story is told every morning. Tuesday\'s post in Tableau on Wednesday. QA dashboard shows health, filter reasons, duplicate trends.',tech:'adl.posts_current (156 identical columns). One connection change. Updated daily. QA dashboard: qa.pipeline_runs (green/red calendar) + qa.filtered_posts (breakdown) + qa.duplicate_checks (trend).'},
+};
+
+function showArchDetail(key){
+const i=AD[key];if(!i)return;
+const c=document.getElementById('det-diagram');
+let h='';
+if(i.story)h+=`<div class="ds ds-story"><h4>📖 The Story</h4><p>${i.story}</p></div>`;
+if(i.tech)h+=`<div class="ds ds-tech"><h4>🔧 Technical Detail</h4><p>${i.tech}</p></div>`;
+if(i.why)h+=`<div class="ds ds-why"><h4>💡 Why This Exists</h4><p>${i.why}</p></div>`;
+c.innerHTML=`<div class="dp"><div class="dh"><div><h3>${i.title}</h3></div><button class="dc" onclick="this.closest('.dp').remove()">✕</button></div><div class="db">${h}</div></div>`;
+c.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function showArchDBDetail(key){
+const t=ET[key];if(!t)return;
+const c=document.getElementById('det-diagram');
+const col={REF:'var(--ref)',RDL:'var(--rdl)',ODL:'var(--odl)',ADL:'var(--adl)',QA:'var(--qa)'}[t.s];
+const colsHtml=t.c.map(([n,ty,desc])=>`<tr><td>${n}</td><td>${ty}</td><td style="color:var(--text2);font-family:'DM Sans';font-size:.7rem">${desc||''}</td></tr>`).join('');
+const fkHtml=t.fk.length?`<div class="ds"><h4>Relationships</h4><p style="font-family:'JetBrains Mono';font-size:.7rem;color:var(--accent)">${t.fk.join('<br>')}</p></div>`:'';
+c.innerHTML=`<div class="dp"><div class="dh"><div><h3>${t.s.toLowerCase()}.${t.n}</h3><span style="display:inline-block;margin-top:.12rem;padding:.06rem .3rem;border-radius:4px;font-size:.54rem;font-weight:600;background:${col}12;color:${col};border:1px solid ${col}28">${t.s} · PK: ${t.pk}</span></div><button class="dc" onclick="this.closest('.dp').remove()">✕</button></div><div class="db"><div class="ds"><h4>Purpose</h4><p>${t.d}</p></div>${fkHtml}<div class="ds"><h4>Columns</h4><table class="dt"><tr><th>Column</th><th>Type</th><th>Purpose</th></tr>${colsHtml}</table></div></div></div>`;
+c.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+// ════════════════════════════════════════════
+// ANALYST VIEW
+// ════════════════════════════════════════════
+function renderAnalystView(){
+const el=document.getElementById('analyst-content');
+const S=[
+{icon:'📅',title:'Can Update Tableau Daily — Even Hourly',color:'#22c55e',id:'daily',
+ before:'You open Tableau on Wednesday. The data shows Monday. A viral post from Tuesday? Invisible until next Monday. You\'re always 1–6 days behind.',
+ after:'The new architecture can update Tableau every morning — or even hourly if needed. The Monday-only constraint is removed. Frequency is now a choice: daily, twice a day, or on-demand. The pipeline takes ~10 minutes to run, so even hourly is feasible at near-zero cost.',
+ metric:'Up to hourly updates'},
+{icon:'🔍',title:'"Why Is This Post Missing?" — Answered Instantly',color:'#ef4444',id:'missing',
+ before:'A stakeholder asks why a post isn\'t in Tableau. You check 5 CSV files across S3 folders, grep through Lambda logs, and spend 30–90 minutes. Sometimes you can\'t find the answer.',
+ after:'One query: <span style="font-family:\'JetBrains Mono\';font-size:.82rem;color:var(--fargate)">SELECT * FROM qa.filtered_posts WHERE permalink = \'...\'</span>. The reason, the rule, and the date — all in one place.',
+ metric:'30 seconds vs 30+ minutes'},
+{icon:'📊',title:'Benchmark Scores You Can Trust',color:'#14b8a6',id:'benchmark',
+ before:'Sometimes a re-run inflates benchmark scores. Posts get doubled (one Median row, one Average row). Nobody notices until numbers look "too good" and someone investigates.',
+ after:'Primary keys prevent duplicates. Each post has one row with both median and mean benchmark scores as separate columns. Re-runs are always safe.',
+ metric:'Zero duplicate risk'},
+{icon:'⏪',title:'Time Travel — See Historical Performance',color:'#6366f1',id:'history',
+ before:'"What were impressions on that UK post three weeks ago, Tuesday vs Wednesday?" You can\'t answer. Old numbers were overwritten. History is gone.',
+ after:'odl.post_metrics_daily stores one row per post per day. Every metric at every point in time. Chart how a post\'s impressions grew day by day.',
+ metric:'Full historical queries'},
+{icon:'🏷️',title:'Tag Corrections Apply Everywhere',color:'#f59e42',id:'tags',
+ before:'A Reputational Topic was wrong 4 months ago. Someone fixes it in Sprinklr. But posts older than 90 days never get the update — the pipeline\'s filter window blocks it.',
+ after:'Tag refresh runs against ALL posts with no date restriction. A correction in Sprinklr today applies to a post from 2024 tomorrow.',
+ metric:'No more frozen tags'},
+{icon:'🚨',title:'Pipeline Health — Visible at a Glance',color:'#ef4444',id:'health',
+ before:'Is the pipeline running? Did it fail? You find out when Tableau hasn\'t updated — hours later.',
+ after:'qa.pipeline_runs shows a green/red calendar in the QA dashboard. If it failed, you see which step and why. SES + Slack alerts fire automatically.',
+ metric:'Instant failure visibility'},
+{icon:'📈',title:'"What Changed This Week?" — Built In',color:'#22c55e',id:'wow',
+ before:'To find which posts improved or declined, you download two weekly exports and compare in Excel. Nobody does this regularly.',
+ after:'adl.metric_changes tracks week-on-week benchmark shifts automatically. "Which posts went from below-average to above-average?" is one query.',
+ metric:'Automatic WoW tracking'},
+{icon:'⚡',title:'Dashboard Load Times Drop',color:'#06b6d4',id:'speed',
+ before:'Trend charts over 2 years of data take several seconds. Tableau runs GROUP BY across millions of rows every time.',
+ after:'adl.daily_aggregates pre-calculates totals. Tableau reads pre-aggregated numbers. Query time: seconds → milliseconds.',
+ metric:'Seconds → milliseconds'},
+{icon:'🔧',title:'MBS Corrections + Custom Data Changes — Automated',color:'#e879f9',id:'mbs',
+ before:'Quarterly MBS updates (~954 rows) require manual SQL scripts. If someone forgets, corrections disappear. Ad-hoc fixes (Spain LinkedIn geotargeting, one-off metric overrides) need separate scripts each time. Any custom change to a post\'s data is a manual process that doesn\'t persist.',
+ after:'Team adds rows to ref.manual_overrides — specify the permalink, the column to change, and the new value. Task 7 applies them automatically every run. Quarterly MBS updates, ad-hoc metric corrections, and any custom data change all go through the same system. Corrections persist across all future runs — no manual SQL, no forgotten fixes.',
+ metric:'Zero manual SQL scripts'},
+];
+
+// ── TIMELINE WITH MINI MOCKUPS ──
+let html=`<div style="max-width:960px;margin:0 auto 2rem">
+<h3 style="font-family:'Playfair Display',serif;font-size:1.6rem;text-align:center;margin-bottom:.3rem">The Analyst Journey — Step by Step</h3>
+<p style="text-align:center;color:var(--text3);font-size:.85rem;margin-bottom:2rem">Each improvement unlocks a new capability. The mini dashboard below each point shows what your Tableau experience looks like after that change lands.</p>
+</div>`;
+
+const M=[
+{s:S[0],mockup:`
+<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:6px">
+${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map((d,i)=>`<div style="text-align:center;padding:4px 2px;border-radius:4px;font-size:7px;font-weight:600;font-family:'JetBrains Mono';background:#22c55e${i===0?'20':'0d'};color:#22c55e;border:1px solid #22c55e${i===0?'40':'20'}">${d}<br><span style="font-size:9px">✓</span></div>`).join('')}
+</div>
+<svg viewBox="0 0 280 50" style="width:100%;display:block;margin-top:2px">
+<text x="4" y="8" fill="#636a7e" font-size="4.5" font-weight="600">REFRESH FREQUENCY OPTIONS</text>
+<rect x="4" y="13" width="80" height="12" rx="3" fill="#22c55e15" stroke="#22c55e" stroke-opacity=".3"/>
+<text x="44" y="21" text-anchor="middle" fill="#22c55e" font-size="4.5" font-weight="600">⏱ Hourly</text>
+<rect x="90" y="13" width="80" height="12" rx="3" fill="#22c55e20" stroke="#22c55e" stroke-opacity=".5"/>
+<text x="130" y="21" text-anchor="middle" fill="#22c55e" font-size="4.5" font-weight="700">📅 Daily (default)</text>
+<rect x="176" y="13" width="80" height="12" rx="3" fill="#22c55e15" stroke="#22c55e" stroke-opacity=".3"/>
+<text x="216" y="21" text-anchor="middle" fill="#22c55e" font-size="4.5" font-weight="600">🔄 On-demand</text>
+<text x="4" y="36" fill="#636a7e" font-size="4">Pipeline runs in ~10 min. Fargate per-second billing = near-zero cost at any frequency.</text>
+<text x="4" y="44" fill="#ef4444" font-size="4">Before: Monday only (S3 relay chain constraint).</text>
+</svg>`},
+
+{s:S[1],mockup:`
+<div style="background:var(--bg3);border-radius:6px;padding:6px 8px;font-family:'JetBrains Mono';font-size:7px;margin-bottom:4px">
+<div style="color:var(--fargate);margin-bottom:3px">SELECT * FROM qa.filtered_posts</div>
+<div style="color:var(--text3)">WHERE permalink = 'instagram.com/p/ABC'</div>
+</div>
+<div style="display:grid;grid-template-columns:auto 1fr auto;gap:2px 8px;font-size:7px;padding:4px 6px;background:#ef444410;border:1px solid #ef444420;border-radius:4px">
+<span style="color:var(--qa)">R5</span><span style="color:var(--text2)">Total Impressions < 250</span><span style="color:var(--text3)">2026-04-12</span>
+</div>
+<div style="font-size:7px;color:var(--adl);margin-top:4px;text-align:center">Answer in 30 seconds — not 30 minutes</div>`},
+
+{s:S[2],mockup:`
+<svg viewBox="0 0 280 90" style="width:100%;display:block">
+<text x="140" y="8" text-anchor="middle" fill="#636a7e" font-size="5" font-weight="600">POST UK-LI-042 — ROW COUNT</text>
+<text x="10" y="22" fill="#ef4444" font-size="5" font-weight="600">❌ Before: 2 rows</text>
+<rect x="10" y="26" width="120" height="9" rx="2" fill="#ef4444" fill-opacity=".25"/>
+<text x="16" y="33" fill="#ef4444" font-size="4.5">Row 1: Median 0.84</text>
+<rect x="10" y="37" width="120" height="9" rx="2" fill="#ef4444" fill-opacity=".15"/>
+<text x="16" y="44" fill="#ef4444" font-size="4.5">Row 2: Mean 0.91</text>
+<text x="140" y="33" fill="#636a7e" font-size="4">Duplicate rows</text>
+<text x="140" y="40" fill="#636a7e" font-size="4">inflate JOINs</text>
+<line x1="0" y1="52" x2="280" y2="52" stroke="#2a2f3e" stroke-width=".5"/>
+<text x="10" y="64" fill="#22c55e" font-size="5" font-weight="600">✅ After: 1 row</text>
+<rect x="10" y="68" width="260" height="10" rx="2" fill="#22c55e" fill-opacity=".1" stroke="#22c55e" stroke-opacity=".3"/>
+<text x="20" y="76" fill="#22c55e" font-size="4.5">median_vs: 0.84</text>
+<text x="140" y="76" fill="#22c55e" font-size="4.5">mean_vs: 0.91</text>
+<text x="250" y="76" fill="#14b8a6" font-size="4.5" text-anchor="end">PK ✓</text>
+<text x="140" y="88" text-anchor="middle" fill="#14b8a6" font-size="4.5">PK (matcher, benchmark_type) prevents re-run duplicates</text>
+</svg>`},
+
+{s:S[3],mockup:`
+<svg viewBox="0 0 280 75" style="width:100%;display:block">
+<text x="4" y="8" fill="#636a7e" font-size="5" font-weight="600">POST: AMAZON DE FB — IMPRESSIONS OVER 10 DAYS</text>
+<defs><linearGradient id="areaG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#6366f1" stop-opacity=".3"/><stop offset="100%" stop-color="#6366f1" stop-opacity=".02"/></linearGradient></defs>
+${(()=>{const vals=[12,18,24,31,38,45,52,58,62,65];const maxV=70;const w=260;const h=42;const ox=14;const oy=15;
+let area='M'+ox+','+(oy+h);let line='';
+vals.forEach((v,i)=>{const x=ox+i*(w/(vals.length-1));const y=oy+h-(v/maxV)*h;area+=' L'+x+','+y;line+=(i?'L':'M')+x+','+y+' ';});
+area+=' L'+(ox+w)+','+(oy+h)+' Z';
+let dots='';vals.forEach((v,i)=>{const x=ox+i*(w/(vals.length-1));const y=oy+h-(v/maxV)*h;dots+='<circle cx="'+x+'" cy="'+y+'" r="2.5" fill="#0a0c10" stroke="#6366f1" stroke-width="1.2"/>';dots+='<title>Mar '+(i+1)+': '+v+'k impressions</title>';});
+return '<path d="'+area+'" fill="url(#areaG)"/><path d="'+line+'" fill="none" stroke="#6366f1" stroke-width="1.8" stroke-linejoin="round"/>'+dots;})()}
+${[1,4,7,10].map(d=>'<text x="'+(14+(d-1)*(260/9))+'" y="65" text-anchor="middle" fill="#636a7e" font-size="4.5">Mar '+d+'</text>').join('')}
+<text x="140" y="73" text-anchor="middle" fill="#6366f1" font-size="5">Day-by-day history — impossible before</text>
+</svg>`},
+
+{s:S[4],mockup:`
+<div style="font-size:7px;display:grid;grid-template-columns:auto 1fr auto;gap:2px 6px;padding:4px 6px;background:var(--bg3);border-radius:4px">
+<span style="color:var(--accent4)">🏷️</span><span style="color:var(--text2)">Post DE-IG-2024-089</span><span></span>
+<span></span><span style="color:var(--text3);font-size:6px">Oct 2024: "Innovation"</span><span style="color:var(--qa);font-size:6px">← was wrong</span>
+<span></span><span style="color:var(--text3);font-size:6px">Apr 2025: "Sustainability"</span><span style="color:var(--adl);font-size:6px">← corrected ✓</span>
+</div>
+<div style="margin-top:4px;padding:3px 6px;background:#f59e4210;border:1px solid #f59e4220;border-radius:4px;font-size:7px;color:var(--accent4)">
+Post is 6 months old — tag still updated. No 90-day limit.
+</div>`},
+
+{s:S[5],mockup:`
+<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:3px;margin-bottom:4px">
+${['Mon','Tue','Wed','Thu','Fri'].map((d,i)=>`<div style="text-align:center;padding:4px;border-radius:4px;font-size:7px;font-weight:600;font-family:'JetBrains Mono';background:${i===2?'#ef444415;color:#ef4444;border:1px solid #ef444430':'#22c55e10;color:#22c55e;border:1px solid #22c55e20'}">${d}<br>${i===2?'❌ T4':'✓'}</div>`).join('')}
+</div>
+<svg viewBox="0 0 280 35" style="width:100%;display:block;margin-bottom:3px">
+<text x="4" y="7" fill="#636a7e" font-size="4.5" font-weight="600">RUN DURATION (seconds) — last 10 runs</text>
+${[42,38,45,41,39,120,43,40,44,37].map((v,i)=>{const x=4+i*28;const h=Math.min(v/120*22,22);const c=v>80?'#ef4444':'#22c55e';return '<rect x="'+x+'" y="'+(30-h)+'" width="22" height="'+h+'" rx="2" fill="'+c+'" fill-opacity=".3"/><text x="'+(x+11)+'" y="'+(28-h)+'" text-anchor="middle" fill="'+c+'" font-size="4">'+v+'s</text>';}).join('')}
+</svg>
+<div style="background:#ef444410;border:1px solid #ef444420;border-radius:4px;padding:4px 6px;font-size:7px">
+<span style="color:var(--qa);font-weight:700">Wed failed:</span> <span style="color:var(--text2)">step_reached=4, error: "unmapped account"</span>
+</div>`},
+
+{s:S[6],mockup:`
+<svg viewBox="0 0 280 90" style="width:100%;display:block">
+<text x="140" y="8" text-anchor="middle" fill="#636a7e" font-size="5" font-weight="600">WEEK-ON-WEEK BENCHMARK SHIFT</text>
+<line x1="140" y1="14" x2="140" y2="82" stroke="#636a7e" stroke-width=".5" stroke-opacity=".4"/>
+<text x="140" y="88" text-anchor="middle" fill="#636a7e" font-size="3.5">0%</text>
+${[{post:'US-IG-Reel-312',delta:142,c:'#22c55e'},{post:'UK-LI-Sustain-08',delta:67,c:'#22c55e'},{post:'JP-TT-Line-04',delta:31,c:'#22c55e'},{post:'DE-FB-Career-91',delta:-38,c:'#ef4444'},{post:'FR-IG-Devices',delta:-12,c:'#ef4444'}].map((r,i)=>{
+const y=16+i*14;const maxBar=100;const barW=Math.abs(r.delta)/142*maxBar;
+if(r.delta>=0){
+return '<text x="136" y="'+(y+9)+'" text-anchor="end" fill="#9ba1b0" font-size="4.5">'+r.post+'</text>'+
+'<rect x="140" y="'+(y+2)+'" width="'+barW+'" height="9" rx="2" fill="'+r.c+'" fill-opacity=".35"/>'+
+'<text x="'+(140+barW+3)+'" y="'+(y+9)+'" text-anchor="start" fill="'+r.c+'" font-size="4.5" font-weight="700">+'+r.delta+'%</text>';
+}else{
+return '<text x="136" y="'+(y+9)+'" text-anchor="end" fill="#9ba1b0" font-size="4.5">'+r.post+'</text>'+
+'<rect x="'+(140-barW)+'" y="'+(y+2)+'" width="'+barW+'" height="9" rx="2" fill="'+r.c+'" fill-opacity=".35"/>'+
+'<text x="'+(140-barW-3)+'" y="'+(y+9)+'" text-anchor="end" fill="'+r.c+'" font-size="4.5" font-weight="700">'+r.delta+'%</text>';
+}}).join('')}
+</svg>`},
+
+{s:S[7],mockup:`
+<svg viewBox="0 0 280 65" style="width:100%;display:block">
+<text x="4" y="8" fill="#636a7e" font-size="5" font-weight="600">MARKET TREND CHART — LOAD TIME</text>
+<rect x="10" y="16" width="120" height="30" rx="4" fill="#ef444410" stroke="#ef4444" stroke-opacity=".2"/>
+<text x="70" y="28" text-anchor="middle" fill="#ef4444" font-size="14" font-weight="700" font-family="'JetBrains Mono'">4.2s</text>
+<text x="70" y="40" text-anchor="middle" fill="#ef4444" font-size="5">GROUP BY across 2M rows</text>
+<text x="138" y="33" fill="#636a7e" font-size="10">→</text>
+<rect x="150" y="16" width="120" height="30" rx="4" fill="#22c55e10" stroke="#22c55e" stroke-opacity=".3"/>
+<text x="210" y="28" text-anchor="middle" fill="#22c55e" font-size="14" font-weight="700" font-family="'JetBrains Mono'">87ms</text>
+<text x="210" y="40" text-anchor="middle" fill="#22c55e" font-size="5">Pre-aggregated materialized view</text>
+<rect x="10" y="52" width="${4.2/4.2*120}" height="5" rx="2" fill="#ef4444" fill-opacity=".4"/>
+<rect x="150" y="52" width="${0.087/4.2*120}" height="5" rx="2" fill="#22c55e" fill-opacity=".7"/>
+<text x="70" y="63" text-anchor="middle" fill="#636a7e" font-size="4">Scale comparison</text>
+</svg>`},
+
+{s:S[8],mockup:`
+<div style="font-size:7px;color:var(--text3);font-weight:600;margin-bottom:4px">ref.manual_overrides — Pending</div>
+<div style="background:var(--bg3);border-radius:4px;overflow:hidden;font-size:7px">
+<div style="display:grid;grid-template-columns:1.2fr .8fr .6fr .5fr;gap:0;padding:3px 6px;background:#e879f915;border-bottom:1px solid var(--border)">
+<span style="color:#e879f9;font-weight:600">Permalink</span><span style="color:#e879f9;font-weight:600">Column</span><span style="color:#e879f9;font-weight:600">Value</span><span style="color:#e879f9;font-weight:600">Batch</span>
+</div>
+${[{p:'ES-LI-geo-041',col:'Impressions',val:'89,204',b:'MBS_Q1'},{p:'UK-FB-corp-12',col:'Eng Rate',val:'0.034',b:'MANUAL'},{p:'DE-IG-sust-07',col:'Reach',val:'241,600',b:'MBS_Q1'}].map(r=>`<div style="display:grid;grid-template-columns:1.2fr .8fr .6fr .5fr;gap:0;padding:3px 6px;border-bottom:1px solid var(--border)">
+<span style="color:var(--text2)">${r.p}</span><span style="color:var(--text3)">${r.col}</span><span style="color:var(--adl)">${r.val}</span><span style="color:var(--text3)">${r.b}</span>
+</div>`).join('')}
+</div>
+<svg viewBox="0 0 280 20" style="width:100%;display:block;margin-top:4px">
+<text x="4" y="7" fill="#636a7e" font-size="4.5">Status:</text>
+<rect x="30" y="2" width="60" height="8" rx="2" fill="#22c55e20" stroke="#22c55e" stroke-opacity=".3"/>
+<text x="60" y="8" text-anchor="middle" fill="#22c55e" font-size="4" font-weight="600">2 applied ✓</text>
+<rect x="95" y="2" width="50" height="8" rx="2" fill="#f59e4220" stroke="#f59e42" stroke-opacity=".3"/>
+<text x="120" y="8" text-anchor="middle" fill="#f59e42" font-size="4" font-weight="600">1 pending</text>
+<text x="155" y="8" fill="#636a7e" font-size="4">→ Next run applies automatically</text>
+</svg>`},
+];
+
+// Build timeline HTML
+html+=`<div style="max-width:960px;margin:0 auto;position:relative">`;
+
+M.forEach((m,i)=>{
+const isLeft=i%2===0;
+const s=m.s;
+html+=`<div style="display:grid;grid-template-columns:1fr 40px 1fr;gap:0;margin-bottom:${i<M.length-1?'0':'0'}px;min-height:220px">`;
+
+// Left content or spacer
+if(isLeft){
+html+=`<div style="padding:0 16px 20px 0;text-align:right">
+<div style="display:inline-block;text-align:left;max-width:380px">
+<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;justify-content:flex-end">
+<h4 style="font-size:.95rem;font-weight:600;font-family:'Sora',sans-serif;color:${s.color}">${s.title}</h4>
+<span style="font-size:1.1rem">${s.icon}</span>
+</div>
+<p style="color:var(--text2);font-size:.8rem;line-height:1.5;margin-bottom:8px;text-align:right">${s.after}</p>
+<span style="display:inline-block;padding:.15rem .5rem;border-radius:10px;font-size:.65rem;font-weight:700;background:${s.color}15;color:${s.color};border:1px solid ${s.color}30;font-family:'Sora',sans-serif">${s.metric}</span>
+</div>
+</div>`;
+} else {
+html+=`<div></div>`;
+}
+
+// Timeline spine
+html+=`<div style="display:flex;flex-direction:column;align-items:center;position:relative">
+<div style="width:3px;flex:1;background:linear-gradient(180deg,${i===0?'transparent':s.color+'40'},${s.color});min-height:20px"></div>
+<div style="width:28px;height:28px;border-radius:50%;background:${s.color}20;border:2px solid ${s.color};display:flex;align-items:center;justify-content:center;font-size:11px;z-index:2;flex-shrink:0">${s.icon}</div>
+<div style="width:3px;flex:1;background:linear-gradient(180deg,${s.color},${i===M.length-1?'transparent':S[Math.min(i+1,S.length-1)].color+'40'});min-height:20px"></div>
+</div>`;
+
+// Right content or spacer
+if(!isLeft){
+html+=`<div style="padding:0 0 20px 16px">
+<div style="max-width:380px">
+<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+<span style="font-size:1.1rem">${s.icon}</span>
+<h4 style="font-size:.95rem;font-weight:600;font-family:'Sora',sans-serif;color:${s.color}">${s.title}</h4>
+</div>
+<p style="color:var(--text2);font-size:.8rem;line-height:1.5;margin-bottom:8px">${s.after}</p>
+<span style="display:inline-block;padding:.15rem .5rem;border-radius:10px;font-size:.65rem;font-weight:700;background:${s.color}15;color:${s.color};border:1px solid ${s.color}30;font-family:'Sora',sans-serif">${s.metric}</span>
+</div>
+</div>`;
+} else {
+html+=`<div></div>`;
+}
+
+html+=`</div>`;
+
+// Mockup card — spans full width below the timeline row
+html+=`<div style="display:grid;grid-template-columns:1fr 40px 1fr;gap:0;margin-bottom:${i<M.length-1?'0':'20px'}">`;
+if(isLeft){
+html+=`<div style="padding:0 16px 0 0;display:flex;justify-content:flex-end"><div style="background:var(--bg2);border:1px solid ${s.color}25;border-radius:8px;padding:10px;max-width:360px;width:100%">
+<div style="font-size:6.5px;text-transform:uppercase;letter-spacing:.08em;color:${s.color};font-weight:700;margin-bottom:6px;font-family:'Sora',sans-serif">📊 Dashboard Preview</div>
+${m.mockup}
+</div></div>`;
+html+=`<div></div><div></div>`;
+} else {
+html+=`<div></div><div></div>`;
+html+=`<div style="padding:0 0 0 16px"><div style="background:var(--bg2);border:1px solid ${s.color}25;border-radius:8px;padding:10px;max-width:360px;width:100%">
+<div style="font-size:6.5px;text-transform:uppercase;letter-spacing:.08em;color:${s.color};font-weight:700;margin-bottom:6px;font-family:'Sora',sans-serif">📊 Dashboard Preview</div>
+${m.mockup}
+</div></div>`;
+}
+html+=`</div>`;
+});
+
+html+=`</div>`;
+
+// ── COMPONENT IMPACT SECTION ──
+html+=`<div style="max-width:960px;margin:2rem auto 0">
+<h3 style="font-family:'Playfair Display',serif;font-size:1.6rem;text-align:center;margin-bottom:.3rem">What Each Component Means For You</h3>
+<p style="text-align:center;color:var(--text3);font-size:.85rem;margin-bottom:1.5rem">Click any pipeline component to see its analyst impact.</p>
+</div>`;
+
+const CI=[
+{id:'ci-sfn',label:'Step Functions',icon:'🔀',color:'#e879f9',sub:'Orchestrator',
+ impact:'You stop discovering failures when Tableau is stale. Step Functions means every morning the QA dashboard shows green or red — if red, you know which step failed and why before you even open Tableau.',
+ before:'Pipeline stalls silently. You find out at 2pm when someone asks "why hasn\'t Tableau updated?"',
+ gives:'Instant failure visibility, automatic alerts, no more silent stalls'},
+{id:'ci-fargate',label:'ECS Fargate',icon:'🐳',color:'#06b6d4',sub:'Compute',
+ impact:'The pipeline can run hourly instead of weekly. No more 15-minute timeouts killing translation. No more 10GB memory ceiling. The pipeline finishes in ~10 minutes and costs ~$2/year.',
+ before:'Lambda 3 hits 10GB ceiling (gc.collect), Lambda 7 risks timeout during translation, 240s sleep wastes billing',
+ gives:'Hourly-capable updates, no timeout risk, ~$2/year compute'},
+{id:'ci-rdl',label:'RDL Layer',icon:'📦',color:'#3b82f6',sub:'Raw Data',
+ impact:'If someone asks "what did Sprinklr actually send us on March 5th?" — you can answer. If a downstream calculation is wrong, the pipeline replays from raw data. No re-pulling from Sprinklr, no lost data.',
+ before:'master_table.csv overwrites old data. If Lambda 3 corrupts it, recovery = last Monday\'s backup (up to 6 days old)',
+ gives:'Full replay capability, zero data loss, "what did Sprinklr send?" answerable'},
+{id:'ci-odl',label:'ODL Layer',icon:'📊',color:'#14b8a6',sub:'Operational',
+ impact:'You can query any post\'s impressions on any historical date. You can see what tag a post had 6 months ago before it was corrected. Time travel for both metrics and attributes.',
+ before:'UPSERT overwrites metrics — history gone. Tags overwritten — no record of corrections. "What were impressions last Tuesday?" = unanswerable',
+ gives:'Historical metrics, tag version history, day-by-day performance tracking'},
+{id:'ci-adl',label:'ADL Layer',icon:'📈',color:'#22c55e',sub:'Analytics',
+ impact:'adl.posts_current is a drop-in replacement for sprinklr_table — same 156 columns, same names. Your Tableau dashboards, calculated fields, and data sources need zero changes. Trend charts load in milliseconds via pre-aggregated views.',
+ before:'Tableau runs GROUP BY across millions of rows. Benchmark re-runs risk duplicate inflation. No WoW change tracking.',
+ gives:'Zero Tableau migration effort, millisecond dashboards, WoW tracking built in'},
+{id:'ci-qa',label:'QA Layer',icon:'🚨',color:'#ef4444',sub:'Quality',
+ impact:'"Why is this post missing from Tableau?" becomes a 30-second SQL query instead of a 30-minute CSV hunt. Duplicate trends are visible over time. Schema drift from Sprinklr is caught automatically.',
+ before:'5 separate CSVs across S3 folders. Dedup reports in dated text files. Schema changes discovered when pipeline crashes.',
+ gives:'One-query filter audit, duplicate trend charts, proactive schema monitoring'},
+{id:'ci-ref',label:'REF Tables',icon:'📋',color:'#6366f1',sub:'Reference',
+ impact:'Country mappings, platform names, blacklist — all versioned in Git. When a wrong country mapping breaks Tableau, you can see who changed it, when, and why. MBS corrections and custom data overrides apply automatically every run.',
+ before:'countrymapping.xlsx editable by anyone with zero history. MBS updates need manual SQL scripts. Ad-hoc fixes are one-off efforts.',
+ gives:'Auditable mappings, automated MBS/corrections, no manual SQL'},
+];
+
+html+=`<div style="max-width:960px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1rem" id="ci-buttons">`;
+CI.forEach(c=>{
+html+=`<button onclick="showCI('${c.id}')" style="cursor:pointer;background:var(--bg2);border:1px solid ${c.color}30;border-radius:var(--r);padding:10px 8px;text-align:center;transition:.2s" onmouseover="this.style.borderColor='${c.color}';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='${c.color}30';this.style.transform='none'">
+<div style="font-size:1.3rem;margin-bottom:4px">${c.icon}</div>
+<div style="font-size:.8rem;font-weight:600;color:${c.color};font-family:'Sora',sans-serif">${c.label}</div>
+<div style="font-size:.65rem;color:var(--text3);margin-top:2px">${c.sub}</div>
+</button>`;
+});
+html+=`</div>`;
+html+=`<div id="ci-detail" style="max-width:960px;margin:0 auto 2rem"></div>`;
+
+el.innerHTML=html;
+
+// CI click handler
+window.showCI=function(id){
+const c=CI.find(x=>x.id===id);if(!c)return;
+const det=document.getElementById('ci-detail');
+det.innerHTML=`<div style="background:var(--bg2);border:1px solid ${c.color}40;border-radius:var(--R);overflow:hidden;animation:fadeIn .2s">
+<div style="padding:1rem 1.2rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.6rem">
+<span style="font-size:1.3rem">${c.icon}</span>
+<h3 style="font-size:1.05rem;font-weight:600;font-family:'Sora',sans-serif;color:${c.color}">${c.label} — What It Means For You</h3>
+<button onclick="document.getElementById('ci-detail').innerHTML=''" style="margin-left:auto;background:0;border:0;color:var(--text3);cursor:pointer;font-size:1.1rem;padding:2px 6px;border-radius:4px">✕</button>
+</div>
+<div style="padding:1rem 1.2rem;display:grid;gap:.8rem">
+<div style="border-left:3px solid ${c.color};padding-left:.8rem">
+<div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:${c.color};font-weight:700;margin-bottom:.3rem;font-family:'Sora',sans-serif">Your Impact</div>
+<p style="color:var(--text);font-size:.9rem;line-height:1.6">${c.impact}</p>
+</div>
+<div style="border-left:3px solid var(--qa);padding-left:.8rem">
+<div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--qa);font-weight:700;margin-bottom:.3rem;font-family:'Sora',sans-serif">What You Deal With Today</div>
+<p style="color:var(--text2);font-size:.85rem;line-height:1.5">${c.before}</p>
+</div>
+<div style="padding:.6rem .8rem;background:${c.color}08;border:1px solid ${c.color}20;border-radius:var(--r)">
+<div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:${c.color};font-weight:700;margin-bottom:.3rem;font-family:'Sora',sans-serif">✅ What This Gives You</div>
+<p style="color:var(--text2);font-size:.85rem;line-height:1.5">${c.gives}</p>
+</div>
+</div>
+</div>`;
+det.scrollIntoView({behavior:'smooth',block:'nearest'});
+};
+}
+
+// ════════════════════════════════════════════
+// ARCH DIAGRAM SVG
+// ════════════════════════════════════════════
 function renderArchDiagram(){
 const W=1100,H=1340;
 let svg=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="font-family:'DM Sans',sans-serif">`;
@@ -438,19 +823,24 @@ const schemaColors={REF:'#6366f1',RDL:'#3b82f6',ODL:'#14b8a6',ADL:'#22c55e',QA:'
 // Data Sources
 const srcY=70;
 svg+=`<text x="30" y="${srcY}" fill="#636a7e" font-size="9" font-weight="700" letter-spacing="1.5" font-family="'Sora',sans-serif">DATA SOURCES</text>`;
+const srcKeys=['src_sprinklr','src_paid','src_collab','src_tags'];
 const srcs=[{t:'Sprinklr S3',sub:'23 files daily',x:30},{t:'Paid Data',sub:'Monday',x:200},{t:'Collab+LINE',sub:'Google Sheets · Mon',x:370},{t:'Tag Files',sub:'7 daily',x:540}];
-srcs.forEach(s=>{
+srcs.forEach((s,i)=>{
+  svg+=`<g style="cursor:pointer" onclick="showArchDetail('${srcKeys[i]}')">`;
   svg+=`<rect x="${s.x}" y="${srcY+10}" width="150" height="34" rx="5" fill="#12151c" stroke="#4f8ff7" stroke-opacity=".3"/>`;
-  svg+=`<text x="${s.x+10}" y="${srcY+26}" fill="#4f8ff7" font-size="9" font-weight="600">${s.t}</text>`;
-  svg+=`<text x="${s.x+10}" y="${srcY+37}" fill="#636a7e" font-size="7" font-family="'JetBrains Mono'">${s.sub}</text>`;
+  svg+=`<text x="${s.x+10}" y="${srcY+26}" fill="#4f8ff7" font-size="9" font-weight="600" style="pointer-events:none">${s.t}</text>`;
+  svg+=`<text x="${s.x+10}" y="${srcY+37}" fill="#636a7e" font-size="7" font-family="'JetBrains Mono'" style="pointer-events:none">${s.sub}</text>`;
+  svg+=`</g>`;
 });
 
 // Infrastructure
 const infraY=126;
+svg+=`<g style="cursor:pointer" onclick="showArchDetail('infra')">`;
 svg+=`<rect x="720" y="${infraY}" width="360" height="60" rx="6" fill="#e879f908" stroke="#e879f9" stroke-opacity=".2"/>`;
-svg+=`<text x="732" y="${infraY+16}" fill="#e879f9" font-size="9" font-weight="700">INFRASTRUCTURE</text>`;
-svg+=`<text x="732" y="${infraY+30}" fill="#9ba1b0" font-size="8">EventBridge (daily 7AM) → Step Functions (sequential)</text>`;
-svg+=`<text x="732" y="${infraY+44}" fill="#9ba1b0" font-size="8">→ ECS Fargate (8 tasks) → SNS→SES+Slack alerts</text>`;
+svg+=`<text x="732" y="${infraY+16}" fill="#e879f9" font-size="9" font-weight="700" style="pointer-events:none">INFRASTRUCTURE</text>`;
+svg+=`<text x="732" y="${infraY+30}" fill="#9ba1b0" font-size="8" style="pointer-events:none">EventBridge (daily 7AM) → Step Functions (sequential)</text>`;
+svg+=`<text x="732" y="${infraY+44}" fill="#9ba1b0" font-size="8" style="pointer-events:none">→ ECS Fargate (8 tasks) → SNS→SES+Slack alerts</text>`;
+svg+=`</g>`;
 
 // Tasks + Database columns
 const tasks=[
@@ -464,14 +854,18 @@ const tasks=[
   {t:'T7: Push+QA+MBS',sub:'Rules 11–21 · MBS override · dedup',y:920,db:[{s:'ADL',n:'posts_current'},{s:'ADL',n:'lookup_check'},{s:'QA',n:'pipeline_runs'},{s:'QA',n:'duplicate_checks'},{s:'REF',n:'manual_overrides'}]},
 ];
 
+const taskKeys=['t0','t1','t2','t3','t4','t5','t6','t7'];
+
 tasks.forEach((task,i)=>{
-  // Task box
+  // Task box — clickable
+  svg+=`<g style="cursor:pointer" onclick="showArchDetail('${taskKeys[i]}')">`;
   svg+=`<rect x="${taskX}" y="${task.y}" width="${taskW}" height="${taskH}" rx="6" fill="#06b6d40a" stroke="#06b6d4" stroke-opacity=".45"/>`;
-  svg+=`<text x="${taskX+12}" y="${task.y+20}" fill="#06b6d4" font-size="10" font-weight="700">${task.t}</text>`;
-  svg+=`<text x="${taskX+12}" y="${task.y+35}" fill="#9ba1b0" font-size="8">${task.sub}</text>`;
+  svg+=`<text x="${taskX+12}" y="${task.y+20}" fill="#06b6d4" font-size="10" font-weight="700" style="pointer-events:none">${task.t}</text>`;
+  svg+=`<text x="${taskX+12}" y="${task.y+35}" fill="#9ba1b0" font-size="8" style="pointer-events:none">${task.sub}</text>`;
   if(task.highlight){
-    svg+=`<text x="${taskX+12}" y="${task.y+48}" fill="#f59e42" font-size="7" font-weight="600">⬆ Daniel: before filters, isolated</text>`;
+    svg+=`<text x="${taskX+12}" y="${task.y+48}" fill="#f59e42" font-size="7" font-weight="600" style="pointer-events:none">⬆ Daniel: before filters, isolated</text>`;
   }
+  svg+=`</g>`;
 
   // Arrow to next task (vertical, left of center to avoid overlap)
   if(i<tasks.length-1){
@@ -482,6 +876,17 @@ tasks.forEach((task,i)=>{
   }
 
   // DB tables — stacked vertically, connected with curved lines from task right-edge
+  // Map db table names to ERD keys for click-through
+  const dbKeyMap={
+    'schema_validation_log':'rdl_schema','data_quality_issues':'qa_dq',
+    'sprinklr_raw_posts':'rdl_posts','tag_pull_raw':'rdl_tags','sprinklr_raw_pulls':'rdl_pulls',
+    'post_metrics_daily':'odl_metrics','manual_tracker_raw':'rdl_manual','manual_tracker_posts':'odl_tracker',
+    'filtered_posts':'qa_filtered','country_mapping':'ref_country','blacklist':'ref_blacklist',
+    'country_language_map':'ref_langmap','post_attributes':'odl_attrs',
+    'benchmarks':'adl_bench','metric_changes':'adl_changes','daily_aggregates':'adl_daily_agg',
+    'posts_current':'adl_posts','lookup_check':'adl_lookup',
+    'pipeline_runs':'qa_runs','duplicate_checks':'qa_dupes','manual_overrides':'ref_overrides',
+  };
   task.db.forEach((db,j)=>{
     const dby=task.y + j*28;
     const dbx=dbX;
@@ -492,9 +897,16 @@ tasks.forEach((task,i)=>{
     const cpx=(sx+ex)/2;
     svg+=`<path d="M${sx},${sy} C${cpx},${sy} ${cpx},${ey} ${ex},${ey}" stroke="${scol}" stroke-opacity=".4" stroke-width="1.5" fill="none" stroke-dasharray="5,4"/>`;
     svg+=`<circle cx="${ex}" cy="${ey}" r="3" fill="${scol}" fill-opacity=".5"/>`;
-    // DB box
+    // DB box — clickable
+    const erdKey=dbKeyMap[db.n]||'';
+    if(erdKey){
+      svg+=`<g style="cursor:pointer" onclick="showArchDBDetail('${erdKey}')">`;
+    }
     svg+=`<rect x="${dbx}" y="${dby}" width="${dbW}" height="24" rx="4" fill="#12151c" stroke="${scol}" stroke-opacity=".55"/>`;
-    svg+=`<text x="${dbx+8}" y="${dby+15}" fill="${scol}" font-size="8" font-weight="600" font-family="'JetBrains Mono'">${db.s.toLowerCase()}.${db.n}</text>`;
+    svg+=`<text x="${dbx+8}" y="${dby+15}" fill="${scol}" font-size="8" font-weight="600" font-family="'JetBrains Mono'" style="pointer-events:none">${db.s.toLowerCase()}.${db.n}</text>`;
+    if(erdKey){
+      svg+=`</g>`;
+    }
   });
 });
 
@@ -526,9 +938,11 @@ refs.forEach((r,i)=>{
 
 // Tableau
 const tabY=1250;
+svg+=`<g style="cursor:pointer" onclick="showArchDetail('tableau')">`;
 svg+=`<rect x="${W/2-120}" y="${tabY}" width="240" height="48" rx="8" fill="#22c55e0c" stroke="#22c55e" stroke-opacity=".35"/>`;
-svg+=`<text x="${W/2}" y="${tabY+20}" text-anchor="middle" fill="#22c55e" font-size="12" font-weight="700" font-family="'Sora',sans-serif">📈 Tableau — DAILY</text>`;
-svg+=`<text x="${W/2}" y="${tabY+35}" text-anchor="middle" fill="#9ba1b0" font-size="8">adl.posts_current (156 columns)</text>`;
+svg+=`<text x="${W/2}" y="${tabY+20}" text-anchor="middle" fill="#22c55e" font-size="12" font-weight="700" font-family="'Sora',sans-serif" style="pointer-events:none">📈 Tableau — DAILY</text>`;
+svg+=`<text x="${W/2}" y="${tabY+35}" text-anchor="middle" fill="#9ba1b0" font-size="8" style="pointer-events:none">adl.posts_current (156 columns)</text>`;
+svg+=`</g>`;
 
 // Arrow from T7 to Tableau
 svg+=`<line x1="${taskX+taskW/2}" y1="${920+taskH}" x2="${W/2}" y2="${tabY}" stroke="#22c55e" stroke-opacity=".5" stroke-width="2.5"/>`;
@@ -544,6 +958,7 @@ document.getElementById('arch-svg').innerHTML=svg;
 ['existing','new'].forEach(renderFlow);
 renderERD();
 renderArchDiagram();
+renderAnalystView();
 document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.vw').forEach(x=>x.classList.remove('active'));
