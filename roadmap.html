@@ -637,7 +637,7 @@ function setPhase(n) {
 }
 
 // Checklist persistence
-const STORAGE_KEY = 'sprinklr_v2_checks_v8';
+const STORAGE_KEY = 'sprinklr_v2_checks_v9';
 
 // Items completed so far — pre-ticked on first load
 const DEFAULTS = {
@@ -655,16 +655,15 @@ const DEFAULTS = {
   'p1s5_0': true, 'p1s5_1': true, 'p1s5_2': true, 'p1s5_3': true,
   'p1s5_4': true, 'p1s5_5': true, 'p1s5_6': true, 'p1s5_7': true,
   'p1s5_8': true, 'p1s5_9': true, 'p1s5_10': true, 'p1s5_11': true, 'p1s5_12': true,
-  // Step 1.6 — Step Functions (CONFIG WRITTEN — needs to be created in console)
-  'p1s6_0': false, 'p1s6_1': true, 'p1s6_2': true, 'p1s6_3': true,
-  'p1s6_4': true, 'p1s6_5': true,
-  // Step 1.7 — EventBridge (CONFIG WRITTEN — needs to be created in console)
-  'p1s7_3': true,  // Config saved in infrastructure/
-  'p1s7_4': true,  // Initially disabled
-  // Step 1.8 — SNS + SES Alerting (ALL DONE)
-  'p1s8_0': true, 'p1s8_1': true, 'p1s8_2': true,
-  // Step 1.9 — S3 Buckets (EXISTING — verified)
-  'p1s9_0': true, 'p1s9_1': true,
+  // Step 1.6 — Step Functions State Machine (ALL DONE)
+  'p1s6_0': true, 'p1s6_1': true, 'p1s6_2': true, 'p1s6_3': true,
+  'p1s6_4': true, 'p1s6_5': true, 'p1s6_6': true,
+  // Step 1.7 — EventBridge Daily Trigger (ALL DONE)
+  'p1s7_0': true, 'p1s7_1': true, 'p1s7_2': true, 'p1s7_3': true, 'p1s7_4': true,
+  // Step 1.8 — SNS + SES Alerting (DONE)
+  'p1s8_0': true, 'p1s8_1': true, 'p1s8_2': true, 'p1s8_4': true,
+  // Step 1.9 — S3 Buckets + Paths (ALL DONE)
+  'p1s9_0': true, 'p1s9_1': true, 'p1s9_2': true, 'p1s9_3': true, 'p1s9_4': true,
   // Step 1.10 — RDS Database Setup (ALL DONE)
   'p1s10_0': true, 'p1s10_1': true, 'p1s10_2': true, 'p1s10_3': true,
   'p1s10_4': true, 'p1s10_5': true, 'p1s10_6': true, 'p1s10_7': true,
@@ -673,8 +672,8 @@ const DEFAULTS = {
   'p1s12_0': true, 'p1s12_1': true, 'p1s12_2': true, 'p1s12_3': true,
   'p1s12_4': true, 'p1s12_5': true, 'p1s12_6': true, 'p1s12_7': true,
   'p1s12_8': true, 'p1s12_9': true,
-  // Step 1.13 — CloudWatch + Monitoring (LOG GROUP DONE)
-  'p1s13_0': true, 'p1s13_1': true,
+  // Step 1.13 — CloudWatch + Monitoring (ALL DONE)
+  'p1s13_0': true, 'p1s13_1': true, 'p1s13_2': true, 'p1s13_3': true,
 };
 
 function loadChecks() {
