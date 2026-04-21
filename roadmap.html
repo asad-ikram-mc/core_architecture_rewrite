@@ -637,13 +637,22 @@ function setPhase(n) {
 }
 
 // Checklist persistence
-const STORAGE_KEY = 'sprinklr_v2_checks_v3';
+const STORAGE_KEY = 'sprinklr_v2_checks_v4';
 
 // Items completed so far — pre-ticked on first load
 const DEFAULTS = {
   'p1s1_0': true,  // Create repo on Fluency-M-C-Saatchi org
-  'p1s1_1': true,  // README with architecture overview + banner
-  'p1s1_2': true,  // Project structure: fargate_tasks/, database/, infrastructure/
+  'p1s1_1': true,  // README with architecture overview + SVG banner
+  'p1s1_2': true,  // Project structure
+  'p1s1_3': true,  // .github/workflows/deploy.yml
+  'p1s1_4': true,  // Workflow triggers on push to main only
+  'p1s12_0': true, // Dockerfile at root
+  'p1s12_1': true, // COPY fargate_tasks/ into image
+  'p1s12_2': true, // shared/db.py
+  'p1s12_3': true, // shared/s3_helpers.py
+  'p1s12_4': true, // shared/pipeline.py
+  'p1s12_5': true, // shared/alerts.py
+  'p1s12_6': true, // Default CMD overridden by task defs
 };
 
 function loadChecks() {
