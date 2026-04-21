@@ -637,7 +637,7 @@ function setPhase(n) {
 }
 
 // Checklist persistence
-const STORAGE_KEY = 'sprinklr_v2_checks_v7';
+const STORAGE_KEY = 'sprinklr_v2_checks_v8';
 
 // Items completed so far — pre-ticked on first load
 const DEFAULTS = {
@@ -651,11 +651,10 @@ const DEFAULTS = {
   'p1s3_0': true, 'p1s3_1': true, 'p1s3_2': true, 'p1s3_3': true, 'p1s3_4': true,
   // Step 1.4 — ECR Repository (ALL DONE)
   'p1s4_0': true, 'p1s4_1': true, 'p1s4_2': true, 'p1s4_3': true,
-  // Step 1.5 — ECS Cluster + Task Definitions (CLUSTER DONE, task defs written)
-  'p1s5_0': true,  // Cluster created
-  'p1s5_9': true,  // All use same image
-  'p1s5_10': true, // Environment variables configured
-  'p1s5_11': true, // CloudWatch log group
+  // Step 1.5 — ECS Cluster + Task Definitions (ALL DONE)
+  'p1s5_0': true, 'p1s5_1': true, 'p1s5_2': true, 'p1s5_3': true,
+  'p1s5_4': true, 'p1s5_5': true, 'p1s5_6': true, 'p1s5_7': true,
+  'p1s5_8': true, 'p1s5_9': true, 'p1s5_10': true, 'p1s5_11': true, 'p1s5_12': true,
   // Step 1.6 — Step Functions (CONFIG WRITTEN — needs to be created in console)
   'p1s6_0': false, 'p1s6_1': true, 'p1s6_2': true, 'p1s6_3': true,
   'p1s6_4': true, 'p1s6_5': true,
