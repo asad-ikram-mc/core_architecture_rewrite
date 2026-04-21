@@ -169,86 +169,224 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;back
 <div class="phase-view" id="phase-1">
   <div class="phase-header">
     <h2>Phase 1 — Foundation</h2>
-    <p>Set up all infrastructure before writing any pipeline logic. ECS cluster, Step Functions state machine, EventBridge daily trigger, RDS schemas, ECR repositories, IAM roles, SNS alerting topic. No Lambda logic yet — just the scaffolding.</p>
+    <p>Set up all infrastructure before writing any pipeline logic. VPC networking, IAM roles, ECR repos, ECS cluster, Step Functions, EventBridge, RDS schemas, S3 verification, SNS/SES alerting, GitHub Actions CI/CD. No Lambda logic yet — just the scaffolding.</p>
   </div>
   <div class="steps-grid">
     <div class="step-card">
       <div class="step-number">Step 1.1</div>
       <div class="step-title">GitHub Repo + CI/CD</div>
-      <div class="step-desc">Create amazon_sprinklr_etl_v2 repo. GitHub Actions workflow for ECR push on merge to main. Branch protection rules.</div>
+      <div class="step-desc">Create amazon_sprinklr_etl_v2 repo. GitHub Actions workflow that builds Docker images and pushes to ECR on merge to main. Branch protection.</div>
       <ul class="checklist" data-phase="1" data-step="1">
         <li data-i="0"><span class="check-box">✓</span>Create repo on Fluency-M-C-Saatchi org</li>
-        <li data-i="1"><span class="check-box">✓</span>README with architecture overview + banner</li>
-        <li data-i="2"><span class="check-box">✓</span>Project structure: fargate_tasks/, database/, infrastructure/</li>
-        <li data-i="3"><span class="check-box">✓</span>.github/workflows/deploy.yml (ECR build+push)</li>
-        <li data-i="4"><span class="check-box">✓</span>Branch protection: require PR for main</li>
-        <li data-i="5"><span class="check-box">✓</span>Add GitHub secrets (AWS creds, ECR repos)</li>
+        <li data-i="1"><span class="check-box">✓</span>README with architecture overview + SVG banner</li>
+        <li data-i="2"><span class="check-box">✓</span>Project structure: fargate_tasks/, database/, infrastructure/, docs/</li>
+        <li data-i="3"><span class="check-box">✓</span>.github/workflows/deploy.yml — build each task's Dockerfile, tag with commit SHA, push to ECR</li>
+        <li data-i="4"><span class="check-box">✓</span>Workflow triggers on push to main only (not on PRs)</li>
+        <li data-i="5"><span class="check-box">✓</span>Workflow builds only changed tasks (path filter per task directory)</li>
+        <li data-i="6"><span class="check-box">✓</span>Add GitHub Secrets: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION</li>
+        <li data-i="7"><span class="check-box">✓</span>Add GitHub Secrets: ECR repo URIs for each task (ECR_T0 through ECR_T7)</li>
+        <li data-i="8"><span class="check-box">✓</span>Branch protection: require PR review for main</li>
+        <li data-i="9"><span class="check-box">✓</span>Test: push dummy change → verify ECR image appears</li>
       </ul>
-      <div class="progress-wrap"><span class="progress-label">0/6</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
+      <div class="progress-wrap"><span class="progress-label">0/10</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
     </div>
 
     <div class="step-card">
       <div class="step-number">Step 1.2</div>
-      <div class="step-title">RDS Schema Setup</div>
-      <div class="step-desc">Create 5 schemas (rdl, ref, odl, adl, qa) on existing prod-fluency-sprinklr-db-eu2 instance. All 28 tables with DDL.</div>
+      <div class="step-title">IAM Roles + Security</div>
+      <div class="step-desc">Create execution role (ECS pulls images) and task role (S3, RDS, SES, SNS access). Least-privilege policies.</div>
       <ul class="checklist" data-phase="1" data-step="2">
-        <li data-i="0"><span class="check-box">✓</span>CREATE SCHEMA rdl, ref, odl, adl, qa</li>
-        <li data-i="1"><span class="check-box">✓</span>RDL tables: sprinklr_raw_pulls, sprinklr_raw_posts, tag_pull_raw, post_id_lookup, manual_tracker_raw, schema_validation_log</li>
-        <li data-i="2"><span class="check-box">✓</span>REF tables: country_mapping, platform_mapping, twitter_account_mapping, blacklist, url_corrections, manual_overrides</li>
-        <li data-i="3"><span class="check-box">✓</span>ODL tables: post_metrics_daily, post_attributes, permalink_aliases, manual_tracker_posts, post_translations, comment_sentiment</li>
-        <li data-i="4"><span class="check-box">✓</span>ADL tables: posts_current, benchmarks, lookup_check, import_staging, metric_changes, daily_aggregates</li>
-        <li data-i="5"><span class="check-box">✓</span>QA tables: pipeline_runs, filtered_posts, duplicate_checks, data_quality_issues</li>
-        <li data-i="6"><span class="check-box">✓</span>All PKs, UNIQUE constraints, indexes verified</li>
-        <li data-i="7"><span class="check-box">✓</span>DDL migration files saved in database/migrations/</li>
+        <li data-i="0"><span class="check-box">✓</span>ECS Task Execution Role: AmazonECSTaskExecutionRolePolicy + ECR pull + CloudWatch logs</li>
+        <li data-i="1"><span class="check-box">✓</span>ECS Task Role: S3 read/write (amazon-global-gsmc-sprinklr + wikitablescrapexample)</li>
+        <li data-i="2"><span class="check-box">✓</span>ECS Task Role: RDS connect (prod-fluency-sprinklr-db-eu2)</li>
+        <li data-i="3"><span class="check-box">✓</span>ECS Task Role: SES SendEmail permission</li>
+        <li data-i="4"><span class="check-box">✓</span>ECS Task Role: SNS Publish to alert topic</li>
+        <li data-i="5"><span class="check-box">✓</span>Step Functions Execution Role: ecs:RunTask, iam:PassRole, logs:*</li>
+        <li data-i="6"><span class="check-box">✓</span>EventBridge Role: states:StartExecution on the state machine</li>
+        <li data-i="7"><span class="check-box">✓</span>RDS security group: allow inbound 5432 from ECS task security group</li>
       </ul>
       <div class="progress-wrap"><span class="progress-label">0/8</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
     </div>
 
     <div class="step-card">
       <div class="step-number">Step 1.3</div>
-      <div class="step-title">REF Table Seeds</div>
-      <div class="step-desc">Seed all 6 REF tables from existing Excel/CSV files. Git-version the seed data.</div>
+      <div class="step-title">VPC + Networking</div>
+      <div class="step-desc">Verify VPC, subnets, security groups. ECS tasks need outbound internet (S3, SES) and inbound to RDS. Same VPC as existing Lambda setup.</div>
       <ul class="checklist" data-phase="1" data-step="3">
-        <li data-i="0"><span class="check-box">✓</span>Export countrymapping.xlsx → ref.country_mapping</li>
-        <li data-i="1"><span class="check-box">✓</span>Export platformmapping.xlsx → ref.platform_mapping</li>
-        <li data-i="2"><span class="check-box">✓</span>Export twitter_mapping.xlsx → ref.twitter_account_mapping</li>
-        <li data-i="3"><span class="check-box">✓</span>Export Blacklist.csv → ref.blacklist</li>
-        <li data-i="4"><span class="check-box">✓</span>Export SQLTableNovember5thCleaned.xlsx → ref.url_corrections</li>
-        <li data-i="5"><span class="check-box">✓</span>Create empty ref.manual_overrides (MBS automation)</li>
-        <li data-i="6"><span class="check-box">✓</span>Save seed CSVs in database/seeds/ (Git-versioned)</li>
+        <li data-i="0"><span class="check-box">✓</span>Identify VPC and subnets (same as existing Lambda/RDS: eu-west-2)</li>
+        <li data-i="1"><span class="check-box">✓</span>Create security group: sprinklr-etl-v2-tasks (outbound all, inbound none)</li>
+        <li data-i="2"><span class="check-box">✓</span>Update RDS security group: allow 5432 from sprinklr-etl-v2-tasks SG</li>
+        <li data-i="3"><span class="check-box">✓</span>Verify NAT gateway exists (Fargate tasks need internet for S3, SES, Google Sheets API)</li>
+        <li data-i="4"><span class="check-box">✓</span>Test: run a simple Fargate task that connects to RDS + reads S3</li>
+      </ul>
+      <div class="progress-wrap"><span class="progress-label">0/5</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-number">Step 1.4</div>
+      <div class="step-title">ECR Repositories</div>
+      <div class="step-desc">Create one ECR repo per Fargate task + one for the shared base image. Lifecycle policies to keep last 5 images.</div>
+      <ul class="checklist" data-phase="1" data-step="4">
+        <li data-i="0"><span class="check-box">✓</span>Create ECR repo: sprinklr-etl-base (shared Python base image)</li>
+        <li data-i="1"><span class="check-box">✓</span>Create ECR repo: sprinklr-t0-validate</li>
+        <li data-i="2"><span class="check-box">✓</span>Create ECR repo: sprinklr-t1-ingest</li>
+        <li data-i="3"><span class="check-box">✓</span>Create ECR repo: sprinklr-t2-merge</li>
+        <li data-i="4"><span class="check-box">✓</span>Create ECR repo: sprinklr-t3-collab-line</li>
+        <li data-i="5"><span class="check-box">✓</span>Create ECR repo: sprinklr-t4-filter</li>
+        <li data-i="6"><span class="check-box">✓</span>Create ECR repo: sprinklr-t5-tags</li>
+        <li data-i="7"><span class="check-box">✓</span>Create ECR repo: sprinklr-t6-benchmark</li>
+        <li data-i="8"><span class="check-box">✓</span>Create ECR repo: sprinklr-t7-push</li>
+        <li data-i="9"><span class="check-box">✓</span>Add lifecycle policy: keep last 5 images per repo</li>
+        <li data-i="10"><span class="check-box">✓</span>Build + push base image to sprinklr-etl-base</li>
+      </ul>
+      <div class="progress-wrap"><span class="progress-label">0/11</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-number">Step 1.5</div>
+      <div class="step-title">ECS Cluster + Task Definitions</div>
+      <div class="step-desc">Fargate cluster with task definitions for all 8 tasks. Each task: 0.5 vCPU, 1GB RAM, CloudWatch logging.</div>
+      <ul class="checklist" data-phase="1" data-step="5">
+        <li data-i="0"><span class="check-box">✓</span>Create ECS Fargate cluster: sprinklr-etl-v2</li>
+        <li data-i="1"><span class="check-box">✓</span>Task definition: sprinklr-t0-validate (0.5 vCPU, 1GB, 15min timeout)</li>
+        <li data-i="2"><span class="check-box">✓</span>Task definition: sprinklr-t1-ingest (0.5 vCPU, 1GB)</li>
+        <li data-i="3"><span class="check-box">✓</span>Task definition: sprinklr-t2-merge (1 vCPU, 2GB — merge is memory-heavy)</li>
+        <li data-i="4"><span class="check-box">✓</span>Task definition: sprinklr-t3-collab-line (0.5 vCPU, 1GB)</li>
+        <li data-i="5"><span class="check-box">✓</span>Task definition: sprinklr-t4-filter (0.5 vCPU, 1GB)</li>
+        <li data-i="6"><span class="check-box">✓</span>Task definition: sprinklr-t5-tags (0.5 vCPU, 1GB)</li>
+        <li data-i="7"><span class="check-box">✓</span>Task definition: sprinklr-t6-benchmark (0.5 vCPU, 1GB)</li>
+        <li data-i="8"><span class="check-box">✓</span>Task definition: sprinklr-t7-push (1 vCPU, 2GB — translation + UPSERT heavy)</li>
+        <li data-i="9"><span class="check-box">✓</span>All task defs: environment variables (DB_HOST, DB_USER, DB_PASS, S3 buckets)</li>
+        <li data-i="10"><span class="check-box">✓</span>All task defs: CloudWatch log group /ecs/sprinklr-etl-v2/{task-name}</li>
+        <li data-i="11"><span class="check-box">✓</span>Test: run a dummy task on the cluster — verify logs appear in CloudWatch</li>
+      </ul>
+      <div class="progress-wrap"><span class="progress-label">0/12</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-number">Step 1.6</div>
+      <div class="step-title">Step Functions State Machine</div>
+      <div class="step-desc">Sequential state machine: T0 → T1 → T2 → T3 → T4 → T5 → T6 → T7. Catch block on each step writes to qa.pipeline_runs and fires SNS alert.</div>
+      <ul class="checklist" data-phase="1" data-step="6">
+        <li data-i="0"><span class="check-box">✓</span>Create state machine: sprinklr-etl-v2-pipeline</li>
+        <li data-i="1"><span class="check-box">✓</span>Define sequential flow: T0 → T1 → T2 → T3 → T4 → T5 → T6 → T7</li>
+        <li data-i="2"><span class="check-box">✓</span>T3 conditional: skip on non-Monday (Choice state checks day of week)</li>
+        <li data-i="3"><span class="check-box">✓</span>Each step: Catch block → error handler → SNS alert → fail state</li>
+        <li data-i="4"><span class="check-box">✓</span>Each step: pass run_id and step number as input to next task</li>
+        <li data-i="5"><span class="check-box">✓</span>Save state machine definition JSON in infrastructure/step_functions.json</li>
+        <li data-i="6"><span class="check-box">✓</span>Test: manually start execution → verify T0 runs and logs appear</li>
       </ul>
       <div class="progress-wrap"><span class="progress-label">0/7</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
     </div>
 
     <div class="step-card">
-      <div class="step-number">Step 1.4</div>
-      <div class="step-title">ECS + Step Functions + EventBridge</div>
-      <div class="step-desc">Fargate cluster, task definitions for 8 tasks, Step Functions state machine (sequential), EventBridge daily trigger at 7AM UTC.</div>
-      <ul class="checklist" data-phase="1" data-step="4">
-        <li data-i="0"><span class="check-box">✓</span>Create ECS Fargate cluster: sprinklr-etl-v2</li>
-        <li data-i="1"><span class="check-box">✓</span>Create ECR repos: sprinklr-t0 through sprinklr-t7</li>
-        <li data-i="2"><span class="check-box">✓</span>IAM execution role + task role (S3, RDS, SES, SNS)</li>
-        <li data-i="3"><span class="check-box">✓</span>Task definitions for T0-T7 (0.5 vCPU, 1GB RAM each)</li>
-        <li data-i="4"><span class="check-box">✓</span>Step Functions state machine: sequential T0→T7</li>
-        <li data-i="5"><span class="check-box">✓</span>EventBridge rule: daily 7:00 AM UTC trigger</li>
-        <li data-i="6"><span class="check-box">✓</span>SNS topic: sprinklr-etl-alerts → SES + Slack</li>
-        <li data-i="7"><span class="check-box">✓</span>CloudWatch log groups for each task</li>
+      <div class="step-number">Step 1.7</div>
+      <div class="step-title">EventBridge Daily Trigger</div>
+      <div class="step-desc">EventBridge Scheduler rule fires Step Functions daily at 7:00 AM UTC. Replaces the S3 done.txt relay chain.</div>
+      <ul class="checklist" data-phase="1" data-step="7">
+        <li data-i="0"><span class="check-box">✓</span>Create EventBridge rule: sprinklr-etl-v2-daily (cron: 0 7 * * ? *)</li>
+        <li data-i="1"><span class="check-box">✓</span>Target: Step Functions state machine ARN</li>
+        <li data-i="2"><span class="check-box">✓</span>Input: {"run_type": "daily", "triggered_by": "eventbridge"}</li>
+        <li data-i="3"><span class="check-box">✓</span>Save config in infrastructure/eventbridge.json</li>
+        <li data-i="4"><span class="check-box">✓</span>Initially DISABLED — enable only after full E2E testing in Phase 4</li>
+        <li data-i="5"><span class="check-box">✓</span>Test: manually enable for 1 day → verify pipeline triggers at 7AM</li>
+      </ul>
+      <div class="progress-wrap"><span class="progress-label">0/6</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-number">Step 1.8</div>
+      <div class="step-title">SNS + SES Alerting</div>
+      <div class="step-desc">SNS topic for pipeline alerts. SES email subscription + optional Slack webhook. Two severity levels: critical (pipeline stopped) and warning.</div>
+      <ul class="checklist" data-phase="1" data-step="8">
+        <li data-i="0"><span class="check-box">✓</span>Create SNS topic: sprinklr-etl-v2-alerts</li>
+        <li data-i="1"><span class="check-box">✓</span>Subscribe SES email: asad.ikram@mcsaatchi.com, david.lawton@mcsaatchi.com</li>
+        <li data-i="2"><span class="check-box">✓</span>Subscribe SES email: prabhat.mishra@mcsaatchi.com</li>
+        <li data-i="3"><span class="check-box">✓</span>Optional: Slack webhook subscription for #fluency-alerts</li>
+        <li data-i="4"><span class="check-box">✓</span>Test: publish test message → verify email arrives</li>
+      </ul>
+      <div class="progress-wrap"><span class="progress-label">0/5</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-number">Step 1.9</div>
+      <div class="step-title">S3 Buckets + Paths</div>
+      <div class="step-desc">Verify existing S3 buckets. Create new output paths for v2 pipeline. Ensure Fargate task role has read/write access.</div>
+      <ul class="checklist" data-phase="1" data-step="9">
+        <li data-i="0"><span class="check-box">✓</span>Verify source bucket: amazon-global-gsmc-sprinklr (read access)</li>
+        <li data-i="1"><span class="check-box">✓</span>Verify working bucket: wikitablescrapexample (read/write access)</li>
+        <li data-i="2"><span class="check-box">✓</span>Create v2 output prefix: amazon_sprinklr_pull/v2/ (keeps v1 outputs untouched)</li>
+        <li data-i="3"><span class="check-box">✓</span>Create v2 paths: v2/check/, v2/filtered_posts/, v2/dupes_reports/</li>
+        <li data-i="4"><span class="check-box">✓</span>Test: Fargate task reads from source bucket + writes to v2/ prefix</li>
+      </ul>
+      <div class="progress-wrap"><span class="progress-label">0/5</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-number">Step 1.10</div>
+      <div class="step-title">RDS Database Setup</div>
+      <div class="step-desc">Create 5 schemas on existing RDS instance. All 28 tables with DDL, PKs, UNIQUE constraints, indexes. Migration files versioned in Git.</div>
+      <ul class="checklist" data-phase="1" data-step="10">
+        <li data-i="0"><span class="check-box">✓</span>Connect to prod-fluency-sprinklr-db-eu2 (verify access from local + Fargate)</li>
+        <li data-i="1"><span class="check-box">✓</span>CREATE SCHEMA rdl, ref, odl, adl, qa</li>
+        <li data-i="2"><span class="check-box">✓</span>RDL tables (6): sprinklr_raw_pulls, sprinklr_raw_posts, tag_pull_raw, post_id_lookup, manual_tracker_raw, schema_validation_log</li>
+        <li data-i="3"><span class="check-box">✓</span>REF tables (6): country_mapping, platform_mapping, twitter_account_mapping, blacklist, url_corrections, manual_overrides</li>
+        <li data-i="4"><span class="check-box">✓</span>ODL tables (6): post_metrics_daily, post_attributes, permalink_aliases, manual_tracker_posts, post_translations, comment_sentiment</li>
+        <li data-i="5"><span class="check-box">✓</span>ADL tables (6): posts_current, benchmarks, lookup_check, import_staging, metric_changes, daily_aggregates</li>
+        <li data-i="6"><span class="check-box">✓</span>QA tables (4): pipeline_runs, filtered_posts, duplicate_checks, data_quality_issues</li>
+        <li data-i="7"><span class="check-box">✓</span>All PKs + UNIQUE constraints + indexes verified</li>
+        <li data-i="8"><span class="check-box">✓</span>adl.daily_aggregates: CREATE MATERIALIZED VIEW with UNIQUE index</li>
+        <li data-i="9"><span class="check-box">✓</span>Migration files saved in database/migrations/ (versioned)</li>
+        <li data-i="10"><span class="check-box">✓</span>Test: INSERT dummy row into each table → verify constraints</li>
+      </ul>
+      <div class="progress-wrap"><span class="progress-label">0/11</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-number">Step 1.11</div>
+      <div class="step-title">REF Table Seeds</div>
+      <div class="step-desc">Seed all 6 REF tables from existing Excel/CSV mapping files. Git-version the seed data so every change has an author and date.</div>
+      <ul class="checklist" data-phase="1" data-step="11">
+        <li data-i="0"><span class="check-box">✓</span>Export account_metadataa.xlsx → ref.country_mapping (Lambda 7 uses this, NOT countrymapping.xlsx)</li>
+        <li data-i="1"><span class="check-box">✓</span>Export platformmapping.xlsx → ref.platform_mapping</li>
+        <li data-i="2"><span class="check-box">✓</span>Export twitter_mapping.xlsx → ref.twitter_account_mapping</li>
+        <li data-i="3"><span class="check-box">✓</span>Export Blacklist.csv → ref.blacklist (add reason + added_by columns)</li>
+        <li data-i="4"><span class="check-box">✓</span>Export SQLTableNovember5thCleaned.xlsx → ref.url_corrections</li>
+        <li data-i="5"><span class="check-box">✓</span>Create empty ref.manual_overrides (MBS automation — rows added by team)</li>
+        <li data-i="6"><span class="check-box">✓</span>Save seed CSVs in database/seeds/ (Git-versioned)</li>
+        <li data-i="7"><span class="check-box">✓</span>Verify row counts match existing Excel files</li>
       </ul>
       <div class="progress-wrap"><span class="progress-label">0/8</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
     </div>
 
     <div class="step-card">
-      <div class="step-number">Step 1.5</div>
-      <div class="step-title">Base Docker Image</div>
-      <div class="step-desc">Shared Python base image with boto3, psycopg2, pandas, sqlalchemy. Each task imports from this base.</div>
-      <ul class="checklist" data-phase="1" data-step="5">
-        <li data-i="0"><span class="check-box">✓</span>Dockerfile.base with Python 3.12 + common deps</li>
-        <li data-i="1"><span class="check-box">✓</span>requirements.txt (boto3, psycopg2, pandas, sqlalchemy, deep_translator)</li>
-        <li data-i="2"><span class="check-box">✓</span>shared/ module: db.py (connection pool), s3.py (helpers), logging.py</li>
-        <li data-i="3"><span class="check-box">✓</span>Build + push base image to ECR</li>
-        <li data-i="4"><span class="check-box">✓</span>Verify each task can import shared module</li>
+      <div class="step-number">Step 1.12</div>
+      <div class="step-title">Base Docker Image + Shared Module</div>
+      <div class="step-desc">Shared Python base image with all common dependencies. shared/ module with db.py, s3.py, pipeline.py. Each task Dockerfile inherits from base.</div>
+      <ul class="checklist" data-phase="1" data-step="12">
+        <li data-i="0"><span class="check-box">✓</span>Dockerfile.base: Python 3.12-slim + boto3 + psycopg2 + pandas + sqlalchemy + deep_translator</li>
+        <li data-i="1"><span class="check-box">✓</span>shared/db.py: SQLAlchemy connection pool, get_engine()</li>
+        <li data-i="2"><span class="check-box">✓</span>shared/s3.py: get_s3_client(), bucket constants, read/write helpers</li>
+        <li data-i="3"><span class="check-box">✓</span>shared/pipeline.py: start_run(), update_step(), complete_run() → qa.pipeline_runs</li>
+        <li data-i="4"><span class="check-box">✓</span>shared/alerts.py: send_sns_alert() for failure notifications</li>
+        <li data-i="5"><span class="check-box">✓</span>Build + push base image to ECR sprinklr-etl-base</li>
+        <li data-i="6"><span class="check-box">✓</span>Each task Dockerfile: FROM sprinklr-etl-base, COPY task code, CMD python main.py</li>
+        <li data-i="7"><span class="check-box">✓</span>Test: build T0 image locally, run, verify shared imports work</li>
       </ul>
-      <div class="progress-wrap"><span class="progress-label">0/5</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
+      <div class="progress-wrap"><span class="progress-label">0/8</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-number">Step 1.13</div>
+      <div class="step-title">CloudWatch + Monitoring</div>
+      <div class="step-desc">Log groups for all tasks. Dashboard for pipeline health. Alarm on Step Functions failure.</div>
+      <ul class="checklist" data-phase="1" data-step="13">
+        <li data-i="0"><span class="check-box">✓</span>Create log groups: /ecs/sprinklr-etl-v2/t0 through /t7</li>
+        <li data-i="1"><span class="check-box">✓</span>Log retention: 30 days</li>
+        <li data-i="2"><span class="check-box">✓</span>CloudWatch Alarm: Step Functions execution failed → SNS alert</li>
+        <li data-i="3"><span class="check-box">✓</span>Optional: CloudWatch Dashboard with execution count, duration, error rate</li>
+      </ul>
+      <div class="progress-wrap"><span class="progress-label">0/4</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
     </div>
   </div>
 </div>
@@ -505,7 +643,7 @@ function setPhase(n) {
 }
 
 // Checklist persistence
-const STORAGE_KEY = 'sprinklr_v2_checks';
+const STORAGE_KEY = 'sprinklr_v2_checks_v2';
 
 // Items completed so far — pre-ticked on first load
 const DEFAULTS = {
