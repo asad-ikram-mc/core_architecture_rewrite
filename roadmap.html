@@ -637,31 +637,45 @@ function setPhase(n) {
 }
 
 // Checklist persistence
-const STORAGE_KEY = 'sprinklr_v2_checks_v6';
+const STORAGE_KEY = 'sprinklr_v2_checks_v7';
 
 // Items completed so far — pre-ticked on first load
 const DEFAULTS = {
   // Step 1.1 — GitHub Repo + CI/CD (ALL DONE)
   'p1s1_0': true, 'p1s1_1': true, 'p1s1_2': true, 'p1s1_3': true,
   'p1s1_4': true, 'p1s1_5': true, 'p1s1_6': true, 'p1s1_7': true,
+  // Step 1.2 — IAM Roles + Security (ALL DONE)
+  'p1s2_0': true, 'p1s2_1': true, 'p1s2_2': true, 'p1s2_3': true,
+  'p1s2_4': true, 'p1s2_5': true, 'p1s2_6': true, 'p1s2_7': true,
+  // Step 1.3 — VPC + Networking (DONE — using existing default VPC)
+  'p1s3_0': true, 'p1s3_1': true, 'p1s3_2': true, 'p1s3_3': true, 'p1s3_4': true,
   // Step 1.4 — ECR Repository (ALL DONE)
   'p1s4_0': true, 'p1s4_1': true, 'p1s4_2': true, 'p1s4_3': true,
+  // Step 1.5 — ECS Cluster + Task Definitions (CLUSTER DONE, task defs written)
+  'p1s5_0': true,  // Cluster created
+  'p1s5_9': true,  // All use same image
+  'p1s5_10': true, // Environment variables configured
+  'p1s5_11': true, // CloudWatch log group
+  // Step 1.6 — Step Functions (CONFIG WRITTEN — needs to be created in console)
+  'p1s6_0': false, 'p1s6_1': true, 'p1s6_2': true, 'p1s6_3': true,
+  'p1s6_4': true, 'p1s6_5': true,
+  // Step 1.7 — EventBridge (CONFIG WRITTEN — needs to be created in console)
+  'p1s7_3': true,  // Config saved in infrastructure/
+  'p1s7_4': true,  // Initially disabled
+  // Step 1.8 — SNS + SES Alerting (ALL DONE)
+  'p1s8_0': true, 'p1s8_1': true, 'p1s8_2': true,
+  // Step 1.9 — S3 Buckets (EXISTING — verified)
+  'p1s9_0': true, 'p1s9_1': true,
   // Step 1.10 — RDS Database Setup (ALL DONE)
-  'p1s10_0': true,  // Connect to Aurora cluster
-  'p1s10_1': true,  // CREATE SCHEMA rdl, ref, odl, adl, qa
-  'p1s10_2': true,  // RDL tables (6)
-  'p1s10_3': true,  // REF tables (6)
-  'p1s10_4': true,  // ODL tables (6)
-  'p1s10_5': true,  // ADL tables (6) — including posts_current with exact 156 columns
-  'p1s10_6': true,  // QA tables (4)
-  'p1s10_7': true,  // All PKs + UNIQUE constraints + indexes
-  'p1s10_8': true,  // adl.daily_aggregates materialized view
-  'p1s10_9': true,  // Migration files in database/migrations/
-  'p1s10_10': true, // Verified: 27 tables + 1 matview = 28 objects
+  'p1s10_0': true, 'p1s10_1': true, 'p1s10_2': true, 'p1s10_3': true,
+  'p1s10_4': true, 'p1s10_5': true, 'p1s10_6': true, 'p1s10_7': true,
+  'p1s10_8': true, 'p1s10_9': true, 'p1s10_10': true,
   // Step 1.12 — Dockerfile + Shared Module (ALL DONE)
   'p1s12_0': true, 'p1s12_1': true, 'p1s12_2': true, 'p1s12_3': true,
   'p1s12_4': true, 'p1s12_5': true, 'p1s12_6': true, 'p1s12_7': true,
   'p1s12_8': true, 'p1s12_9': true,
+  // Step 1.13 — CloudWatch + Monitoring (LOG GROUP DONE)
+  'p1s13_0': true, 'p1s13_1': true,
 };
 
 function loadChecks() {
