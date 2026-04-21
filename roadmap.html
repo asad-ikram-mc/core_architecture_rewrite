@@ -175,20 +175,18 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;back
     <div class="step-card">
       <div class="step-number">Step 1.1</div>
       <div class="step-title">GitHub Repo + CI/CD</div>
-      <div class="step-desc">Create amazon_sprinklr_etl_v2 repo. GitHub Actions workflow that builds Docker images and pushes to ECR on merge to main. Branch protection.</div>
+      <div class="step-desc">Create amazon_sprinklr_etl_v2 repo. GitHub Actions builds one Docker image containing all tasks and pushes to a single ECR repo on merge to main.</div>
       <ul class="checklist" data-phase="1" data-step="1">
         <li data-i="0"><span class="check-box">✓</span>Create repo on Fluency-M-C-Saatchi org</li>
         <li data-i="1"><span class="check-box">✓</span>README with architecture overview + SVG banner</li>
         <li data-i="2"><span class="check-box">✓</span>Project structure: fargate_tasks/, database/, infrastructure/, docs/</li>
-        <li data-i="3"><span class="check-box">✓</span>.github/workflows/deploy.yml — build each task's Dockerfile, tag with commit SHA, push to ECR</li>
+        <li data-i="3"><span class="check-box">✓</span>.github/workflows/deploy.yml — build single Dockerfile, tag with commit SHA + latest, push to ECR</li>
         <li data-i="4"><span class="check-box">✓</span>Workflow triggers on push to main only (not on PRs)</li>
-        <li data-i="5"><span class="check-box">✓</span>Workflow builds only changed tasks (path filter per task directory)</li>
-        <li data-i="6"><span class="check-box">✓</span>Add GitHub Secrets: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION</li>
-        <li data-i="7"><span class="check-box">✓</span>Add GitHub Secrets: ECR repo URIs for each task (ECR_T0 through ECR_T7)</li>
-        <li data-i="8"><span class="check-box">✓</span>Branch protection: require PR review for main</li>
-        <li data-i="9"><span class="check-box">✓</span>Test: push dummy change → verify ECR image appears</li>
+        <li data-i="5"><span class="check-box">✓</span>Add GitHub Secrets: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, ECR_REPO_URI</li>
+        <li data-i="6"><span class="check-box">✓</span>Branch protection: require PR review for main</li>
+        <li data-i="7"><span class="check-box">✓</span>Test: push dummy change → verify ECR image appears with correct tag</li>
       </ul>
-      <div class="progress-wrap"><span class="progress-label">0/10</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
+      <div class="progress-wrap"><span class="progress-label">0/8</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
     </div>
 
     <div class="step-card">
@@ -224,43 +222,37 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;back
 
     <div class="step-card">
       <div class="step-number">Step 1.4</div>
-      <div class="step-title">ECR Repositories</div>
-      <div class="step-desc">Create one ECR repo per Fargate task + one for the shared base image. Lifecycle policies to keep last 5 images.</div>
+      <div class="step-title">ECR Repository</div>
+      <div class="step-desc">One ECR repo, one Docker image. All 8 tasks share the same image — each task definition overrides the CMD to run its specific entry point (e.g. python -m fargate_tasks.t0_validate.main).</div>
       <ul class="checklist" data-phase="1" data-step="4">
-        <li data-i="0"><span class="check-box">✓</span>Create ECR repo: sprinklr-etl-base (shared Python base image)</li>
-        <li data-i="1"><span class="check-box">✓</span>Create ECR repo: sprinklr-t0-validate</li>
-        <li data-i="2"><span class="check-box">✓</span>Create ECR repo: sprinklr-t1-ingest</li>
-        <li data-i="3"><span class="check-box">✓</span>Create ECR repo: sprinklr-t2-merge</li>
-        <li data-i="4"><span class="check-box">✓</span>Create ECR repo: sprinklr-t3-collab-line</li>
-        <li data-i="5"><span class="check-box">✓</span>Create ECR repo: sprinklr-t4-filter</li>
-        <li data-i="6"><span class="check-box">✓</span>Create ECR repo: sprinklr-t5-tags</li>
-        <li data-i="7"><span class="check-box">✓</span>Create ECR repo: sprinklr-t6-benchmark</li>
-        <li data-i="8"><span class="check-box">✓</span>Create ECR repo: sprinklr-t7-push</li>
-        <li data-i="9"><span class="check-box">✓</span>Add lifecycle policy: keep last 5 images per repo</li>
-        <li data-i="10"><span class="check-box">✓</span>Build + push base image to sprinklr-etl-base</li>
+        <li data-i="0"><span class="check-box">✓</span>Create ECR repo: sprinklr-etl-v2</li>
+        <li data-i="1"><span class="check-box">✓</span>Add lifecycle policy: keep last 10 images, expire untagged after 7 days</li>
+        <li data-i="2"><span class="check-box">✓</span>Build image locally and push with tag :latest + :test</li>
+        <li data-i="3"><span class="check-box">✓</span>Verify image size is reasonable (target under 500MB)</li>
       </ul>
-      <div class="progress-wrap"><span class="progress-label">0/11</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
+      <div class="progress-wrap"><span class="progress-label">0/4</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
     </div>
 
     <div class="step-card">
       <div class="step-number">Step 1.5</div>
       <div class="step-title">ECS Cluster + Task Definitions</div>
-      <div class="step-desc">Fargate cluster with task definitions for all 8 tasks. Each task: 0.5 vCPU, 1GB RAM, CloudWatch logging.</div>
+      <div class="step-desc">Fargate cluster with 8 task definitions. All point to the same ECR image — each overrides CMD to run its entry point. T2 and T7 get more memory (merge and translation are heavy).</div>
       <ul class="checklist" data-phase="1" data-step="5">
         <li data-i="0"><span class="check-box">✓</span>Create ECS Fargate cluster: sprinklr-etl-v2</li>
-        <li data-i="1"><span class="check-box">✓</span>Task definition: sprinklr-t0-validate (0.5 vCPU, 1GB, 15min timeout)</li>
-        <li data-i="2"><span class="check-box">✓</span>Task definition: sprinklr-t1-ingest (0.5 vCPU, 1GB)</li>
-        <li data-i="3"><span class="check-box">✓</span>Task definition: sprinklr-t2-merge (1 vCPU, 2GB — merge is memory-heavy)</li>
-        <li data-i="4"><span class="check-box">✓</span>Task definition: sprinklr-t3-collab-line (0.5 vCPU, 1GB)</li>
-        <li data-i="5"><span class="check-box">✓</span>Task definition: sprinklr-t4-filter (0.5 vCPU, 1GB)</li>
-        <li data-i="6"><span class="check-box">✓</span>Task definition: sprinklr-t5-tags (0.5 vCPU, 1GB)</li>
-        <li data-i="7"><span class="check-box">✓</span>Task definition: sprinklr-t6-benchmark (0.5 vCPU, 1GB)</li>
-        <li data-i="8"><span class="check-box">✓</span>Task definition: sprinklr-t7-push (1 vCPU, 2GB — translation + UPSERT heavy)</li>
-        <li data-i="9"><span class="check-box">✓</span>All task defs: environment variables (DB_HOST, DB_USER, DB_PASS, S3 buckets)</li>
-        <li data-i="10"><span class="check-box">✓</span>All task defs: CloudWatch log group /ecs/sprinklr-etl-v2/{task-name}</li>
-        <li data-i="11"><span class="check-box">✓</span>Test: run a dummy task on the cluster — verify logs appear in CloudWatch</li>
+        <li data-i="1"><span class="check-box">✓</span>Task def: sprinklr-t0 (0.5 vCPU, 1GB) CMD: ["python","-m","fargate_tasks.t0_validate.main"]</li>
+        <li data-i="2"><span class="check-box">✓</span>Task def: sprinklr-t1 (0.5 vCPU, 1GB) CMD: ["python","-m","fargate_tasks.t1_ingest.main"]</li>
+        <li data-i="3"><span class="check-box">✓</span>Task def: sprinklr-t2 (1 vCPU, 2GB) CMD: merge — needs more RAM for master_table</li>
+        <li data-i="4"><span class="check-box">✓</span>Task def: sprinklr-t3 (0.5 vCPU, 1GB) CMD: collab_line</li>
+        <li data-i="5"><span class="check-box">✓</span>Task def: sprinklr-t4 (0.5 vCPU, 1GB) CMD: filter</li>
+        <li data-i="6"><span class="check-box">✓</span>Task def: sprinklr-t5 (0.5 vCPU, 1GB) CMD: tags</li>
+        <li data-i="7"><span class="check-box">✓</span>Task def: sprinklr-t6 (0.5 vCPU, 1GB) CMD: benchmark</li>
+        <li data-i="8"><span class="check-box">✓</span>Task def: sprinklr-t7 (1 vCPU, 2GB) CMD: push — translation + UPSERT heavy</li>
+        <li data-i="9"><span class="check-box">✓</span>All task defs: same image URI from sprinklr-etl-v2 ECR repo</li>
+        <li data-i="10"><span class="check-box">✓</span>All task defs: environment variables (DB_HOST, DB_USER, DB_PASS, S3 buckets, RUN_ID)</li>
+        <li data-i="11"><span class="check-box">✓</span>All task defs: CloudWatch log group /ecs/sprinklr-etl-v2</li>
+        <li data-i="12"><span class="check-box">✓</span>Test: run T0 task on cluster → verify it starts, logs appear, exits cleanly</li>
       </ul>
-      <div class="progress-wrap"><span class="progress-label">0/12</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
+      <div class="progress-wrap"><span class="progress-label">0/13</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
     </div>
 
     <div class="step-card">
@@ -361,19 +353,21 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;back
 
     <div class="step-card">
       <div class="step-number">Step 1.12</div>
-      <div class="step-title">Base Docker Image + Shared Module</div>
-      <div class="step-desc">Shared Python base image with all common dependencies. shared/ module with db.py, s3.py, pipeline.py. Each task Dockerfile inherits from base.</div>
+      <div class="step-title">Dockerfile + Shared Module</div>
+      <div class="step-desc">Single Dockerfile at repo root. Installs all dependencies, copies all task code + shared module. Each task definition overrides CMD. No per-task Dockerfiles needed.</div>
       <ul class="checklist" data-phase="1" data-step="12">
-        <li data-i="0"><span class="check-box">✓</span>Dockerfile.base: Python 3.12-slim + boto3 + psycopg2 + pandas + sqlalchemy + deep_translator</li>
-        <li data-i="1"><span class="check-box">✓</span>shared/db.py: SQLAlchemy connection pool, get_engine()</li>
-        <li data-i="2"><span class="check-box">✓</span>shared/s3.py: get_s3_client(), bucket constants, read/write helpers</li>
-        <li data-i="3"><span class="check-box">✓</span>shared/pipeline.py: start_run(), update_step(), complete_run() → qa.pipeline_runs</li>
-        <li data-i="4"><span class="check-box">✓</span>shared/alerts.py: send_sns_alert() for failure notifications</li>
-        <li data-i="5"><span class="check-box">✓</span>Build + push base image to ECR sprinklr-etl-base</li>
-        <li data-i="6"><span class="check-box">✓</span>Each task Dockerfile: FROM sprinklr-etl-base, COPY task code, CMD python main.py</li>
-        <li data-i="7"><span class="check-box">✓</span>Test: build T0 image locally, run, verify shared imports work</li>
+        <li data-i="0"><span class="check-box">✓</span>Dockerfile at repo root: Python 3.12-slim + all deps (boto3, psycopg2, pandas, sqlalchemy, deep_translator, gspread, openpyxl)</li>
+        <li data-i="1"><span class="check-box">✓</span>COPY fargate_tasks/ into image (all 8 task modules + shared/)</li>
+        <li data-i="2"><span class="check-box">✓</span>shared/db.py: SQLAlchemy connection pool, get_engine()</li>
+        <li data-i="3"><span class="check-box">✓</span>shared/s3.py: get_s3_client(), bucket constants, read/write helpers</li>
+        <li data-i="4"><span class="check-box">✓</span>shared/pipeline.py: start_run(), update_step(), complete_run() → qa.pipeline_runs</li>
+        <li data-i="5"><span class="check-box">✓</span>shared/alerts.py: send_sns_alert() for failure notifications</li>
+        <li data-i="6"><span class="check-box">✓</span>Default CMD: ["python","-m","fargate_tasks.t0_validate.main"] (overridden by task defs)</li>
+        <li data-i="7"><span class="check-box">✓</span>Build locally: docker build -t sprinklr-etl-v2 . → verify all imports resolve</li>
+        <li data-i="8"><span class="check-box">✓</span>Push to ECR: docker push sprinklr-etl-v2:latest</li>
+        <li data-i="9"><span class="check-box">✓</span>Test: docker run sprinklr-etl-v2 python -m fargate_tasks.t0_validate.main → runs without error</li>
       </ul>
-      <div class="progress-wrap"><span class="progress-label">0/8</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
+      <div class="progress-wrap"><span class="progress-label">0/10</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
     </div>
 
     <div class="step-card">
@@ -643,7 +637,7 @@ function setPhase(n) {
 }
 
 // Checklist persistence
-const STORAGE_KEY = 'sprinklr_v2_checks_v2';
+const STORAGE_KEY = 'sprinklr_v2_checks_v3';
 
 // Items completed so far — pre-ticked on first load
 const DEFAULTS = {
