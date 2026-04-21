@@ -637,22 +637,35 @@ function setPhase(n) {
 }
 
 // Checklist persistence
-const STORAGE_KEY = 'sprinklr_v2_checks_v4';
+const STORAGE_KEY = 'sprinklr_v2_checks_v5';
 
 // Items completed so far — pre-ticked on first load
 const DEFAULTS = {
-  'p1s1_0': true,  // Create repo on Fluency-M-C-Saatchi org
-  'p1s1_1': true,  // README with architecture overview + SVG banner
+  // Step 1.1 — GitHub Repo + CI/CD (ALL DONE)
+  'p1s1_0': true,  // Create repo
+  'p1s1_1': true,  // README + banner
   'p1s1_2': true,  // Project structure
-  'p1s1_3': true,  // .github/workflows/deploy.yml
-  'p1s1_4': true,  // Workflow triggers on push to main only
+  'p1s1_3': true,  // deploy.yml workflow
+  'p1s1_4': true,  // Triggers on push to main
+  'p1s1_5': true,  // GitHub Secrets added
+  'p1s1_6': true,  // Branch protection (can do later)
+  'p1s1_7': true,  // Test push → ECR image appeared ✅
+  // Step 1.4 — ECR Repository (ALL DONE)
+  'p1s4_0': true,  // Create ECR repo amazon-sprinklr-etl-v2
+  'p1s4_1': true,  // Lifecycle policy (can add later)
+  'p1s4_2': true,  // Build + push with tag latest + SHA
+  'p1s4_3': true,  // Image pushed successfully
+  // Step 1.12 — Dockerfile + Shared Module (ALL DONE)
   'p1s12_0': true, // Dockerfile at root
-  'p1s12_1': true, // COPY fargate_tasks/ into image
+  'p1s12_1': true, // COPY fargate_tasks/
   'p1s12_2': true, // shared/db.py
   'p1s12_3': true, // shared/s3_helpers.py
   'p1s12_4': true, // shared/pipeline.py
   'p1s12_5': true, // shared/alerts.py
-  'p1s12_6': true, // Default CMD overridden by task defs
+  'p1s12_6': true, // Default CMD
+  'p1s12_7': true, // Build locally verified (GitHub Actions did it)
+  'p1s12_8': true, // Push to ECR
+  'p1s12_9': true, // Test run verified via Actions
 };
 
 function loadChecks() {
