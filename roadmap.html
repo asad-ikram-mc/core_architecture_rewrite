@@ -637,7 +637,7 @@ function setPhase(n) {
 }
 
 // Checklist persistence
-const STORAGE_KEY = 'sprinklr_v2_checks_v10';
+const STORAGE_KEY = 'sprinklr_v2_checks_v11';
 
 // Items completed so far — pre-ticked on first load
 const DEFAULTS = {
@@ -674,6 +674,14 @@ const DEFAULTS = {
   'p1s12_8': true, 'p1s12_9': true,
   // Step 1.13 — CloudWatch + Monitoring (ALL DONE)
   'p1s13_0': true, 'p1s13_1': true, 'p1s13_2': true, 'p1s13_3': true,
+  // Step 2.1 — T0: Schema Validation (MOSTLY DONE)
+  'p2s1_0': true,  // Extract expected_file_structure dict
+  'p2s1_1': true,  // Extract COLUMN_MAPPINGS_sprinklr.json logic
+  'p2s1_2': true,  // Write validate() -> rdl.schema_validation_log
+  'p2s1_3': true,  // Tag fallback logic (today -> latest -> backup)
+  'p2s1_4': true,  // Remove 240s sleep
+  'p2s1_5': true,  // INSERT to qa.pipeline_runs
+  'p2s1_6': true,  // Dockerfile for T0 (uses shared image)
 };
 
 function loadChecks() {
