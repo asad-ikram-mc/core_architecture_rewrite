@@ -637,7 +637,7 @@ function setPhase(n) {
 }
 
 // Checklist persistence
-const STORAGE_KEY = 'sprinklr_v2_checks_v12';
+const STORAGE_KEY = 'sprinklr_v2_checks_v13';
 
 // Items completed so far — pre-ticked on first load
 const DEFAULTS = {
@@ -684,8 +684,23 @@ const DEFAULTS = {
   'p2s1_6': true,  // Dockerfile for T0 (uses shared image)
   // Step 2.2 — T1: Copy + Ingest (MOSTLY DONE)
   'p2s2_0': true, 'p2s2_1': true, 'p2s2_2': true, 'p2s2_3': true, 'p2s2_4': true, 'p2s2_5': true,
-  // Step 2.3 — T2: Merge (MOSTLY DONE)
+  // Step 2.3 — T2: Transform (REDESIGNED — SQL-first)
   'p2s3_0': true, 'p2s3_1': true, 'p2s3_2': true, 'p2s3_3': true, 'p2s3_4': true, 'p2s3_5': true,
+  // Step 3.1 — T3: Collab + LINE (SQL DONE)
+  'p3s1_0': true, 'p3s1_1': true, 'p3s1_2': true, 'p3s1_3': true,
+  'p3s1_4': true, 'p3s1_5': true,
+  // Step 3.2 — T4: Filter Rules 1-20 (SQL DONE)
+  'p3s2_0': true, 'p3s2_1': true, 'p3s2_2': true, 'p3s2_3': true,
+  'p3s2_4': true, 'p3s2_5': true, 'p3s2_6': true,
+  // Step 3.3 — T5: Tag Refresh (SQL DONE)
+  'p3s3_0': true, 'p3s3_1': true, 'p3s3_2': true, 'p3s3_3': true, 'p3s3_4': true,
+  // Step 4.1 — T6: Benchmarking (SQL DONE)
+  'p4s1_0': true, 'p4s1_1': true, 'p4s1_2': true, 'p4s1_3': true,
+  'p4s1_4': true, 'p4s1_5': true, 'p4s1_6': true,
+  // Step 4.2 — T7: Push + QA (SQL DONE)
+  'p4s2_0': true, 'p4s2_1': true, 'p4s2_2': true, 'p4s2_3': true,
+  'p4s2_4': true, 'p4s2_5': true, 'p4s2_6': true, 'p4s2_7': true,
+  'p4s2_8': true, 'p4s2_9': true, 'p4s2_10': true,
 };
 
 function loadChecks() {
