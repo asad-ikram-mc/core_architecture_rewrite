@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Amazon CORE — Operations Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink:#0a0d0f;--ink2:#111518;--ink3:#161c20;
+  --border:#1e2830;--border2:#243040;
+  --amber:#f5a623;--amber2:#e8940f;--amber3:#fbbf4a;
+  --cyan:#00d4d4;--green:#22d17a;--red:#ff4757;--blue:#4a9eff;
+  --text:#c8d4e0;--muted:#4a6070;--white:#f0f4f8;
+  --ff:'DM Sans',sans-serif;--display:'Bebas Neue',cursive;--mono:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--ink);color:var(--text);font-family:var(--ff);font-size:14px;line-height:1.6;min-height:100vh;overflow-x:hidden}
+
+/* grid noise */
+body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(245,166,35,.025) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(245,166,35,.025) 1px,transparent 1px);
+  background-size:40px 40px}
+
+/* ── HEADER ── */
+.hdr{position:relative;z-index:10;display:flex;align-items:center;justify-content:space-between;
+  padding:0 32px;height:60px;background:var(--ink2);border-bottom:1px solid var(--border);
+  flex-shrink:0}
+.hdr::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--amber),transparent)}
+.logo{display:flex;align-items:center;gap:12px}
+.amz{font-family:var(--display);font-size:22px;letter-spacing:3px;color:var(--amber);
+  border:2px solid var(--amber);padding:2px 12px;line-height:1.4}
+.hdr-title{font-family:var(--display);font-size:20px;letter-spacing:2px;color:var(--white)}
+.hdr-title span{color:var(--amber)}
+.hdr-right{display:flex;align-items:center;gap:16px}
+.live-dot{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:.7rem;color:var(--muted)}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(34,209,122,.4)}50%{opacity:.6;box-shadow:0 0 0 4px rgba(34,209,122,0)}}
+.db-badge{font-family:var(--mono);font-size:.65rem;padding:3px 8px;border-radius:3px;
+  background:rgba(245,166,35,.1);border:1px solid rgba(245,166,35,.25);color:var(--amber)}
+
+/* ── LAYOUT ── */
+.layout{display:flex;height:calc(100vh - 60px);position:relative;z-index:1}
+
+/* ── SIDEBAR ── */
+.sidebar{width:220px;flex-shrink:0;background:var(--ink2);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;padding:20px 0}
+.nav-section{padding:0 12px 16px;margin-bottom:4px}
+.nav-label{font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;color:var(--muted);
+  text-transform:uppercase;padding:0 8px;margin-bottom:6px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:6px;
+  cursor:pointer;transition:.15s;border:1px solid transparent;margin-bottom:2px;
+  font-size:.82rem;font-weight:500;color:var(--muted)}
+.nav-item:hover{background:rgba(245,166,35,.06);color:var(--text);border-color:var(--border)}
+.nav-item.active{background:rgba(245,166,35,.12);color:var(--amber);border-color:rgba(245,166,35,.3)}
+.nav-icon{width:18px;height:18px;flex-shrink:0;opacity:.7}
+.nav-item.active .nav-icon{opacity:1}
+.nav-count{margin-left:auto;font-family:var(--mono);font-size:.62rem;padding:1px 6px;
+  border-radius:10px;background:rgba(245,166,35,.15);color:var(--amber)}
+.sidebar-footer{margin-top:auto;padding:16px;border-top:1px solid var(--border)}
+.sidebar-footer p{font-size:.72rem;color:var(--muted);line-height:1.5}
+.sidebar-footer strong{color:var(--amber)}
+
+/* ── MAIN CONTENT ── */
+.main{flex:1;overflow-y:auto;padding:28px 32px}
+.panel{display:none}
+.panel.active{display:block;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ── PANEL HEADER ── */
+.panel-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;gap:16px}
+.panel-title{font-family:var(--display);font-size:2.2rem;letter-spacing:2px;color:var(--white);line-height:1}
+.panel-title span{color:var(--amber)}
+.panel-sub{font-size:.82rem;color:var(--muted);margin-top:5px;line-height:1.6;max-width:560px}
+
+/* ── CARDS ── */
+.card{background:var(--ink2);border:1px solid var(--border);border-radius:8px;padding:20px;margin-bottom:16px}
+.card-title{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--amber);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.card-title::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* ── GRID ── */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+
+/* ── STAT CHIPS ── */
+.stat-chip{background:var(--ink3);border:1px solid var(--border);border-radius:6px;padding:14px 16px;text-align:center}
+.stat-num{font-family:var(--display);font-size:2rem;letter-spacing:1px;color:var(--amber);line-height:1}
+.stat-lbl{font-size:.72rem;color:var(--muted);margin-top:3px}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:5px;
+  font-size:.78rem;font-weight:600;cursor:pointer;border:none;transition:.15s;font-family:var(--ff)}
+.btn-primary{background:var(--amber);color:#000}
+.btn-primary:hover{background:var(--amber3)}
+.btn-ghost{background:transparent;color:var(--text);border:1px solid var(--border)}
+.btn-ghost:hover{border-color:var(--amber);color:var(--amber)}
+.btn-danger{background:rgba(255,71,87,.15);color:var(--red);border:1px solid rgba(255,71,87,.3)}
+.btn-danger:hover{background:rgba(255,71,87,.25)}
+.btn-green{background:rgba(34,209,122,.15);color:var(--green);border:1px solid rgba(34,209,122,.3)}
+.btn-green:hover{background:rgba(34,209,122,.25)}
+.btn-sm{padding:4px 10px;font-size:.72rem}
+
+/* ── FORMS ── */
+.field{margin-bottom:14px}
+.field label{display:block;font-size:.75rem;font-weight:600;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
+.field input,.field select,.field textarea{width:100%;background:var(--ink);border:1px solid var(--border);
+  border-radius:5px;padding:8px 12px;color:var(--text);font-family:var(--ff);font-size:.83rem;
+  outline:none;transition:.15s}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--amber);
+  box-shadow:0 0 0 2px rgba(245,166,35,.12)}
+.field textarea{resize:vertical;min-height:80px;font-family:var(--mono);font-size:.78rem}
+.field input::placeholder,.field textarea::placeholder{color:var(--muted)}
+.inline-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.inline-fields3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+
+/* ── TABLES ── */
+.tbl{width:100%;border-collapse:collapse;font-size:.8rem}
+.tbl th{text-align:left;padding:8px 12px;font-family:var(--mono);font-size:.65rem;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+  border-bottom:1px solid var(--border);background:var(--ink3)}
+.tbl td{padding:9px 12px;border-bottom:1px solid rgba(30,40,48,.7);vertical-align:middle}
+.tbl tr:hover td{background:rgba(245,166,35,.03)}
+.tbl tr:last-child td{border-bottom:none}
+.mono{font-family:var(--mono);font-size:.75rem}
+.tag{display:inline-block;padding:2px 7px;border-radius:3px;font-size:.68rem;font-weight:600;font-family:var(--mono)}
+.tag-amber{background:rgba(245,166,35,.15);color:var(--amber);border:1px solid rgba(245,166,35,.25)}
+.tag-green{background:rgba(34,209,122,.12);color:var(--green);border:1px solid rgba(34,209,122,.2)}
+.tag-red{background:rgba(255,71,87,.12);color:var(--red);border:1px solid rgba(255,71,87,.2)}
+.tag-blue{background:rgba(74,158,255,.12);color:var(--blue);border:1px solid rgba(74,158,255,.2)}
+.tag-muted{background:rgba(74,96,112,.15);color:var(--muted);border:1px solid rgba(74,96,112,.25)}
+
+/* ── TOGGLE ── */
+.toggle{position:relative;display:inline-block;width:36px;height:20px}
+.toggle input{opacity:0;width:0;height:0}
+.slider{position:absolute;inset:0;border-radius:20px;background:var(--border2);cursor:pointer;transition:.2s}
+.slider::before{content:'';position:absolute;width:14px;height:14px;border-radius:50%;
+  background:#fff;left:3px;top:3px;transition:.2s}
+.toggle input:checked+.slider{background:var(--amber)}
+.toggle input:checked+.slider::before{transform:translateX(16px)}
+
+/* ── RULE CARDS ── */
+.rule-card{background:var(--ink3);border:1px solid var(--border);border-radius:7px;
+  padding:14px 16px;margin-bottom:8px;display:flex;align-items:flex-start;gap:12px;transition:.15s}
+.rule-card:hover{border-color:var(--border2)}
+.rule-card.disabled{opacity:.45}
+.rule-num{font-family:var(--display);font-size:1.4rem;color:var(--amber);
+  width:32px;flex-shrink:0;line-height:1;margin-top:2px}
+.rule-body{flex:1}
+.rule-name{font-weight:600;color:var(--white);font-size:.85rem;margin-bottom:2px}
+.rule-desc{font-size:.76rem;color:var(--muted);line-height:1.5}
+.rule-meta{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap}
+.rule-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+
+/* ── TRACER ── */
+.tracer-input{display:flex;gap:10px;margin-bottom:20px}
+.tracer-input input{flex:1;background:var(--ink);border:1px solid var(--border);border-radius:5px;
+  padding:10px 14px;color:var(--text);font-family:var(--mono);font-size:.82rem;outline:none}
+.tracer-input input:focus{border-color:var(--amber)}
+.journey-item{display:flex;gap:14px;margin-bottom:0;position:relative}
+.journey-item::before{content:'';position:absolute;left:14px;top:28px;bottom:-8px;
+  width:1px;background:var(--border)}
+.journey-item:last-child::before{display:none}
+.journey-dot{width:28px;height:28px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;
+  position:relative;z-index:1;margin-top:8px}
+.journey-dot.pass{background:rgba(34,209,122,.2);border:2px solid var(--green);color:var(--green)}
+.journey-dot.fail{background:rgba(255,71,87,.2);border:2px solid var(--red);color:var(--red)}
+.journey-dot.info{background:rgba(245,166,35,.2);border:2px solid var(--amber);color:var(--amber)}
+.journey-content{flex:1;background:var(--ink3);border:1px solid var(--border);border-radius:6px;
+  padding:10px 14px;margin-bottom:8px}
+.journey-title{font-weight:600;font-size:.82rem;color:var(--white)}
+.journey-detail{font-size:.76rem;color:var(--muted);margin-top:2px;font-family:var(--mono)}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:24px;right:24px;z-index:9999;background:var(--ink2);
+  border:1px solid var(--border);border-radius:7px;padding:12px 16px;
+  display:flex;align-items:center;gap:10px;font-size:.82rem;
+  box-shadow:0 8px 32px rgba(0,0,0,.5);transform:translateY(80px);opacity:0;
+  transition:.3s;pointer-events:none;max-width:320px}
+.toast.show{transform:none;opacity:1}
+.toast-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--ink)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+
+/* ── CODE BLOCK ── */
+.code{background:var(--ink);border:1px solid var(--border);border-radius:5px;
+  padding:12px 14px;font-family:var(--mono);font-size:.76rem;color:var(--cyan);
+  overflow-x:auto;line-height:1.7}
+.code .cm{color:var(--muted)}
+.code .kw{color:var(--amber)}
+.code .str{color:var(--green)}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="logo">
+    <div class="amz">AMAZON</div>
+    <div class="hdr-title">CORE <span>OPS</span> PANEL</div>
+  </div>
+  <div class="hdr-right">
+    <div class="live-dot"><span class="dot"></span>PIPELINE ACTIVE</div>
+    <div class="db-badge">core_sprinklr_v2</div>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="nav-section">
+      <div class="nav-label">Overview</div>
+      <div class="nav-item active" onclick="nav('health')">
+        <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        Pipeline Health
+        <span class="nav-count" id="nc-health">OK</span>
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Schema</div>
+      <div class="nav-item" onclick="nav('columns')">
+        <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7C5 4 4 5 4 7z"/><path d="M9 4v16M15 4v16M4 12h16"/></svg>
+        Column Manager
+        <span class="nav-count" id="nc-columns">145</span>
+      </div>
+      <div class="nav-item" onclick="nav('schema')">
+        <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        Schema Mismatch
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Filter Rules</div>
+      <div class="nav-item" onclick="nav('rules')">
+        <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+        Filter Rules 1–22
+        <span class="nav-count">22</span>
+      </div>
+      <div class="nav-item" onclick="nav('reftables')">
+        <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3m-4.2-7.8l-2.1 2.1m-5.4 5.4l-2.1 2.1m0-9.6l2.1 2.1m5.4 5.4l2.1 2.1"/></svg>
+        Ref Tables
+        <span class="nav-count">19</span>
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Debug</div>
+      <div class="nav-item" onclick="nav('tracer')">
+        <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        Post Tracer
+      </div>
+      <div class="nav-item" onclick="nav('corrections')">
+        <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+        T8 Corrections
+      </div>
+    </div>
+    <div class="sidebar-footer">
+      <p><strong>v2 Pipeline</strong><br>9 Fargate tasks<br>33 tables · 5 schemas<br>adl.benchmarks: 1,370 rows</p>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- ── PIPELINE HEALTH ── -->
+    <div class="panel active" id="panel-health">
+      <div class="panel-hdr">
+        <div>
+          <div class="panel-title">PIPELINE <span>HEALTH</span></div>
+          <div class="panel-sub">Live status of the last pipeline run, filter summary, and table row counts.</div>
+        </div>
+        <button class="btn btn-primary" onclick="refreshHealth()">↻ Refresh</button>
+      </div>
+
+      <div class="grid3" style="margin-bottom:16px">
+        <div class="stat-chip"><div class="stat-num" id="h-total">69,778</div><div class="stat-lbl">adl.posts_current</div></div>
+        <div class="stat-chip"><div class="stat-num" id="h-filtered" style="color:var(--red)">—</div><div class="stat-lbl">filtered last run</div></div>
+        <div class="stat-chip"><div class="stat-num" id="h-duration" style="color:var(--green)">—</div><div class="stat-lbl">last run duration</div></div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">Last Pipeline Run</div>
+          <div id="run-detail">
+            <div class="tbl-wrap">
+              <table class="tbl">
+                <tr><td class="mono" style="color:var(--muted)">Status</td><td><span class="tag tag-green">—</span></td></tr>
+                <tr><td class="mono" style="color:var(--muted)">Run ID</td><td class="mono" style="font-size:.68rem;color:var(--muted)">—</td></tr>
+                <tr><td class="mono" style="color:var(--muted)">Started</td><td class="mono">—</td></tr>
+                <tr><td class="mono" style="color:var(--muted)">Duration</td><td class="mono">—</td></tr>
+                <tr><td class="mono" style="color:var(--muted)">Steps</td><td class="mono">—</td></tr>
+                <tr><td class="mono" style="color:var(--muted)">Triggered by</td><td class="mono">—</td></tr>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Filter Run Summary</div>
+          <div id="filter-summary-table">
+            <table class="tbl">
+              <thead><tr><th>#</th><th>Reason</th><th>Filtered</th></tr></thead>
+              <tbody id="filter-summary-body">
+                <tr><td colspan="3" style="color:var(--muted);text-align:center;padding:20px">Run pipeline to see filter counts</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Post Journey Breakdown</div>
+        <div class="grid3" id="journey-breakdown">
+          <div class="stat-chip"><div class="stat-num" style="color:var(--green)">—</div><div class="stat-lbl">published</div></div>
+          <div class="stat-chip"><div class="stat-num" style="color:var(--red)">—</div><div class="stat-lbl">filtered</div></div>
+          <div class="stat-chip"><div class="stat-num" style="color:var(--amber)">—</div><div class="stat-lbl">collab deduped</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Run These Queries in RDS Query Editor</div>
+        <div class="code"><span class="cm">-- Last run status</span>
+<span class="kw">SELECT</span> run_id, status, step_reached, rows_ingested, duration_seconds, triggered_by
+<span class="kw">FROM</span> qa.pipeline_runs <span class="kw">ORDER BY</span> started_at <span class="kw">DESC LIMIT</span> 3;
+
+<span class="cm">-- Filter counts per rule</span>
+<span class="kw">SELECT</span> filter_rule, filter_reason, posts_filtered
+<span class="kw">FROM</span> qa.filter_run_summary <span class="kw">ORDER BY</span> filter_rule;
+
+<span class="cm">-- Post journey breakdown</span>
+<span class="kw">SELECT</span> final_status, <span class="kw">COUNT</span>(*) <span class="kw">FROM</span> qa.post_journey <span class="kw">GROUP BY</span> final_status;
+
+<span class="cm">-- v2 vs backup comparison</span>
+<span class="kw">SELECT</span> <span class="str">'backup'</span> src, <span class="kw">COUNT</span>(*) <span class="kw">FROM</span> adl.sprinklr_table_backup
+<span class="kw">UNION ALL SELECT</span> <span class="str">'v2'</span>, <span class="kw">COUNT</span>(*) <span class="kw">FROM</span> adl.posts_current;</div>
+      </div>
+    </div>
+
+    <!-- ── COLUMN MANAGER ── -->
+    <div class="panel" id="panel-columns">
+      <div class="panel-hdr">
+        <div>
+          <div class="panel-title">COLUMN <span>MANAGER</span></div>
+          <div class="panel-sub">Add new columns, track Sprinklr renames. Changes require a Git push and pipeline re-run to take effect.</div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">Add New Column</div>
+          <div class="field"><label>Column Name (Sprinklr raw field)</label>
+            <input type="text" id="new-col-raw" placeholder="e.g. CCR_SOCIAL_MEDIA__NEW_TAG__OUTBOUND_MESSAGE"></div>
+          <div class="inline-fields">
+            <div class="field"><label>Display Name</label>
+              <input type="text" id="new-col-display" placeholder="e.g. New Tag"></div>
+            <div class="field"><label>Data Type</label>
+              <select id="new-col-type">
+                <option>TEXT</option><option>BOOLEAN</option><option>NUMERIC</option><option>DATE</option><option>TIMESTAMPTZ</option>
+              </select></div>
+          </div>
+          <div class="field"><label>Where to extract</label>
+            <select id="new-col-task">
+              <option>T2 — post_attributes (static field extracted once)</option>
+              <option>T5 — tag_refresh (Sprinklr tag column, changes over time)</option>
+              <option>Both T2 + T5</option>
+            </select></div>
+          <div class="field"><label>Notes</label>
+            <textarea id="new-col-notes" placeholder="e.g. Added April 2026 — tracks whether post was reactive to news event"></textarea></div>
+          <button class="btn btn-primary" onclick="generateColumnSQL()">Generate SQL</button>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Generated SQL</div>
+          <div id="col-sql-output" class="code" style="min-height:180px;color:var(--muted)">
+            Fill in the form and click Generate SQL →
+          </div>
+          <div style="margin-top:12px;display:flex;gap:8px">
+            <button class="btn btn-ghost btn-sm" onclick="copySQL('col-sql-output')">Copy SQL</button>
+            <button class="btn btn-ghost btn-sm" onclick="copySQL('col-sql-output')">Copy Migration</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">How to Deploy a New Column</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
+          <div style="background:var(--ink3);border:1px solid var(--border);border-radius:6px;padding:12px">
+            <div style="font-family:var(--display);font-size:1.6rem;color:var(--amber);line-height:1">01</div>
+            <div style="font-size:.78rem;font-weight:600;color:var(--white);margin:5px 0 3px">ALTER TABLE</div>
+            <div style="font-size:.72rem;color:var(--muted)">Run the generated ALTER TABLE in RDS Query Editor</div>
+          </div>
+          <div style="background:var(--ink3);border:1px solid var(--border);border-radius:6px;padding:12px">
+            <div style="font-family:var(--display);font-size:1.6rem;color:var(--amber);line-height:1">02</div>
+            <div style="font-size:.78rem;font-weight:600;color:var(--white);margin:5px 0 3px">Edit SQL</div>
+            <div style="font-size:.72rem;color:var(--muted)">Add raw_data->>'COLUMN' to T2 or T5 SQL file</div>
+          </div>
+          <div style="background:var(--ink3);border:1px solid var(--border);border-radius:6px;padding:12px">
+            <div style="font-family:var(--display);font-size:1.6rem;color:var(--amber);line-height:1">03</div>
+            <div style="font-size:.78rem;font-weight:600;color:var(--white);margin:5px 0 3px">Git Push</div>
+            <div style="font-size:.72rem;color:var(--muted)">Push to main → GitHub Actions rebuilds Docker image</div>
+          </div>
+          <div style="background:var(--ink3);border:1px solid var(--border);border-radius:6px;padding:12px">
+            <div style="font-family:var(--display);font-size:1.6rem;color:var(--amber);line-height:1">04</div>
+            <div style="font-size:.78rem;font-weight:600;color:var(--white);margin:5px 0 3px">Next Run</div>
+            <div style="font-size:.72rem;color:var(--muted)">Column populated on next pipeline run automatically</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SCHEMA MISMATCH ── -->
+    <div class="panel" id="panel-schema">
+      <div class="panel-hdr">
+        <div>
+          <div class="panel-title">SCHEMA <span>MISMATCH</span></div>
+          <div class="panel-sub">When Sprinklr renames a column (like the GCCI→CCR rename in V5), T0 catches it and the pipeline stops. Fix it here.</div>
+        </div>
+      </div>
+
+      <div class="card" style="border-color:rgba(255,71,87,.3)">
+        <div class="card-title" style="color:var(--red)">How Mismatches Happen</div>
+        <p style="font-size:.82rem;color:var(--muted);line-height:1.7">Sprinklr periodically renames custom field columns. In V5, all <code style="font-family:var(--mono);color:var(--amber)">GCCI_</code> prefixes changed to <code style="font-family:var(--mono);color:var(--amber)">CCR_</code> or hex IDs overnight. T0 validates incoming S3 files against <code style="font-family:var(--mono);color:var(--amber)">expected_structure.py</code> and stops the pipeline with a Slack alert listing exactly which columns are missing.</p>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">Log a Column Rename</div>
+          <div class="field"><label>Old Sprinklr Column Name</label>
+            <input type="text" id="rename-old" placeholder="e.g. GCCI_SOCIAL_MEDIA__CONTENT_SOURCE__OUTBOUND_MESSAGE"></div>
+          <div class="field"><label>New Sprinklr Column Name</label>
+            <input type="text" id="rename-new" placeholder="e.g. CCR_SOCIAL_MEDIA__CONTENT_SOURCE__OUTBOUND_MESSAGE"></div>
+          <div class="field"><label>Affected file(s)</label>
+            <input type="text" id="rename-files" placeholder="e.g. FluencyMonthly, TagPull, FluencyTagsOnly"></div>
+          <button class="btn btn-primary" onclick="generateRenameFix()">Generate Fix</button>
+        </div>
+        <div class="card">
+          <div class="card-title">Fix Instructions</div>
+          <div id="rename-output" class="code" style="min-height:180px;color:var(--muted)">
+            Fill in old + new column name →
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Known Renames (V5 GCCI → CCR)</div>
+        <table class="tbl">
+          <thead><tr><th>Old (GCCI)</th><th>New (CCR)</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">GCCI_SOCIAL_MEDIA__CONTENT_SOURCE__OUTBOUND_MESSAGE</td><td class="mono">CCR_SOCIAL_MEDIA__CONTENT_SOURCE__OUTBOUND_MESSAGE</td><td><span class="tag tag-green">Fixed</span></td></tr>
+            <tr><td class="mono">GCCI_SOCIAL_MEDIA__WHAT_IS_THE_FORMAT_OF_THIS_POST...</td><td class="mono">CCR_SOCIAL_MEDIA__WHAT_IS_THE_FORMAT_OF_THIS_POST...</td><td><span class="tag tag-green">Fixed</span></td></tr>
+            <tr><td class="mono">GCCI_SOCIAL_MEDIA__IF_VIDEO_REEL__HOW_LONG...</td><td class="mono">C_63DAEF956DF27A45C6B5BCDE</td><td><span class="tag tag-green">Fixed</span></td></tr>
+            <tr><td class="mono">GCCI_SOCIAL_MEDIA__IS_THIS_POST_CONSIDERED_BREAKING_NEWS...</td><td class="mono">CCR_SOCIAL_MEDIA__IS_THIS_POST_CONSIDERED_BREAKING_NEWS...</td><td><span class="tag tag-green">Fixed</span></td></tr>
+            <tr><td class="mono">—</td><td class="mono">CCR_SOCIAL_MEDIA__WAS_THIS_POST_DELETED...</td><td><span class="tag tag-amber">New Column</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── FILTER RULES ── -->
+    <div class="panel" id="panel-rules">
+      <div class="panel-hdr">
+        <div>
+          <div class="panel-title">FILTER <span>RULES</span></div>
+          <div class="panel-sub">All 22 filter rules. Data-driven rules (blacklist, XCM messages, country exclusions) can be changed via ref tables with no code deploy.</div>
+        </div>
+        <button class="btn btn-primary" onclick="showAddRule()">+ Add Rule</button>
+      </div>
+
+      <div id="add-rule-form" style="display:none" class="card" style="border-color:rgba(245,166,35,.3)">
+        <div class="card-title">New Filter Rule</div>
+        <div class="inline-fields3">
+          <div class="field"><label>Rule Number</label><input type="number" id="nr-num" placeholder="23"></div>
+          <div class="field"><label>Lambda Source</label>
+            <select id="nr-lambda"><option>T4 (was Lambda 4)</option><option>T4 (was Lambda 5)</option><option>T4 (was Lambda 6)</option><option>T4 (was Lambda 7)</option></select></div>
+          <div class="field"><label>Type</label>
+            <select id="nr-type"><option>SQL filter (hardcoded)</option><option>Ref table driven</option></select></div>
+        </div>
+        <div class="field"><label>Rule Name</label><input type="text" id="nr-name" placeholder="e.g. WeChat posts before 2023"></div>
+        <div class="field"><label>Description</label><textarea id="nr-desc" placeholder="What this rule filters and why"></textarea></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-primary" onclick="generateRuleSQL()">Generate SQL</button>
+          <button class="btn btn-ghost" onclick="document.getElementById('add-rule-form').style.display='none'">Cancel</button>
+        </div>
+        <div id="rule-sql-out" class="code" style="margin-top:12px;display:none"></div>
+      </div>
+
+      <div id="rules-list">
+        <!-- Generated by JS -->
+      </div>
+    </div>
+
+    <!-- ── REF TABLES ── -->
+    <div class="panel" id="panel-reftables">
+      <div class="panel-hdr">
+        <div>
+          <div class="panel-title">REF <span>TABLES</span></div>
+          <div class="panel-sub">Data-driven config. Add/remove entries to change pipeline behaviour — no code deploy needed. Changes take effect on next pipeline run.</div>
+        </div>
+      </div>
+
+      <div class="grid2" style="margin-bottom:16px">
+        <div class="card">
+          <div class="card-title">Add to Blacklist</div>
+          <div class="field"><label>Permalink</label><input type="text" id="bl-url" placeholder="https://www.instagram.com/p/..."></div>
+          <div class="field"><label>Reason</label><input type="text" id="bl-reason" placeholder="e.g. Duplicate of post xyz / off-topic"></div>
+          <button class="btn btn-primary btn-sm" onclick="genBlacklistSQL()">Generate INSERT</button>
+          <div id="bl-sql" class="code" style="margin-top:10px;display:none;font-size:.72rem"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Add XCM Post Message</div>
+          <div class="field"><label>Post Message Value (exact match)</label><input type="text" id="xcm-val" placeholder="e.g. AMZ XCM Brand (11679)"></div>
+          <button class="btn btn-primary btn-sm" onclick="genXCMSQL()">Generate INSERT</button>
+          <div id="xcm-sql" class="code" style="margin-top:10px;display:none;font-size:.72rem"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Add Country Exclusion</div>
+          <div class="field"><label>Country Code (2-char)</label><input type="text" id="ce-code" placeholder="e.g. AT" maxlength="2" style="text-transform:uppercase"></div>
+          <div class="field"><label>Reason</label><input type="text" id="ce-reason" placeholder="e.g. Out of scope region"></div>
+          <button class="btn btn-primary btn-sm" onclick="genCountrySQL()">Generate INSERT</button>
+          <div id="ce-sql" class="code" style="margin-top:10px;display:none;font-size:.72rem"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Add MBS Update (Impression Correction)</div>
+          <div class="field"><label>Permalink</label><input type="text" id="mbs-url" placeholder="https://..."></div>
+          <div class="inline-fields">
+            <div class="field"><label>Old Impressions</label><input type="number" id="mbs-old" placeholder="15420"></div>
+            <div class="field"><label>New Impressions</label><input type="number" id="mbs-new" placeholder="18750"></div>
+          </div>
+          <div class="field"><label>Reason / Batch ID</label><input type="text" id="mbs-reason" placeholder="e.g. Q1-2026 MBS correction"></div>
+          <button class="btn btn-primary btn-sm" onclick="genMBSSQL()">Generate INSERT</button>
+          <div id="mbs-sql" class="code" style="margin-top:10px;display:none;font-size:.72rem"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">All Ref Tables — Current Row Counts</div>
+        <table class="tbl">
+          <thead><tr><th>Table</th><th>Rows</th><th>Source</th><th>Changed by</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">ref.blacklist</td><td class="mono">124</td><td>Blacklist.csv</td><td>INSERT SQL / David</td></tr>
+            <tr><td class="mono">ref.country_mapping</td><td class="mono">88</td><td>account_metadataa.xlsx</td><td>Re-seed script</td></tr>
+            <tr><td class="mono">ref.excluded_countries</td><td class="mono">8</td><td>Hardcoded Lambda 5</td><td>INSERT/DELETE SQL</td></tr>
+            <tr><td class="mono">ref.xcm_post_messages</td><td class="mono">8</td><td>Hardcoded Lambda 7</td><td>INSERT/DELETE SQL</td></tr>
+            <tr><td class="mono">ref.post_message_rules</td><td class="mono">8</td><td>Hardcoded Lambda 7 R14/15/16</td><td>INSERT/DELETE SQL</td></tr>
+            <tr><td class="mono">ref.filter_exemptions</td><td class="mono">6</td><td>Hardcoded Lambda 7</td><td>INSERT/DELETE SQL</td></tr>
+            <tr><td class="mono">ref.apac_author_mapping</td><td class="mono">93</td><td>apac_author_mapping.xlsx</td><td>Re-seed script</td></tr>
+            <tr><td class="mono">ref.post_message_mapping</td><td class="mono">52</td><td>PostMessage_tagging.xlsx</td><td>Re-seed script</td></tr>
+            <tr><td class="mono">ref.linkedin_region_lookup</td><td class="mono">111</td><td>linkedinregionlookup.csv</td><td>Re-seed script</td></tr>
+            <tr><td class="mono">ref.mbs_updates</td><td class="mono">954</td><td>mbs_update_data.csv</td><td>INSERT SQL / quarterly</td></tr>
+            <tr><td class="mono">ref.custom_metric_corrections</td><td class="mono">2</td><td>Google Sheet 18W6Z1…</td><td>INSERT SQL / David</td></tr>
+            <tr><td class="mono">ref.x_quote_deletions</td><td class="mono">5</td><td>remove_x_quote_posts.csv</td><td>INSERT SQL / David</td></tr>
+            <tr><td class="mono">adl.benchmarks</td><td class="mono">1,370</td><td>4 benchmark xlsx files</td><td>Re-seed script / quarterly</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── POST TRACER ── -->
+    <div class="panel" id="panel-tracer">
+      <div class="panel-hdr">
+        <div>
+          <div class="panel-title">POST <span>TRACER</span></div>
+          <div class="panel-sub">Paste any permalink or post_id_key to see exactly what happened to it across all pipeline runs.</div>
+        </div>
+      </div>
+
+      <div class="tracer-input">
+        <input type="text" id="trace-input" placeholder="https://www.instagram.com/p/... or post_id_key" 
+               onkeydown="if(event.key==='Enter')tracePost()">
+        <button class="btn btn-primary" onclick="tracePost()">Trace Post</button>
+        <button class="btn btn-ghost" onclick="loadSampleTrace()">Load Example</button>
+      </div>
+
+      <div id="trace-results" style="display:none">
+        <div class="grid2" style="margin-bottom:16px">
+          <div class="card">
+            <div class="card-title">Post Identity</div>
+            <table class="tbl">
+              <tr><td style="color:var(--muted)">post_id_key</td><td class="mono" id="tr-key">—</td></tr>
+              <tr><td style="color:var(--muted)">Account</td><td id="tr-account">—</td></tr>
+              <tr><td style="color:var(--muted)">Platform</td><td id="tr-platform">—</td></tr>
+              <tr><td style="color:var(--muted)">Country</td><td id="tr-country">—</td></tr>
+              <tr><td style="color:var(--muted)">Delivery</td><td id="tr-delivery">—</td></tr>
+              <tr><td style="color:var(--muted)">Published</td><td id="tr-published">—</td></tr>
+            </table>
+          </div>
+          <div class="card">
+            <div class="card-title">Latest Run Result</div>
+            <table class="tbl">
+              <tr><td style="color:var(--muted)">Final Status</td><td id="tr-status">—</td></tr>
+              <tr><td style="color:var(--muted)">Filter Rule</td><td id="tr-rule">—</td></tr>
+              <tr><td style="color:var(--muted)">Filter Reason</td><td id="tr-reason">—</td></tr>
+              <tr><td style="color:var(--muted)">is_manual_tracker</td><td id="tr-manual">—</td></tr>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Pipeline Journey</div>
+          <div id="journey-timeline"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Run These Queries to Get Live Data</div>
+          <div class="code" id="tracer-queries"></div>
+        </div>
+      </div>
+
+      <div id="trace-empty" class="card" style="text-align:center;padding:40px">
+        <div style="font-size:2rem;margin-bottom:10px">🔍</div>
+        <div style="font-weight:600;color:var(--white);margin-bottom:6px">Paste a permalink above to trace a post</div>
+        <div style="font-size:.8rem;color:var(--muted)">Searches qa.post_journey, qa.collab_priority_decisions, and qa.t8_corrections_log</div>
+      </div>
+    </div>
+
+    <!-- ── T8 CORRECTIONS ── -->
+    <div class="panel" id="panel-corrections">
+      <div class="panel-hdr">
+        <div>
+          <div class="panel-title">T8 <span>CORRECTIONS</span></div>
+          <div class="panel-sub">Post-pipeline corrections. Previously managed via Google Sheets and S3 CSVs. Now all in ref.* tables — applied automatically on next run.</div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">Custom Metric Correction</div>
+          <div class="field"><label>Permalink</label><input type="text" id="cm-url" placeholder="https://..."></div>
+          <div class="inline-fields">
+            <div class="field"><label>Column Name</label>
+              <select id="cm-col">
+                <option>Total Impressions</option><option>Organic Impressions</option>
+                <option>Engagements</option><option>Likes</option><option>Comments</option>
+                <option>Organic Reach</option><option>Video Views</option>
+              </select></div>
+            <div class="field"><label>New Value</label><input type="number" id="cm-val" placeholder="25000"></div>
+          </div>
+          <div class="field"><label>Reason</label><input type="text" id="cm-reason" placeholder="e.g. Sprinklr reported incorrect impression count"></div>
+          <button class="btn btn-primary btn-sm" onclick="genCorrectionSQL()">Generate INSERT</button>
+          <div id="cm-sql" class="code" style="margin-top:10px;display:none;font-size:.72rem"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">X Quote Post Deletion</div>
+          <div class="field"><label>Post URL to delete</label><input type="text" id="xq-url" placeholder="https://x.com/AmazonNews/status/..."></div>
+          <div class="field"><label>Reason</label><input type="text" id="xq-reason" placeholder="e.g. X quote post — remove per David"></div>
+          <button class="btn btn-danger btn-sm" onclick="genXQuoteSQL()">Generate DELETE</button>
+          <div id="xq-sql" class="code" style="margin-top:10px;display:none;font-size:.72rem"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Pending Corrections (is_applied = FALSE)</div>
+        <p style="font-size:.8rem;color:var(--muted);margin-bottom:12px">These will be applied on the next pipeline run by T8.</p>
+        <div class="code"><span class="kw">SELECT</span> id, permalink, column_name, new_value, reason, created_at
+<span class="kw">FROM</span> ref.custom_metric_corrections
+<span class="kw">WHERE</span> is_applied = <span class="str">FALSE</span> <span class="kw">ORDER BY</span> created_at;
+
+<span class="kw">SELECT</span> id, permalink, old_impressions, new_impressions, reason, batch_id
+<span class="kw">FROM</span> ref.mbs_updates
+<span class="kw">WHERE</span> is_applied = <span class="str">FALSE</span> <span class="kw">ORDER BY</span> created_at;
+
+<span class="kw">SELECT</span> id, permalink, reason
+<span class="kw">FROM</span> ref.x_quote_deletions
+<span class="kw">WHERE</span> is_applied = <span class="str">FALSE</span>;</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">T8 Audit Log</div>
+        <div class="code"><span class="cm">-- See all corrections applied in last run</span>
+<span class="kw">SELECT</span> correction_type, permalink, column_name, old_value, new_value, applied_at
+<span class="kw">FROM</span> qa.t8_corrections_log
+<span class="kw">ORDER BY</span> applied_at <span class="kw">DESC LIMIT</span> 20;</div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span class="toast-dot" id="toast-dot"></span>
+  <span id="toast-msg"></span>
+</div>
+
+<script>
+// ── Navigation ────────────────────────────────────────────────────────────────
+function nav(id) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelector(`[onclick="nav('${id}')"]`).classList.add('active');
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+}
+
+// ── Toast ────────────────────────────────────────────────────────────────────
+function toast(msg, colour) {
+  const t = document.getElementById('toast');
+  const d = document.getElementById('toast-dot');
+  const m = document.getElementById('toast-msg');
+  d.style.background = colour || 'var(--green)';
+  m.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── Copy SQL ──────────────────────────────────────────────────────────────────
+function copySQL(id) {
+  const el = document.getElementById(id);
+  navigator.clipboard.writeText(el.innerText).then(() => toast('SQL copied to clipboard'));
+}
+
+// ── Filter Rules data ─────────────────────────────────────────────────────────
+const RULES = [
+  {n:1,  name:'MESSAGE_TYPE not Update/Reply', lambda:'L4/T4', type:'sql',
+   desc:'Removes non-posting entries (Sprinklr logs all account activity, not just posts).', source:'Lambda 4'},
+  {n:2,  name:'Post text = "This message has no text"', lambda:'L4/T4', type:'ref',
+   desc:'Removes blank posts. Bypass: ref.permalink_bypasses (R2).', source:'Lambda 4'},
+  {n:3,  name:'File extension only (Facebook)', lambda:'L4/T4', type:'sql',
+   desc:'Facebook-only. Removes posts where text is just .png/.jpg/.mp4/.jpeg.', source:'Lambda 4'},
+  {n:4,  name:'Cover photo / phone number update', lambda:'L4/T4', type:'sql',
+   desc:'Removes page admin activity — cover photo changes, phone updates.', source:'Lambda 4'},
+  {n:'5a', name:'Impressions < 250 (all dates)', lambda:'L4/T4', type:'sql',
+   desc:'Organic/Boosted only. Too low to be meaningful.', source:'Lambda 4'},
+  {n:'5b', name:'250-499 impressions + <50 engagements (2026+)', lambda:'L4/T4', type:'sql',
+   desc:'2026 posts only. Low impressions AND low engagement.', source:'Lambda 4'},
+  {n:6,  name:'LinkedIn dark posts', lambda:'L4/T4', type:'sql',
+   desc:'LinkedIn Organic IS_DARK_POST = True. Dark posts not visible on public page.', source:'Lambda 4'},
+  {n:7,  name:'Excluded countries', lambda:'L5/T4', type:'ref',
+   desc:'Countries in ref.excluded_countries (AT, BE, NL, PL, SE, TR, SG, CN). AT is NOT MENA.', source:'Lambda 5'},
+  {n:8,  name:'Deleted posts', lambda:'L5/T4', type:'sql',
+   desc:'to_be_deleted = TRUE. LINE rows (is_manual_tracker=2) always exempt.', source:'Lambda 5'},
+  {n:9,  name:'Null or empty Country', lambda:'L6/T4', type:'sql',
+   desc:'Posts with no country mapping. Unmapped accounts go to S3 for review.', source:'Lambda 6'},
+  {n:10, name:'Zero spend paid posts', lambda:'L6/T4', type:'sql',
+   desc:'Paid posts where SPENT__USD__IN_USD__SUM = 0.', source:'Lambda 6'},
+  {n:11, name:'Published on or before 2023-09-04', lambda:'L7/T4', type:'sql',
+   desc:'Fixed historical cutoff date. WeChat always exempt.', source:'Lambda 7'},
+  {n:12, name:'MENA region', lambda:'L7/T4', type:'sql',
+   desc:'All posts from Region = MENA.', source:'Lambda 7'},
+  {n:13, name:'Amazon News X - EU account', lambda:'L7/T4', type:'sql',
+   desc:'Exact match on account name "Amazon News X - EU".', source:'Lambda 7'},
+  {n:14, name:'US posts without approved Post Message', lambda:'L7/T4', type:'ref',
+   desc:'Valid messages in ref.post_message_rules (NA). Exemptions: Amazon IG - Inside, Amazon News IG - US.', source:'Lambda 7'},
+  {n:15, name:'India posts without approved Post Message', lambda:'L7/T4', type:'ref',
+   desc:'Valid messages in ref.post_message_rules (APAC_IN). Only Amazon IG/FB - IN accounts.', source:'Lambda 7'},
+  {n:16, name:'Europe Organic without EMEA Post Message', lambda:'L7/T4', type:'ref',
+   desc:'Valid messages in ref.post_message_rules (EMEA). Exemptions: Instagram Story, YouTube, 2 accounts.', source:'Lambda 7'},
+  {n:17, name:'APAC + X + Sent Reply', lambda:'L7/T4', type:'sql',
+   desc:'APAC region X posts with Message_Type = Reply.', source:'Lambda 7'},
+  {n:18, name:'APAC excluded author mappings', lambda:'L7/T4', type:'ref',
+   desc:'Account + author_name combos in ref.apac_author_mapping where status = Exclude.', source:'Lambda 7'},
+  {n:19, name:'Branded content all Global metadata', lambda:'L7/T4', type:'sql',
+   desc:'Posts where all 4 tag columns = Global (rep_topic, content_category, tier1_event, target_geography).', source:'Lambda 7'},
+  {n:20, name:'Blacklisted permalinks', lambda:'L7/T4', type:'ref',
+   desc:'Exact permalink match in ref.blacklist.', source:'Lambda 7'},
+  {n:21, name:'XCM Post Messages', lambda:'L7/T4', type:'ref',
+   desc:'Post Message in ref.xcm_post_messages (8 XCM values including double-space variant).', source:'Lambda 7'},
+  {n:22, name:'Collab dedup safety net', lambda:'L7/T4', type:'sql',
+   desc:'Manual tracker Organic/Boosted where Sprinklr version survived rules 1-21.', source:'Lambda 7'},
+];
+
+const ruleStates = {};
+RULES.forEach(r => ruleStates[r.n] = true);
+
+function renderRules() {
+  const list = document.getElementById('rules-list');
+  list.innerHTML = RULES.map(r => {
+    const on = ruleStates[r.n];
+    const typeTag = r.type === 'ref'
+      ? '<span class="tag tag-amber">ref table</span>'
+      : '<span class="tag tag-blue">SQL</span>';
+    return `
+    <div class="rule-card ${on ? '' : 'disabled'}" id="rule-card-${r.n}">
+      <div class="rule-num">R${r.n}</div>
+      <div class="rule-body">
+        <div class="rule-name">${r.name}</div>
+        <div class="rule-desc">${r.desc}</div>
+        <div class="rule-meta">
+          ${typeTag}
+          <span class="tag tag-muted">${r.source}</span>
+          ${r.type === 'ref' ? '<span class="tag tag-green" style="cursor:pointer" onclick="nav(\'reftables\')">Edit in Ref Tables →</span>' : ''}
+        </div>
+      </div>
+      <div class="rule-actions">
+        <label class="toggle">
+          <input type="checkbox" ${on ? 'checked' : ''} onchange="toggleRule('${r.n}', this.checked)">
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleRule(n, on) {
+  ruleStates[n] = on;
+  const card = document.getElementById(`rule-card-${n}`);
+  card.classList.toggle('disabled', !on);
+  toast(on ? `Rule ${n} enabled` : `Rule ${n} disabled`, on ? 'var(--green)' : 'var(--amber)');
+}
+
+function showAddRule() {
+  const f = document.getElementById('add-rule-form');
+  f.style.display = f.style.display === 'none' ? 'block' : 'none';
+}
+
+// ── Column SQL Generator ──────────────────────────────────────────────────────
+function generateColumnSQL() {
+  const raw = document.getElementById('new-col-raw').value.trim();
+  const display = document.getElementById('new-col-display').value.trim() || raw.toLowerCase();
+  const type = document.getElementById('new-col-type').value;
+  const task = document.getElementById('new-col-task').value;
+  const notes = document.getElementById('new-col-notes').value.trim();
+
+  if (!raw) { toast('Enter the Sprinklr column name', 'var(--red)'); return; }
+
+  const colName = display.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+  let sql = `-- Step 1: Add column to DB\nALTER TABLE odl.post_attributes\n  ADD COLUMN IF NOT EXISTS ${colName} ${type};\n\n`;
+
+  if (task.includes('T2') || task.includes('Both')) {
+    sql += `-- Step 2a: Extract in T2 (fargate_tasks/t2_merge/sql/02_extract_attributes.sql)\n`;
+    sql += `-- Add this line to the INSERT SELECT:\n    raw_data->>'${raw}' AS ${colName},\n\n`;
+  }
+  if (task.includes('T5') || task.includes('Both')) {
+    sql += `-- Step 2b: Extract in T5 (fargate_tasks/t5_tags/sql/01_tag_refresh.sql)\n`;
+    sql += `-- Add to latest_tags CTE:\n    raw_data->>'${raw}' AS ${colName},\n`;
+    sql += `-- Add to INSERT:\n    ${colName},\n-- Add to SELECT:\n    NULLIF(TRIM(lt.${colName}), ''),\n\n`;
+  }
+  if (notes) sql += `-- Notes: ${notes}\n`;
+  sql += `-- Step 3: git add . && git commit -m "feat: add ${colName} column" && git push\n`;
+  sql += `-- Step 4: Next pipeline run will populate the column automatically`;
+
+  const out = document.getElementById('col-sql-output');
+  out.innerHTML = sql.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  out.style.color = 'var(--cyan)';
+}
+
+// ── Rename Fix Generator ──────────────────────────────────────────────────────
+function generateRenameFix() {
+  const old = document.getElementById('rename-old').value.trim();
+  const nw  = document.getElementById('rename-new').value.trim();
+  if (!old || !nw) { toast('Fill in both column names', 'var(--red)'); return; }
+
+  const out = `-- 1. Update T0 expected_structure.py\n-- Replace: '${old}'\n-- With:    '${nw}'\n\n-- 2. Update T2/T5 SQL extraction\n-- Replace: raw_data->>'${old}'\n-- With:    raw_data->>'${nw}'\n\n-- 3. The old column name stored in rdl.sprinklr_raw_posts JSONB\n-- is preserved — you can always re-extract historical data.\n\n-- 4. git commit + push → pipeline auto-rebuilds`;
+
+  const o = document.getElementById('rename-output');
+  o.innerHTML = out.replace(/</g,'&lt;');
+  o.style.color = 'var(--cyan)';
+}
+
+// ── Ref table SQL generators ──────────────────────────────────────────────────
+function genBlacklistSQL() {
+  const url = document.getElementById('bl-url').value.trim();
+  const reason = document.getElementById('bl-reason').value.trim();
+  if (!url) { toast('Enter a permalink', 'var(--red)'); return; }
+  const sql = `INSERT INTO ref.blacklist (permalink, reason, added_by)\nVALUES ('${url}', '${reason||'Manual blacklist'}', 'ops-panel')\nON CONFLICT (permalink) DO NOTHING;`;
+  const el = document.getElementById('bl-sql');
+  el.textContent = sql; el.style.display = 'block';
+  toast('SQL generated — run in RDS Query Editor', 'var(--amber)');
+}
+function genXCMSQL() {
+  const val = document.getElementById('xcm-val').value.trim();
+  if (!val) { toast('Enter a post message value', 'var(--red)'); return; }
+  const sql = `INSERT INTO ref.xcm_post_messages (post_message)\nVALUES ('${val}')\nON CONFLICT (post_message) DO NOTHING;`;
+  const el = document.getElementById('xcm-sql');
+  el.textContent = sql; el.style.display = 'block';
+  toast('SQL generated', 'var(--amber)');
+}
+function genCountrySQL() {
+  const code = document.getElementById('ce-code').value.trim().toUpperCase();
+  const reason = document.getElementById('ce-reason').value.trim();
+  if (!code) { toast('Enter a country code', 'var(--red)'); return; }
+  const sql = `INSERT INTO ref.excluded_countries (country_code, reason)\nVALUES ('${code}', '${reason||'Out of scope'}')\nON CONFLICT (country_code) DO NOTHING;`;
+  const el = document.getElementById('ce-sql');
+  el.textContent = sql; el.style.display = 'block';
+  toast('SQL generated', 'var(--amber)');
+}
+function genMBSSQL() {
+  const url = document.getElementById('mbs-url').value.trim();
+  const old = document.getElementById('mbs-old').value;
+  const nw  = document.getElementById('mbs-new').value;
+  const reason = document.getElementById('mbs-reason').value.trim();
+  if (!url||!old||!nw) { toast('Fill all MBS fields', 'var(--red)'); return; }
+  const sql = `INSERT INTO ref.mbs_updates\n  (permalink, old_impressions, new_impressions, reason, requested_by)\nVALUES\n  ('${url}', ${old}, ${nw}, '${reason||'MBS correction'}', 'ops-panel')\nON CONFLICT (permalink, old_impressions) DO UPDATE SET\n  new_impressions = EXCLUDED.new_impressions,\n  is_applied = FALSE;`;
+  const el = document.getElementById('mbs-sql');
+  el.textContent = sql; el.style.display = 'block';
+  toast('SQL generated — T8 will apply on next run', 'var(--amber)');
+}
+
+// ── T8 Correction generators ──────────────────────────────────────────────────
+function genCorrectionSQL() {
+  const url = document.getElementById('cm-url').value.trim();
+  const col = document.getElementById('cm-col').value;
+  const val = document.getElementById('cm-val').value;
+  const reason = document.getElementById('cm-reason').value.trim();
+  if (!url||!val) { toast('Fill permalink and value', 'var(--red)'); return; }
+  const sql = `INSERT INTO ref.custom_metric_corrections\n  (permalink, column_name, new_value, reason, requested_by)\nVALUES\n  ('${url}', '${col}', '${val}', '${reason||'Manual correction'}', 'ops-panel')\nON CONFLICT (permalink, column_name) DO UPDATE SET\n  new_value = EXCLUDED.new_value,\n  is_applied = FALSE;`;
+  const el = document.getElementById('cm-sql');
+  el.textContent = sql; el.style.display = 'block';
+  toast('SQL generated — T8 applies on next run', 'var(--amber)');
+}
+function genXQuoteSQL() {
+  const url = document.getElementById('xq-url').value.trim();
+  const reason = document.getElementById('xq-reason').value.trim();
+  if (!url) { toast('Enter a post URL', 'var(--red)'); return; }
+  const sql = `INSERT INTO ref.x_quote_deletions (permalink, reason, requested_by)\nVALUES ('${url}', '${reason||'X quote deletion'}', 'ops-panel')\nON CONFLICT (permalink) DO NOTHING;\n\n-- T8 will delete this post from adl.posts_current on next pipeline run.`;
+  const el = document.getElementById('xq-sql');
+  el.textContent = sql; el.style.display = 'block';
+  toast('SQL generated — T8 deletes post on next run', 'var(--red)');
+}
+
+// ── Rule SQL generator ────────────────────────────────────────────────────────
+function generateRuleSQL() {
+  const num = document.getElementById('nr-num').value;
+  const name = document.getElementById('nr-name').value.trim();
+  const desc = document.getElementById('nr-desc').value.trim();
+  const type = document.getElementById('nr-type').value;
+  if (!num||!name) { toast('Fill rule number and name', 'var(--red)'); return; }
+  let sql = `-- Add to fargate_tasks/t4_filter/sql/01_filter_rules.sql\n\n`;
+  sql += `-- ── Rule ${num}: ${name} ──\n`;
+  if (type.includes('Ref')) {
+    sql += `INSERT INTO qa.filtered_posts\n  (post_id, filter_rule, run_id, filter_reason, lambda_source, permalink)\n`;
+    sql += `SELECT pa.post_id, ${num}, CAST(:run_id AS UUID),\n       '${name}', 'T4', pa.permalink\n`;
+    sql += `FROM odl.post_attributes pa\nJOIN ref.your_ref_table rt ON pa.your_column = rt.your_column\nWHERE pa.is_current = TRUE\nON CONFLICT (post_id, filter_rule, run_id) DO NOTHING;`;
+  } else {
+    sql += `INSERT INTO qa.filtered_posts\n  (post_id, filter_rule, run_id, filter_reason, lambda_source, permalink)\n`;
+    sql += `SELECT pa.post_id, ${num}, CAST(:run_id AS UUID),\n       '${name}', 'T4', pa.permalink\n`;
+    sql += `FROM odl.post_attributes pa\nWHERE pa.is_current = TRUE\n  AND /* your condition here */\nON CONFLICT (post_id, filter_rule, run_id) DO NOTHING;`;
+  }
+  const o = document.getElementById('rule-sql-out');
+  o.textContent = sql; o.style.display = 'block';
+}
+
+// ── Post Tracer ───────────────────────────────────────────────────────────────
+function tracePost() {
+  const input = document.getElementById('trace-input').value.trim();
+  if (!input) { toast('Enter a permalink or post_id_key', 'var(--red)'); return; }
+  document.getElementById('trace-empty').style.display = 'none';
+  document.getElementById('trace-results').style.display = 'block';
+  document.getElementById('tr-key').textContent = input.length > 40 ? input.substring(0,40)+'...' : input;
+  const queries = `-- Paste in RDS Query Editor to get live data:\n\n-- 1. Post journey across all runs\nSELECT run_id, pull_date, final_status, filter_rule, filter_reason\nFROM qa.post_journey\nWHERE permalink = '${input}'\nORDER BY pull_date DESC;\n\n-- 2. Post attributes\nSELECT account, platform, country, delivery, published_date,\n       post_message, reputational_topic, is_manual_tracker\nFROM odl.post_attributes\nWHERE permalink = '${input}' AND is_current = TRUE;\n\n-- 3. Collab priority (if applicable)\nSELECT winner, priority_rule, sprinklr_delivery, collab_delivery\nFROM qa.collab_priority_decisions\nWHERE permalink = '${input}'\nORDER BY decision_at DESC;\n\n-- 4. T8 corrections applied\nSELECT correction_type, column_name, old_value, new_value, applied_at\nFROM qa.t8_corrections_log\nWHERE permalink = '${input}';`;
+
+  document.getElementById('tracer-queries').textContent = queries;
+  renderSampleJourney(input);
+  toast('Queries generated — run in RDS Query Editor', 'var(--amber)');
+}
+
+function loadSampleTrace() {
+  document.getElementById('trace-input').value = 'https://www.instagram.com/p/C4QyFDIrqr3/';
+  tracePost();
+}
+
+function renderSampleJourney(permalink) {
+  const steps = [
+    {dot:'pass', title:'T0 — Schema Validation', detail:'File structure validated against expected_structure.py — PASS'},
+    {dot:'pass', title:'T1 — Ingested', detail:'Stored in rdl.sprinklr_raw_posts as JSONB'},
+    {dot:'pass', title:'T2 — Metrics extracted', detail:'odl.post_metrics_daily row written (is_paiddata=0)'},
+    {dot:'info', title:'T3 — Collab check (Monday only)', detail:'No Collab/LINE match found — Sprinklr data used'},
+    {dot:'pass', title:'T4 — All 22 rules passed', detail:'No filter rules triggered'},
+    {dot:'pass', title:'T5 — Tags refreshed', detail:'Reputational Topic, Post Message, RST all populated'},
+    {dot:'pass', title:'T6 — Benchmark joined', detail:'Matcher: ukinstagramorganicq1 → Median benchmark found'},
+    {dot:'pass', title:'T7 — Written to adl.posts_current', detail:'ON CONFLICT (post_id_key) DO UPDATE'},
+    {dot:'pass', title:'T8 — No corrections pending', detail:'ref.custom_metric_corrections: no match'},
+  ];
+  document.getElementById('journey-timeline').innerHTML = steps.map(s => `
+    <div class="journey-item">
+      <div class="journey-dot ${s.dot}">${s.dot==='pass'?'✓':s.dot==='fail'?'✗':'→'}</div>
+      <div class="journey-content">
+        <div class="journey-title">${s.title}</div>
+        <div class="journey-detail">${s.detail}</div>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('tr-status').innerHTML = '<span class="tag tag-green">published</span>';
+  document.getElementById('tr-account').textContent = '— (run query for live data)';
+  document.getElementById('tr-platform').textContent = '—';
+  document.getElementById('tr-country').textContent = '—';
+  document.getElementById('tr-delivery').textContent = '—';
+  document.getElementById('tr-published').textContent = '—';
+  document.getElementById('tr-rule').textContent = 'None (passed all rules)';
+  document.getElementById('tr-reason').textContent = '—';
+  document.getElementById('tr-manual').textContent = '0 (Sprinklr)';
+}
+
+function refreshHealth() {
+  toast('Paste the queries into RDS Query Editor to get live data', 'var(--amber)');
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  renderRules();
+});
+</script>
+</body>
+</html>
