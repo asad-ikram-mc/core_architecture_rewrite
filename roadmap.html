@@ -3,839 +3,645 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Amazon CORE — Architecture Rewrite Roadmap</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<title>Amazon CORE — ETL Architecture Rewrite</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg:#080b12;--bg2:#0c1019;--panel:#101624;--border:#1c2540;
-  --cyan:#06b6d4;--cyan2:#0891b2;--green:#22c55e;--orange:#f59e42;
-  --red:#ef4444;--purple:#a78bfa;--blue:#3b82f6;--teal:#14b8a6;
+:root{
+  --bg:#080b12;--bg2:#0c1019;--panel:#101624;--border:#1c2540;--border2:#243050;
+  --cyan:#06b6d4;--green:#22c55e;--orange:#f59e42;--red:#ef4444;
+  --blue:#3b82f6;--teal:#14b8a6;--purple:#a78bfa;--amber:#fbbf24;
   --text:#d4dae8;--muted:#4a5872;--white:#f0f2f7;
-  --cond:'Sora',sans-serif;--serif:'Playfair Display',serif;--mono:'JetBrains Mono',monospace;
+  --ff:'Sora',sans-serif;--serif:'Playfair Display',serif;--mono:'JetBrains Mono',monospace;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
-body{background:var(--bg);color:var(--text);font-family:var(--cond);font-size:14px;line-height:1.6;overflow-x:hidden}
-body::before{content:'';position:fixed;inset:0;z-index:9999;pointer-events:none;opacity:.025;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
-body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(6,182,212,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(6,182,212,.03) 1px,transparent 1px);background-size:50px 50px}
+body{background:var(--bg);color:var(--text);font-family:var(--ff);font-size:14px;line-height:1.6;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:9999;pointer-events:none;opacity:.022;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(6,182,212,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(6,182,212,.025) 1px,transparent 1px);
+  background-size:48px 48px}
 
-/* HEADER */
-.header{position:relative;z-index:10;padding:48px 40px 36px;border-bottom:1px solid var(--border);display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:16px}
-.header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),var(--orange),transparent);opacity:.3}
-.logo-block{display:flex;align-items:center;gap:14px}
-.amazon-pill{border:2px solid var(--orange);color:var(--orange);font-family:var(--cond);font-weight:700;font-size:18px;letter-spacing:1.5px;padding:5px 18px;border-radius:30px}
-.header-text h1{font-family:var(--serif);font-size:2.2rem;font-weight:500;background:linear-gradient(135deg,var(--white),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.header-text p{color:var(--muted);font-size:.88rem;margin-top:2px}
-.status-bar{display:flex;align-items:center;gap:10px;padding:6px 14px;border-radius:20px;background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.2);font-size:.78rem;font-weight:600;color:var(--cyan)}
-.status-dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+/* ── HEADER ── */
+.hdr{position:relative;z-index:10;padding:44px 40px 32px;border-bottom:1px solid var(--border);
+  display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.hdr::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--cyan),var(--orange),transparent);opacity:.35}
+.logo-row{display:flex;align-items:center;gap:14px}
+.amz-pill{border:2px solid var(--orange);color:var(--orange);font-weight:700;font-size:17px;
+  letter-spacing:1.5px;padding:4px 16px;border-radius:28px;font-family:var(--ff)}
+.hdr-text h1{font-family:var(--serif);font-size:2.1rem;font-weight:500;
+  background:linear-gradient(130deg,var(--white),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hdr-text p{color:var(--muted);font-size:.84rem;margin-top:3px}
+.status-pill{display:flex;align-items:center;gap:9px;padding:6px 14px;border-radius:20px;
+  background:rgba(6,182,212,.07);border:1px solid rgba(6,182,212,.2);font-size:.77rem;font-weight:600;color:var(--cyan)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
 
-/* PHASE NAV */
-.phase-nav{display:flex;gap:3px;padding:0 40px;background:var(--bg);position:sticky;top:0;z-index:100;border-bottom:1px solid var(--border)}
-.phase-pill{padding:14px 22px;font-size:.82rem;font-weight:600;color:var(--muted);cursor:pointer;border:none;background:0;border-bottom:2.5px solid transparent;transition:.25s;font-family:var(--cond);letter-spacing:.02em}
-.phase-pill:hover{color:var(--text);background:var(--bg2)}
-.phase-pill.active{color:var(--cyan);border-bottom-color:var(--cyan);background:var(--bg2)}
-.phase-pill .pn{font-family:var(--mono);font-size:.62rem;margin-right:6px;opacity:.5}
-.phase-pill.active .pn{opacity:.8}
+/* ── NAV ── */
+.nav{display:flex;gap:0;padding:0 40px;background:var(--bg);position:sticky;top:0;z-index:100;
+  border-bottom:1px solid var(--border);overflow-x:auto}
+.pill{padding:13px 20px;font-size:.8rem;font-weight:600;color:var(--muted);cursor:pointer;
+  border:none;background:0;border-bottom:2.5px solid transparent;transition:.2s;
+  font-family:var(--ff);letter-spacing:.02em;white-space:nowrap}
+.pill:hover{color:var(--text);background:var(--bg2)}
+.pill.active{color:var(--cyan);border-bottom-color:var(--cyan);background:var(--bg2)}
+.pill .pn{font-family:var(--mono);font-size:.6rem;margin-right:5px;opacity:.45}
+.pill.active .pn{opacity:.75}
 
-/* OVERVIEW CARDS */
-.overview{padding:32px 40px}
-.ov-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:16px}
-.ov-card{padding:18px 16px;border-radius:10px;border:1px solid var(--border);background:var(--panel);cursor:pointer;transition:.25s;position:relative;overflow:hidden}
-.ov-card:hover{border-color:var(--cyan);transform:translateY(-2px)}
-.ov-card.active-card{border-color:var(--cyan);box-shadow:0 0 20px rgba(6,182,212,.1)}
-.ov-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
-.ov-card:nth-child(1)::before{background:var(--cyan)}
-.ov-card:nth-child(2)::before{background:var(--blue)}
-.ov-card:nth-child(3)::before{background:var(--teal)}
-.ov-card:nth-child(4)::before{background:var(--orange)}
-.ov-card:nth-child(5)::before{background:var(--green)}
-.ov-label{font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
-.ov-title{font-family:var(--serif);font-size:1.05rem;font-weight:500;color:var(--white);margin-bottom:4px}
-.ov-desc{font-size:.74rem;color:var(--muted);line-height:1.5}
-.ov-time{font-family:var(--mono);font-size:.65rem;color:var(--cyan);margin-top:8px}
-.ov-ring{position:absolute;top:12px;right:12px;width:36px;height:36px}
+/* ── OVERVIEW ── */
+.ov{padding:28px 40px}
+.ov-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:14px}
+.oc{padding:16px 14px;border-radius:10px;border:1px solid var(--border);background:var(--panel);
+  cursor:pointer;transition:.25s;position:relative;overflow:hidden}
+.oc:hover{border-color:var(--cyan);transform:translateY(-2px)}
+.oc.lit{border-color:var(--cyan);box-shadow:0 0 18px rgba(6,182,212,.12)}
+.oc.done-card{border-color:rgba(34,197,94,.35)}
+.oc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.oc:nth-child(1)::before{background:var(--cyan)}
+.oc:nth-child(2)::before{background:var(--blue)}
+.oc:nth-child(3)::before{background:var(--teal)}
+.oc:nth-child(4)::before{background:var(--orange)}
+.oc:nth-child(5)::before{background:var(--green)}
+.oc-lbl{font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.oc-title{font-family:var(--serif);font-size:1rem;font-weight:500;color:var(--white);margin-bottom:3px}
+.oc-desc{font-size:.72rem;color:var(--muted);line-height:1.5}
+.oc-time{font-family:var(--mono);font-size:.62rem;color:var(--cyan);margin-top:7px}
+.oc-ring{position:absolute;top:10px;right:10px;width:34px;height:34px}
 
-/* PHASE VIEWS */
-.phase-view{display:none;padding:32px 40px 60px;animation:fadeIn .3s}
-.phase-view.active{display:block}
-@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+/* ── PHASE VIEWS ── */
+.pv{display:none;padding:28px 40px 56px;animation:fadeIn .28s}
+.pv.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+.ph{margin-bottom:22px}
+.ph h2{font-family:var(--serif);font-size:1.6rem;font-weight:500;color:var(--white)}
+.ph p{color:var(--muted);font-size:.87rem;margin-top:5px;max-width:680px;line-height:1.7}
 
-.phase-header{margin-bottom:24px}
-.phase-header h2{font-family:var(--serif);font-size:1.7rem;font-weight:500;color:var(--white)}
-.phase-header p{color:var(--muted);font-size:.9rem;margin-top:6px;max-width:700px;line-height:1.7}
+/* ── STEP CARDS ── */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:13px;margin-top:18px}
+.sc{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:18px;transition:.2s}
+.sc:hover{border-color:rgba(6,182,212,.28)}
+.sc.done-step{border-color:rgba(34,197,94,.2)}
+.sc.active-step{border-color:rgba(6,182,212,.4);box-shadow:0 0 12px rgba(6,182,212,.06)}
+.sn{font-family:var(--mono);font-size:.68rem;font-weight:600;color:var(--cyan);
+  letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px}
+.st{font-family:var(--serif);font-size:1rem;font-weight:500;color:var(--white);margin-bottom:7px}
+.sd{font-size:.8rem;color:var(--muted);line-height:1.6;margin-bottom:10px}
+.badge{display:inline-block;font-family:var(--mono);font-size:.58rem;padding:2px 8px;
+  border-radius:20px;margin-bottom:9px;font-weight:600;letter-spacing:.03em}
+.b-done{background:rgba(34,197,94,.12);color:var(--green);border:1px solid rgba(34,197,94,.25)}
+.b-now{background:rgba(6,182,212,.12);color:var(--cyan);border:1px solid rgba(6,182,212,.25);animation:glow 2s infinite}
+.b-pen{background:rgba(74,88,114,.12);color:var(--muted);border:1px solid rgba(74,88,114,.25)}
+@keyframes glow{0%,100%{box-shadow:0 0 0 rgba(6,182,212,0)}50%{box-shadow:0 0 8px rgba(6,182,212,.3)}}
 
-/* STEP CARDS */
-.steps-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;margin-top:20px}
-.step-card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:20px;position:relative;transition:.2s}
-.step-card:hover{border-color:rgba(6,182,212,.3)}
-.step-number{font-family:var(--mono);font-size:.7rem;font-weight:600;color:var(--cyan);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
-.step-title{font-family:var(--serif);font-size:1.05rem;font-weight:500;color:var(--white);margin-bottom:8px}
-.step-desc{font-size:.82rem;color:var(--muted);line-height:1.6;margin-bottom:12px}
+/* ── CHECKLISTS ── */
+.cl{list-style:none;padding:0}
+.cl li{display:flex;align-items:flex-start;gap:7px;padding:5px 0;
+  border-top:1px solid rgba(28,37,64,.5);font-size:.78rem;color:var(--text);cursor:pointer;transition:.15s}
+.cl li:hover{background:rgba(6,182,212,.03);margin:0 -6px;padding:5px 6px;border-radius:4px}
+.cl li.done{color:var(--muted);text-decoration:line-through}
+.cb{width:15px;height:15px;border:1.5px solid var(--border);border-radius:3px;flex-shrink:0;
+  margin-top:1px;display:flex;align-items:center;justify-content:center;
+  transition:.15s;font-size:9px;color:transparent}
+.cl li.done .cb{background:var(--cyan);border-color:var(--cyan);color:#000}
 
-/* CHECKLISTS */
-.checklist{list-style:none;padding:0}
-.checklist li{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-top:1px solid rgba(28,37,64,.5);font-size:.8rem;color:var(--text);cursor:pointer;transition:.15s}
-.checklist li:hover{background:rgba(6,182,212,.03);margin:0 -8px;padding:6px 8px;border-radius:4px}
-.checklist li.done{color:var(--muted);text-decoration:line-through}
-.check-box{width:16px;height:16px;border:1.5px solid var(--border);border-radius:3px;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;font-size:10px;color:transparent}
-.checklist li.done .check-box{background:var(--cyan);border-color:var(--cyan);color:#000}
+/* ── PROGRESS ── */
+.pw{margin-top:10px;padding-top:7px;border-top:1px solid var(--border)}
+.pb{height:3px;background:var(--bg);border-radius:4px;overflow:hidden;margin-top:4px}
+.pf{height:100%;border-radius:4px;background:var(--cyan);transition:.4s}
+.pl{font-family:var(--mono);font-size:.66rem;color:var(--muted)}
 
-/* PROGRESS BAR */
-.progress-wrap{margin-top:12px;padding-top:8px;border-top:1px solid var(--border)}
-.progress-bar{height:4px;background:var(--bg);border-radius:4px;overflow:hidden;margin-top:4px}
-.progress-fill{height:100%;border-radius:4px;background:var(--cyan);transition:.4s}
-.progress-label{font-family:var(--mono);font-size:.68rem;color:var(--muted)}
+/* ── FOOTER ── */
+.footer{padding:20px 40px;border-top:1px solid var(--border);
+  display:flex;justify-content:space-between;color:var(--muted);font-size:.73rem}
 
-/* SVG DIAGRAM */
-.diagram-wrap{margin:20px 0;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:20px;overflow-x:auto}
-.diagram-wrap svg{max-width:100%;height:auto}
-
-/* FOOTER */
-.footer{padding:24px 40px;border-top:1px solid var(--border);display:flex;justify-content:space-between;color:var(--muted);font-size:.75rem}
-
-/* RESPONSIVE */
+/* ── RESPONSIVE ── */
 @media(max-width:768px){
-  .header,.phase-nav,.overview,.phase-view,.footer{padding-left:16px;padding-right:16px}
-  .ov-strip{grid-template-columns:1fr 1fr}
-  .steps-grid{grid-template-columns:1fr}
-  .header-text h1{font-size:1.5rem}
+  .hdr,.nav,.ov,.pv,.footer{padding-left:16px;padding-right:16px}
+  .ov-grid{grid-template-columns:1fr 1fr}
+  .grid{grid-template-columns:1fr}
+  .hdr-text h1{font-size:1.45rem}
 }
 </style>
 </head>
 <body>
 
-<div class="header">
-  <div class="logo-block">
-    <div class="amazon-pill">amazon</div>
-    <div class="header-text">
+<div class="hdr">
+  <div class="logo-row">
+    <div class="amz-pill">amazon</div>
+    <div class="hdr-text">
       <h1>CORE ETL — Architecture Rewrite</h1>
-      <p>12 Lambdas → 8 Fargate Tasks · Step Functions · 28 Tables · 5 Schemas · Daily Tableau</p>
+      <p>12 Lambdas → 9 Fargate Tasks · Step Functions · 33 Tables · 5 Schemas · 19 REF Tables · adl.benchmarks 1,370 rows</p>
     </div>
   </div>
-  <div class="status-bar"><span class="status-dot"></span><span id="status-text">Phase 0 — Planning</span></div>
-  <a href="index.html" style="color:var(--cyan);font-size:.78rem;font-weight:600;text-decoration:none;padding:6px 14px;border:1px solid rgba(6,182,212,.25);border-radius:16px;transition:.2s">← Architecture Explorer</a>
+  <div class="status-pill"><span class="dot"></span><span id="status-text">Loading...</span></div>
 </div>
 
-<div class="phase-nav">
-  <button class="phase-pill active" data-phase="0" onclick="setPhase(0)"><span class="pn">00</span>Overview</button>
-  <button class="phase-pill" data-phase="1" onclick="setPhase(1)"><span class="pn">01</span>Foundation</button>
-  <button class="phase-pill" data-phase="2" onclick="setPhase(2)"><span class="pn">02</span>Database + Ingest</button>
-  <button class="phase-pill" data-phase="3" onclick="setPhase(3)"><span class="pn">03</span>Transform + Filter</button>
-  <button class="phase-pill" data-phase="4" onclick="setPhase(4)"><span class="pn">04</span>Benchmark + Push + QA</button>
+<div class="nav">
+  <button class="pill active" data-phase="0" onclick="go(0)"><span class="pn">00</span>Overview</button>
+  <button class="pill" data-phase="1" onclick="go(1)"><span class="pn">01</span>Foundation</button>
+  <button class="pill" data-phase="2" onclick="go(2)"><span class="pn">02</span>Database + Ingest</button>
+  <button class="pill" data-phase="3" onclick="go(3)"><span class="pn">03</span>Transform + Filter</button>
+  <button class="pill" data-phase="4" onclick="go(4)"><span class="pn">04</span>Benchmark + Push + T8</button>
+  <button class="pill" data-phase="5" onclick="go(5)"><span class="pn">05</span>Validation + Cutover</button>
 </div>
 
 <!-- OVERVIEW -->
-<div class="overview" id="phase-0-overview">
-  <div class="ov-strip">
-    <div class="ov-card active-card" data-phase="1" onclick="setPhase(1)">
-      <div class="ov-label">Phase 1</div>
-      <div class="ov-title">Foundation</div>
-      <div class="ov-desc">Infrastructure: ECS cluster, Step Functions, EventBridge, RDS schemas, ECR repos, IAM roles.</div>
-      <div class="ov-time">Week 1</div>
-      <svg class="ov-ring" viewBox="0 0 36 36"><circle cx="18" cy="18" r="15" fill="none" stroke="#1c2540" stroke-width="3"/><circle class="ring-progress" data-phase="1" cx="18" cy="18" r="15" fill="none" stroke="var(--cyan)" stroke-width="3" stroke-dasharray="0 94.2" stroke-linecap="round" transform="rotate(-90 18 18)"/></svg>
+<div class="ov" id="phase-0-overview">
+  <div class="ov-grid">
+    <div class="oc done-card" data-phase="1" onclick="go(1)">
+      <div class="oc-lbl">Phase 1</div>
+      <div class="oc-title">Foundation</div>
+      <div class="oc-desc">ECS, Step Functions, RDS schemas, ECR, IAM, SNS, CI/CD. All infra scaffolding.</div>
+      <div class="oc-time">Complete ✓</div>
+      <svg class="oc-ring" viewBox="0 0 36 36"><circle cx="18" cy="18" r="15" fill="none" stroke="#1c2540" stroke-width="3"/><circle class="ring-progress" data-phase="1" cx="18" cy="18" r="15" fill="none" stroke="var(--cyan)" stroke-width="3" stroke-dasharray="0 94.2" stroke-linecap="round" transform="rotate(-90 18 18)"/></svg>
     </div>
-    <div class="ov-card" data-phase="2" onclick="setPhase(2)">
-      <div class="ov-label">Phase 2</div>
-      <div class="ov-title">Database + Ingest</div>
-      <div class="ov-desc">28 tables created. T0 (Validate) + T1 (Ingest) + T2 (Merge) containerised and running.</div>
-      <div class="ov-time">Weeks 2–3</div>
-      <svg class="ov-ring" viewBox="0 0 36 36"><circle cx="18" cy="18" r="15" fill="none" stroke="#1c2540" stroke-width="3"/><circle class="ring-progress" data-phase="2" cx="18" cy="18" r="15" fill="none" stroke="var(--blue)" stroke-width="3" stroke-dasharray="0 94.2" stroke-linecap="round" transform="rotate(-90 18 18)"/></svg>
+    <div class="oc done-card" data-phase="2" onclick="go(2)">
+      <div class="oc-lbl">Phase 2</div>
+      <div class="oc-title">Database + Ingest</div>
+      <div class="oc-desc">28 tables. T0 Validate, T1 Ingest, T2 Merge. Shadow run validated.</div>
+      <div class="oc-time">Complete ✓</div>
+      <svg class="oc-ring" viewBox="0 0 36 36"><circle cx="18" cy="18" r="15" fill="none" stroke="#1c2540" stroke-width="3"/><circle class="ring-progress" data-phase="2" cx="18" cy="18" r="15" fill="none" stroke="var(--blue)" stroke-width="3" stroke-dasharray="0 94.2" stroke-linecap="round" transform="rotate(-90 18 18)"/></svg>
     </div>
-    <div class="ov-card" data-phase="3" onclick="setPhase(3)">
-      <div class="ov-label">Phase 3</div>
-      <div class="ov-title">Transform + Filter</div>
-      <div class="ov-desc">T3 (Collab+LINE) + T4 (Filter R1-10) + T5 (Tags) containerised. REF tables seeded.</div>
-      <div class="ov-time">Weeks 3–5</div>
-      <svg class="ov-ring" viewBox="0 0 36 36"><circle cx="18" cy="18" r="15" fill="none" stroke="#1c2540" stroke-width="3"/><circle class="ring-progress" data-phase="3" cx="18" cy="18" r="15" fill="none" stroke="var(--teal)" stroke-width="3" stroke-dasharray="0 94.2" stroke-linecap="round" transform="rotate(-90 18 18)"/></svg>
+    <div class="oc done-card" data-phase="3" onclick="go(3)">
+      <div class="oc-lbl">Phase 3</div>
+      <div class="oc-title">Transform + Filter</div>
+      <div class="oc-desc">T3 Collab/LINE, T4 all 22 rules, T5 full tag refresh. 19 REF tables seeded.</div>
+      <div class="oc-time">Complete ✓</div>
+      <svg class="oc-ring" viewBox="0 0 36 36"><circle cx="18" cy="18" r="15" fill="none" stroke="#1c2540" stroke-width="3"/><circle class="ring-progress" data-phase="3" cx="18" cy="18" r="15" fill="none" stroke="var(--teal)" stroke-width="3" stroke-dasharray="0 94.2" stroke-linecap="round" transform="rotate(-90 18 18)"/></svg>
     </div>
-    <div class="ov-card" data-phase="4" onclick="setPhase(4)">
-      <div class="ov-label">Phase 4</div>
-      <div class="ov-title">Benchmark + Push + QA</div>
-      <div class="ov-desc">T6 (Benchmark) + T7 (Push+QA+MBS). Full pipeline E2E. Tableau cutover. Lambda decommission.</div>
-      <div class="ov-time">Weeks 5–8</div>
-      <svg class="ov-ring" viewBox="0 0 36 36"><circle cx="18" cy="18" r="15" fill="none" stroke="#1c2540" stroke-width="3"/><circle class="ring-progress" data-phase="4" cx="18" cy="18" r="15" fill="none" stroke="var(--orange)" stroke-width="3" stroke-dasharray="0 94.2" stroke-linecap="round" transform="rotate(-90 18 18)"/></svg>
+    <div class="oc done-card" data-phase="4" onclick="go(4)">
+      <div class="oc-lbl">Phase 4</div>
+      <div class="oc-title">Benchmark + Push + T8</div>
+      <div class="oc-desc">T6 156-col build, T7 QA, T8 corrections. adl.benchmarks 1,370 rows. Pipeline runs E2E.</div>
+      <div class="oc-time">Complete ✓</div>
+      <svg class="oc-ring" viewBox="0 0 36 36"><circle cx="18" cy="18" r="15" fill="none" stroke="#1c2540" stroke-width="3"/><circle class="ring-progress" data-phase="4" cx="18" cy="18" r="15" fill="none" stroke="var(--orange)" stroke-width="3" stroke-dasharray="0 94.2" stroke-linecap="round" transform="rotate(-90 18 18)"/></svg>
     </div>
-    <div class="ov-card" style="border-color:rgba(34,197,94,.3)">
-      <div class="ov-label">Done</div>
-      <div class="ov-title">Live + Monitored</div>
-      <div class="ov-desc">Daily Tableau. Lambda decommissioned. QA dashboard. MBS automated. Alerts on Slack.</div>
-      <div class="ov-time">Week 8+</div>
+    <div class="oc lit" data-phase="5" onclick="go(5)">
+      <div class="oc-lbl">Phase 5 — Active</div>
+      <div class="oc-title">Validation + Cutover</div>
+      <div class="oc-desc">Register T8 ECS task def. Update Step Functions. Create EventBridge. Shadow run. Tableau cutover. Lambda decommission.</div>
+      <div class="oc-time">In Progress →</div>
+      <svg class="oc-ring" viewBox="0 0 36 36"><circle cx="18" cy="18" r="15" fill="none" stroke="#1c2540" stroke-width="3"/><circle class="ring-progress" data-phase="5" cx="18" cy="18" r="15" fill="none" stroke="var(--green)" stroke-width="3" stroke-dasharray="0 94.2" stroke-linecap="round" transform="rotate(-90 18 18)"/></svg>
     </div>
   </div>
 </div>
 
 <!-- PHASE 1 -->
-<div class="phase-view" id="phase-1">
-  <div class="phase-header">
-    <h2>Phase 1 — Foundation</h2>
-    <p>Set up all infrastructure before writing any pipeline logic. VPC networking, IAM roles, ECR repos, ECS cluster, Step Functions, EventBridge, RDS schemas, S3 verification, SNS/SES alerting, GitHub Actions CI/CD. No Lambda logic yet — just the scaffolding.</p>
-  </div>
-  <div class="steps-grid">
-    <div class="step-card">
-      <div class="step-number">Step 1.1</div>
-      <div class="step-title">GitHub Repo + CI/CD</div>
-      <div class="step-desc">Create amazon_sprinklr_etl_v2 repo. GitHub Actions builds one Docker image containing all tasks and pushes to a single ECR repo on merge to main.</div>
-      <ul class="checklist" data-phase="1" data-step="1">
-        <li data-i="0"><span class="check-box">✓</span>Create repo on Fluency-M-C-Saatchi org</li>
-        <li data-i="1"><span class="check-box">✓</span>README with architecture overview + SVG banner</li>
-        <li data-i="2"><span class="check-box">✓</span>Project structure: fargate_tasks/, database/, infrastructure/, docs/</li>
-        <li data-i="3"><span class="check-box">✓</span>.github/workflows/deploy.yml — build single Dockerfile, tag with commit SHA + latest, push to ECR</li>
-        <li data-i="4"><span class="check-box">✓</span>Workflow triggers on push to main only (not on PRs)</li>
-        <li data-i="5"><span class="check-box">✓</span>Add GitHub Secrets: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, ECR_REPO_URI</li>
-        <li data-i="6"><span class="check-box">✓</span>Branch protection: require PR review for main</li>
-        <li data-i="7"><span class="check-box">✓</span>Test: push dummy change → verify ECR image appears with correct tag</li>
+<div class="pv" id="phase-1">
+  <div class="ph"><h2>Phase 1 — Foundation</h2><p>All infrastructure before writing any pipeline logic. ECS cluster, Step Functions, EventBridge config, RDS schemas, ECR repo, IAM roles, SNS alerting, GitHub Actions CI/CD.</p></div>
+  <div class="grid">
+    <div class="sc done-step">
+      <div class="sn">Step 1.1</div><span class="badge b-done">COMPLETE</span>
+      <div class="st">GitHub Repo + CI/CD</div>
+      <ul class="cl" data-phase="1" data-step="1">
+        <li data-i="0"><span class="cb">✓</span>Create repo on Fluency-M-C-Saatchi org</li>
+        <li data-i="1"><span class="cb">✓</span>README + project structure: fargate_tasks/, database/, infrastructure/</li>
+        <li data-i="2"><span class="cb">✓</span>.github/workflows/deploy.yml — build Dockerfile, push to ECR on merge to main</li>
+        <li data-i="3"><span class="cb">✓</span>GitHub Secrets: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, ECR_REPO_URI</li>
+        <li data-i="4"><span class="cb">✓</span>Branch protection: require PR review for main</li>
       </ul>
-      <div class="progress-wrap"><span class="progress-label">0/8</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
+      <div class="pw"><span class="pl">0/5</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
     </div>
-
-    <div class="step-card">
-      <div class="step-number">Step 1.2</div>
-      <div class="step-title">IAM Roles + Security</div>
-      <div class="step-desc">Create execution role (ECS pulls images) and task role (S3, RDS, SES, SNS access). Least-privilege policies.</div>
-      <ul class="checklist" data-phase="1" data-step="2">
-        <li data-i="0"><span class="check-box">✓</span>ECS Task Execution Role: AmazonECSTaskExecutionRolePolicy + ECR pull + CloudWatch logs</li>
-        <li data-i="1"><span class="check-box">✓</span>ECS Task Role: S3 read/write (amazon-global-gsmc-sprinklr + wikitablescrapexample)</li>
-        <li data-i="2"><span class="check-box">✓</span>ECS Task Role: RDS connect (prod-fluency-sprinklr-db-eu2)</li>
-        <li data-i="3"><span class="check-box">✓</span>ECS Task Role: SES SendEmail permission</li>
-        <li data-i="4"><span class="check-box">✓</span>ECS Task Role: SNS Publish to alert topic</li>
-        <li data-i="5"><span class="check-box">✓</span>Step Functions Execution Role: ecs:RunTask, iam:PassRole, logs:*</li>
-        <li data-i="6"><span class="check-box">✓</span>EventBridge Role: states:StartExecution on the state machine</li>
-        <li data-i="7"><span class="check-box">✓</span>RDS security group: allow inbound 5432 from ECS task security group</li>
+    <div class="sc done-step">
+      <div class="sn">Step 1.2</div><span class="badge b-done">COMPLETE</span>
+      <div class="st">IAM Roles + Security</div>
+      <ul class="cl" data-phase="1" data-step="2">
+        <li data-i="0"><span class="cb">✓</span>ECS Task Execution Role: ECR pull + CloudWatch logs</li>
+        <li data-i="1"><span class="cb">✓</span>ECS Task Role: S3 read/write (both buckets)</li>
+        <li data-i="2"><span class="cb">✓</span>ECS Task Role: RDS connect + SNS Publish</li>
+        <li data-i="3"><span class="cb">✓</span>Step Functions Role: ecs:RunTask, iam:PassRole, logs:*</li>
+        <li data-i="4"><span class="cb">✓</span>EventBridge Role: states:StartExecution on state machine</li>
       </ul>
-      <div class="progress-wrap"><span class="progress-label">0/8</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
+      <div class="pw"><span class="pl">0/5</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
     </div>
-
-    <div class="step-card">
-      <div class="step-number">Step 1.3</div>
-      <div class="step-title">VPC + Networking</div>
-      <div class="step-desc">Verify VPC, subnets, security groups. ECS tasks need outbound internet (S3, SES) and inbound to RDS. Same VPC as existing Lambda setup.</div>
-      <ul class="checklist" data-phase="1" data-step="3">
-        <li data-i="0"><span class="check-box">✓</span>Identify VPC and subnets (same as existing Lambda/RDS: eu-west-2)</li>
-        <li data-i="1"><span class="check-box">✓</span>Create security group: sprinklr-etl-v2-tasks (outbound all, inbound none)</li>
-        <li data-i="2"><span class="check-box">✓</span>Update RDS security group: allow 5432 from sprinklr-etl-v2-tasks SG</li>
-        <li data-i="3"><span class="check-box">✓</span>Verify NAT gateway exists (Fargate tasks need internet for S3, SES, Google Sheets API)</li>
-        <li data-i="4"><span class="check-box">✓</span>Test: run a simple Fargate task that connects to RDS + reads S3</li>
+    <div class="sc done-step">
+      <div class="sn">Step 1.3</div><span class="badge b-done">COMPLETE</span>
+      <div class="st">VPC + Networking</div>
+      <ul class="cl" data-phase="1" data-step="3">
+        <li data-i="0"><span class="cb">✓</span>Identify VPC + subnets (eu-west-2, same as existing Lambda/RDS)</li>
+        <li data-i="1"><span class="cb">✓</span>Security group: sprinklr-etl-v2-tasks</li>
+        <li data-i="2"><span class="cb">✓</span>Update RDS SG: allow 5432 from sprinklr-etl-v2-tasks</li>
+        <li data-i="3"><span class="cb">✓</span>NAT gateway verified (Fargate needs internet for S3, Sheets, SES)</li>
       </ul>
-      <div class="progress-wrap"><span class="progress-label">0/5</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
+      <div class="pw"><span class="pl">0/4</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
     </div>
-
-    <div class="step-card">
-      <div class="step-number">Step 1.4</div>
-      <div class="step-title">ECR Repository</div>
-      <div class="step-desc">One ECR repo, one Docker image. All 8 tasks share the same image — each task definition overrides the CMD to run its specific entry point (e.g. python -m fargate_tasks.t0_validate.main).</div>
-      <ul class="checklist" data-phase="1" data-step="4">
-        <li data-i="0"><span class="check-box">✓</span>Create ECR repo: sprinklr-etl-v2</li>
-        <li data-i="1"><span class="check-box">✓</span>Add lifecycle policy: keep last 10 images, expire untagged after 7 days</li>
-        <li data-i="2"><span class="check-box">✓</span>Build image locally and push with tag :latest + :test</li>
-        <li data-i="3"><span class="check-box">✓</span>Verify image size is reasonable (target under 500MB)</li>
+    <div class="sc done-step">
+      <div class="sn">Step 1.4</div><span class="badge b-done">COMPLETE</span>
+      <div class="st">ECR + ECS Cluster</div>
+      <ul class="cl" data-phase="1" data-step="4">
+        <li data-i="0"><span class="cb">✓</span>ECR repo: amazon-sprinklr-etl-v2 (lifecycle: keep 10, expire untagged after 7d)</li>
+        <li data-i="1"><span class="cb">✓</span>ECS Fargate cluster: sprinklr-etl-v2 (ford-lens-scraping-cluster separate)</li>
+        <li data-i="2"><span class="cb">✓</span>Task defs T0–T7: sprinklr-t0 through sprinklr-t7</li>
+        <li data-i="3"><span class="cb">✓</span>Dockerfile: Python 3.12-slim + Open Sans fonts bundled (Slack alert cards)</li>
+        <li data-i="4"><span class="cb">✓</span>All task defs: same ECR image, CloudWatch log group /ecs/amazon-sprinklr-etl-v2</li>
       </ul>
-      <div class="progress-wrap"><span class="progress-label">0/4</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
+      <div class="pw"><span class="pl">0/5</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
     </div>
-
-    <div class="step-card">
-      <div class="step-number">Step 1.5</div>
-      <div class="step-title">ECS Cluster + Task Definitions</div>
-      <div class="step-desc">Fargate cluster with 8 task definitions. All point to the same ECR image — each overrides CMD to run its entry point. T2 and T7 get more memory (merge and translation are heavy).</div>
-      <ul class="checklist" data-phase="1" data-step="5">
-        <li data-i="0"><span class="check-box">✓</span>Create ECS Fargate cluster: sprinklr-etl-v2</li>
-        <li data-i="1"><span class="check-box">✓</span>Task def: sprinklr-t0 (0.5 vCPU, 1GB) CMD: ["python","-m","fargate_tasks.t0_validate.main"]</li>
-        <li data-i="2"><span class="check-box">✓</span>Task def: sprinklr-t1 (0.5 vCPU, 1GB) CMD: ["python","-m","fargate_tasks.t1_ingest.main"]</li>
-        <li data-i="3"><span class="check-box">✓</span>Task def: sprinklr-t2 (1 vCPU, 2GB) CMD: merge — needs more RAM for master_table</li>
-        <li data-i="4"><span class="check-box">✓</span>Task def: sprinklr-t3 (0.5 vCPU, 1GB) CMD: collab_line</li>
-        <li data-i="5"><span class="check-box">✓</span>Task def: sprinklr-t4 (0.5 vCPU, 1GB) CMD: filter</li>
-        <li data-i="6"><span class="check-box">✓</span>Task def: sprinklr-t5 (0.5 vCPU, 1GB) CMD: tags</li>
-        <li data-i="7"><span class="check-box">✓</span>Task def: sprinklr-t6 (0.5 vCPU, 1GB) CMD: benchmark</li>
-        <li data-i="8"><span class="check-box">✓</span>Task def: sprinklr-t7 (1 vCPU, 2GB) CMD: push — translation + UPSERT heavy</li>
-        <li data-i="9"><span class="check-box">✓</span>All task defs: same image URI from sprinklr-etl-v2 ECR repo</li>
-        <li data-i="10"><span class="check-box">✓</span>All task defs: environment variables (DB_HOST, DB_USER, DB_PASS, S3 buckets, RUN_ID)</li>
-        <li data-i="11"><span class="check-box">✓</span>All task defs: CloudWatch log group /ecs/sprinklr-etl-v2</li>
-        <li data-i="12"><span class="check-box">✓</span>Test: run T0 task on cluster → verify it starts, logs appear, exits cleanly</li>
+    <div class="sc done-step">
+      <div class="sn">Step 1.5</div><span class="badge b-done">COMPLETE</span>
+      <div class="st">Step Functions State Machine</div>
+      <ul class="cl" data-phase="1" data-step="5">
+        <li data-i="0"><span class="cb">✓</span>State machine: sprinklr-etl-v2-pipeline (T0→T1→T2→Check-Monday→T3→T4→T5→T6→T7→T8→Success)</li>
+        <li data-i="1"><span class="cb">✓</span>T3 conditional: Choice state skips on non-Monday</li>
+        <li data-i="2"><span class="cb">✓</span>Each step: Catch → Pipeline-Failed → SNS alert</li>
+        <li data-i="3"><span class="cb">✓</span>RUN_TYPE + TRIGGERED_BY passed as env vars to all tasks</li>
+        <li data-i="4"><span class="cb">✓</span>infrastructure/step_functions.json saved (T8 now included)</li>
       </ul>
-      <div class="progress-wrap"><span class="progress-label">0/13</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
+      <div class="pw"><span class="pl">0/5</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
     </div>
-
-    <div class="step-card">
-      <div class="step-number">Step 1.6</div>
-      <div class="step-title">Step Functions State Machine</div>
-      <div class="step-desc">Sequential state machine: T0 → T1 → T2 → T3 → T4 → T5 → T6 → T7. Catch block on each step writes to qa.pipeline_runs and fires SNS alert.</div>
-      <ul class="checklist" data-phase="1" data-step="6">
-        <li data-i="0"><span class="check-box">✓</span>Create state machine: sprinklr-etl-v2-pipeline</li>
-        <li data-i="1"><span class="check-box">✓</span>Define sequential flow: T0 → T1 → T2 → T3 → T4 → T5 → T6 → T7</li>
-        <li data-i="2"><span class="check-box">✓</span>T3 conditional: skip on non-Monday (Choice state checks day of week)</li>
-        <li data-i="3"><span class="check-box">✓</span>Each step: Catch block → error handler → SNS alert → fail state</li>
-        <li data-i="4"><span class="check-box">✓</span>Each step: pass run_id and step number as input to next task</li>
-        <li data-i="5"><span class="check-box">✓</span>Save state machine definition JSON in infrastructure/step_functions.json</li>
-        <li data-i="6"><span class="check-box">✓</span>Test: manually start execution → verify T0 runs and logs appear</li>
+    <div class="sc done-step">
+      <div class="sn">Step 1.6</div><span class="badge b-done">COMPLETE</span>
+      <div class="st">RDS Aurora PostgreSQL</div>
+      <ul class="cl" data-phase="1" data-step="6">
+        <li data-i="0"><span class="cb">✓</span>Aurora Serverless v2: amazon-sprinklr-etl-v2-db (eu-west-2)</li>
+        <li data-i="1"><span class="cb">✓</span>Schemas: rdl, ref, odl, adl, qa all created</li>
+        <li data-i="2"><span class="cb">✓</span>33 tables across 5 schemas (migrations 001–007 applied)</li>
+        <li data-i="3"><span class="cb">✓</span>Migration files versioned in database/migrations/</li>
+        <li data-i="4"><span class="cb">✓</span>All PKs, UNIQUE constraints, 22 indexes added</li>
       </ul>
-      <div class="progress-wrap"><span class="progress-label">0/7</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
+      <div class="pw"><span class="pl">0/5</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
     </div>
-
-    <div class="step-card">
-      <div class="step-number">Step 1.7</div>
-      <div class="step-title">EventBridge Daily Trigger</div>
-      <div class="step-desc">EventBridge Scheduler rule fires Step Functions daily at 7:00 AM UTC. Replaces the S3 done.txt relay chain.</div>
-      <ul class="checklist" data-phase="1" data-step="7">
-        <li data-i="0"><span class="check-box">✓</span>Create EventBridge rule: sprinklr-etl-v2-daily (cron: 0 7 * * ? *)</li>
-        <li data-i="1"><span class="check-box">✓</span>Target: Step Functions state machine ARN</li>
-        <li data-i="2"><span class="check-box">✓</span>Input: {"run_type": "daily", "triggered_by": "eventbridge"}</li>
-        <li data-i="3"><span class="check-box">✓</span>Save config in infrastructure/eventbridge.json</li>
-        <li data-i="4"><span class="check-box">✓</span>Initially DISABLED — enable only after full E2E testing in Phase 4</li>
-        <li data-i="5"><span class="check-box">✓</span>Test: manually enable for 1 day → verify pipeline triggers at 7AM</li>
+    <div class="sc done-step">
+      <div class="sn">Step 1.7</div><span class="badge b-done">COMPLETE</span>
+      <div class="st">SNS + Slack Alerting</div>
+      <ul class="cl" data-phase="1" data-step="7">
+        <li data-i="0"><span class="cb">✓</span>SNS topic: amazon-sprinklr-etl-v2-alerts (eu-west-2)</li>
+        <li data-i="1"><span class="cb">✓</span>SES subscribers: asad.ikram, david.lawton, prabhat.mishra</li>
+        <li data-i="2"><span class="cb">✓</span>Slack webhook: Pillow PNG alert cards with step progress + buttons</li>
+        <li data-i="3"><span class="cb">✓</span>Open Sans bundled in Docker image (fixes tiny font on ECS)</li>
+        <li data-i="4"><span class="cb">✓</span>CloudWatch deep-link button on every alert card</li>
       </ul>
-      <div class="progress-wrap"><span class="progress-label">0/6</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
-    </div>
-
-    <div class="step-card">
-      <div class="step-number">Step 1.8</div>
-      <div class="step-title">SNS + SES Alerting</div>
-      <div class="step-desc">SNS topic for pipeline alerts. SES email subscription + optional Slack webhook. Two severity levels: critical (pipeline stopped) and warning.</div>
-      <ul class="checklist" data-phase="1" data-step="8">
-        <li data-i="0"><span class="check-box">✓</span>Create SNS topic: sprinklr-etl-v2-alerts</li>
-        <li data-i="1"><span class="check-box">✓</span>Subscribe SES email: asad.ikram@mcsaatchi.com, david.lawton@mcsaatchi.com</li>
-        <li data-i="2"><span class="check-box">✓</span>Subscribe SES email: prabhat.mishra@mcsaatchi.com</li>
-        <li data-i="3"><span class="check-box">✓</span>Optional: Slack webhook subscription for #fluency-alerts</li>
-        <li data-i="4"><span class="check-box">✓</span>Test: publish test message → verify email arrives</li>
-      </ul>
-      <div class="progress-wrap"><span class="progress-label">0/5</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
-    </div>
-
-    <div class="step-card">
-      <div class="step-number">Step 1.9</div>
-      <div class="step-title">S3 Buckets + Paths</div>
-      <div class="step-desc">Verify existing S3 buckets. Create new output paths for v2 pipeline. Ensure Fargate task role has read/write access.</div>
-      <ul class="checklist" data-phase="1" data-step="9">
-        <li data-i="0"><span class="check-box">✓</span>Verify source bucket: amazon-global-gsmc-sprinklr (read access)</li>
-        <li data-i="1"><span class="check-box">✓</span>Verify working bucket: wikitablescrapexample (read/write access)</li>
-        <li data-i="2"><span class="check-box">✓</span>Create v2 output prefix: amazon_sprinklr_pull/v2/ (keeps v1 outputs untouched)</li>
-        <li data-i="3"><span class="check-box">✓</span>Create v2 paths: v2/check/, v2/filtered_posts/, v2/dupes_reports/</li>
-        <li data-i="4"><span class="check-box">✓</span>Test: Fargate task reads from source bucket + writes to v2/ prefix</li>
-      </ul>
-      <div class="progress-wrap"><span class="progress-label">0/5</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
-    </div>
-
-    <div class="step-card">
-      <div class="step-number">Step 1.10</div>
-      <div class="step-title">RDS Database Setup</div>
-      <div class="step-desc">Create 5 schemas on existing RDS instance. All 28 tables with DDL, PKs, UNIQUE constraints, indexes. Migration files versioned in Git.</div>
-      <ul class="checklist" data-phase="1" data-step="10">
-        <li data-i="0"><span class="check-box">✓</span>Connect to prod-fluency-sprinklr-db-eu2 (verify access from local + Fargate)</li>
-        <li data-i="1"><span class="check-box">✓</span>CREATE SCHEMA rdl, ref, odl, adl, qa</li>
-        <li data-i="2"><span class="check-box">✓</span>RDL tables (6): sprinklr_raw_pulls, sprinklr_raw_posts, tag_pull_raw, post_id_lookup, manual_tracker_raw, schema_validation_log</li>
-        <li data-i="3"><span class="check-box">✓</span>REF tables (6): country_mapping, platform_mapping, twitter_account_mapping, blacklist, url_corrections, manual_overrides</li>
-        <li data-i="4"><span class="check-box">✓</span>ODL tables (6): post_metrics_daily, post_attributes, permalink_aliases, manual_tracker_posts, post_translations, comment_sentiment</li>
-        <li data-i="5"><span class="check-box">✓</span>ADL tables (6): posts_current, benchmarks, lookup_check, import_staging, metric_changes, daily_aggregates</li>
-        <li data-i="6"><span class="check-box">✓</span>QA tables (4): pipeline_runs, filtered_posts, duplicate_checks, data_quality_issues</li>
-        <li data-i="7"><span class="check-box">✓</span>All PKs + UNIQUE constraints + indexes verified</li>
-        <li data-i="8"><span class="check-box">✓</span>adl.daily_aggregates: CREATE MATERIALIZED VIEW with UNIQUE index</li>
-        <li data-i="9"><span class="check-box">✓</span>Migration files saved in database/migrations/ (versioned)</li>
-        <li data-i="10"><span class="check-box">✓</span>Test: INSERT dummy row into each table → verify constraints</li>
-      </ul>
-      <div class="progress-wrap"><span class="progress-label">0/11</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
-    </div>
-
-    <div class="step-card">
-      <div class="step-number">Step 1.11</div>
-      <div class="step-title">REF Table Seeds</div>
-      <div class="step-desc">Seed all 6 REF tables from existing Excel/CSV mapping files. Git-version the seed data so every change has an author and date.</div>
-      <ul class="checklist" data-phase="1" data-step="11">
-        <li data-i="0"><span class="check-box">✓</span>Export account_metadataa.xlsx → ref.country_mapping (Lambda 7 uses this, NOT countrymapping.xlsx)</li>
-        <li data-i="1"><span class="check-box">✓</span>Export platformmapping.xlsx → ref.platform_mapping</li>
-        <li data-i="2"><span class="check-box">✓</span>Export twitter_mapping.xlsx → ref.twitter_account_mapping</li>
-        <li data-i="3"><span class="check-box">✓</span>Export Blacklist.csv → ref.blacklist (add reason + added_by columns)</li>
-        <li data-i="4"><span class="check-box">✓</span>Export SQLTableNovember5thCleaned.xlsx → ref.url_corrections</li>
-        <li data-i="5"><span class="check-box">✓</span>Create empty ref.manual_overrides (MBS automation — rows added by team)</li>
-        <li data-i="6"><span class="check-box">✓</span>Save seed CSVs in database/seeds/ (Git-versioned)</li>
-        <li data-i="7"><span class="check-box">✓</span>Verify row counts match existing Excel files</li>
-      </ul>
-      <div class="progress-wrap"><span class="progress-label">0/8</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
-    </div>
-
-    <div class="step-card">
-      <div class="step-number">Step 1.12</div>
-      <div class="step-title">Dockerfile + Shared Module</div>
-      <div class="step-desc">Single Dockerfile at repo root. Installs all dependencies, copies all task code + shared module. Each task definition overrides CMD. No per-task Dockerfiles needed.</div>
-      <ul class="checklist" data-phase="1" data-step="12">
-        <li data-i="0"><span class="check-box">✓</span>Dockerfile at repo root: Python 3.12-slim + all deps (boto3, psycopg2, pandas, sqlalchemy, deep_translator, gspread, openpyxl)</li>
-        <li data-i="1"><span class="check-box">✓</span>COPY fargate_tasks/ into image (all 8 task modules + shared/)</li>
-        <li data-i="2"><span class="check-box">✓</span>shared/db.py: SQLAlchemy connection pool, get_engine()</li>
-        <li data-i="3"><span class="check-box">✓</span>shared/s3.py: get_s3_client(), bucket constants, read/write helpers</li>
-        <li data-i="4"><span class="check-box">✓</span>shared/pipeline.py: start_run(), update_step(), complete_run() → qa.pipeline_runs</li>
-        <li data-i="5"><span class="check-box">✓</span>shared/alerts.py: send_sns_alert() for failure notifications</li>
-        <li data-i="6"><span class="check-box">✓</span>Default CMD: ["python","-m","fargate_tasks.t0_validate.main"] (overridden by task defs)</li>
-        <li data-i="7"><span class="check-box">✓</span>Build locally: docker build -t sprinklr-etl-v2 . → verify all imports resolve</li>
-        <li data-i="8"><span class="check-box">✓</span>Push to ECR: docker push sprinklr-etl-v2:latest</li>
-        <li data-i="9"><span class="check-box">✓</span>Test: docker run sprinklr-etl-v2 python -m fargate_tasks.t0_validate.main → runs without error</li>
-      </ul>
-      <div class="progress-wrap"><span class="progress-label">0/10</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
-    </div>
-
-    <div class="step-card">
-      <div class="step-number">Step 1.13</div>
-      <div class="step-title">CloudWatch + Monitoring</div>
-      <div class="step-desc">Log groups for all tasks. Dashboard for pipeline health. Alarm on Step Functions failure.</div>
-      <ul class="checklist" data-phase="1" data-step="13">
-        <li data-i="0"><span class="check-box">✓</span>Create log groups: /ecs/sprinklr-etl-v2/t0 through /t7</li>
-        <li data-i="1"><span class="check-box">✓</span>Log retention: 30 days</li>
-        <li data-i="2"><span class="check-box">✓</span>CloudWatch Alarm: Step Functions execution failed → SNS alert</li>
-        <li data-i="3"><span class="check-box">✓</span>Optional: CloudWatch Dashboard with execution count, duration, error rate</li>
-      </ul>
-      <div class="progress-wrap"><span class="progress-label">0/4</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
+      <div class="pw"><span class="pl">0/5</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
     </div>
   </div>
 </div>
 
 <!-- PHASE 2 -->
-<div class="phase-view" id="phase-2">
-  <div class="phase-header">
-    <h2>Phase 2 — Database + Ingest</h2>
-    <p>Extract Lambda 1, 2a/2b, 2c, and 3 logic into Fargate tasks T0 (Validate), T1 (Copy+Ingest), and T2 (Merge). Write to new RDL tables. Run alongside existing Lambdas — shadow mode, not replacing yet.</p>
-  </div>
-  <div class="steps-grid">
-    <div class="step-card">
-      <div class="step-number">Step 2.1</div>
-      <div class="step-title">T0: Schema Validation</div>
-      <div class="step-desc">Extract Lambda 1 logic. Validate 23 files. Write results to rdl.schema_validation_log. No done.txt relay — Step Functions handles sequencing.</div>
-      <ul class="checklist" data-phase="2" data-step="1">
-        <li data-i="0"><span class="check-box">✓</span>Extract expected_file_structure dict from Lambda 1</li>
-        <li data-i="1"><span class="check-box">✓</span>Extract COLUMN_MAPPINGS_sprinklr.json logic</li>
-        <li data-i="2"><span class="check-box">✓</span>Write validate() → rdl.schema_validation_log</li>
-        <li data-i="3"><span class="check-box">✓</span>Tag fallback logic (today → latest → backup)</li>
-        <li data-i="4"><span class="check-box">✓</span>Remove 240s sleep (Step Functions replaces)</li>
-        <li data-i="5"><span class="check-box">✓</span>INSERT to qa.pipeline_runs (status=running, step=0)</li>
-        <li data-i="6"><span class="check-box">✓</span>Dockerfile for T0, push to ECR</li>
-        <li data-i="7"><span class="check-box">✓</span>Test: run T0 against today's S3 data</li>
+<div class="pv" id="phase-2">
+  <div class="ph"><h2>Phase 2 — Database + Ingest</h2><p>T0 schema validation, T1 S3 copy + ingest into JSONB, T2 merge (metrics + attributes). All run alongside existing Lambdas in shadow mode.</p></div>
+  <div class="grid">
+    <div class="sc done-step">
+      <div class="sn">Step 2.1</div><span class="badge b-done">COMPLETE</span>
+      <div class="st">T0: Schema Validation</div>
+      <ul class="cl" data-phase="2" data-step="1">
+        <li data-i="0"><span class="cb">✓</span>expected_file_structure from Lambda 1 + column mapping JSON</li>
+        <li data-i="1"><span class="cb">✓</span>Validate → rdl.schema_validation_log</li>
+        <li data-i="2"><span class="cb">✓</span>Tag fallback logic: today → latest → backup S3 date</li>
+        <li data-i="3"><span class="cb">✓</span>INSERT qa.pipeline_runs (status=running, step=0, run_id UUID)</li>
+        <li data-i="4"><span class="cb">✓</span>Fixed: apply column mappings before comparison (FK fix)</li>
       </ul>
-      <div class="progress-wrap"><span class="progress-label">0/8</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
+      <div class="pw"><span class="pl">0/5</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
     </div>
-
-    <div class="step-card">
-      <div class="step-number">Step 2.2</div>
-      <div class="step-title">T1: Copy + Ingest</div>
-      <div class="step-desc">Extract Lambda 2a/2b/2c + 3 logic. Copy files (no sleep), archive raw JSONB to rdl.sprinklr_raw_posts. Merge to master CSV.</div>
-      <ul class="checklist" data-phase="2" data-step="2">
-        <li data-i="0"><span class="check-box">✓</span>Extract copy logic from Lambda 2a/2b (no sleep)</li>
-        <li data-i="1"><span class="check-box">✓</span>Extract post_id lookup from Lambda 2c</li>
-        <li data-i="2"><span class="check-box">✓</span>INSERT raw posts → rdl.sprinklr_raw_posts (JSONB, ON CONFLICT DO NOTHING)</li>
-        <li data-i="3"><span class="check-box">✓</span>INSERT tags → rdl.tag_pull_raw</li>
-        <li data-i="4"><span class="check-box">✓</span>INSERT run log → rdl.sprinklr_raw_pulls</li>
-        <li data-i="5"><span class="check-box">✓</span>Dockerfile for T1, push to ECR</li>
-        <li data-i="6"><span class="check-box">✓</span>Test: verify JSONB rows match raw S3 files</li>
+    <div class="sc done-step">
+      <div class="sn">Step 2.2</div><span class="badge b-done">COMPLETE</span>
+      <div class="st">T1: S3 Copy + Ingest</div>
+      <ul class="cl" data-phase="2" data-step="2">
+        <li data-i="0"><span class="cb">✓</span>Copy logic from Lambda 2a/2b (no 240s sleep)</li>
+        <li data-i="1"><span class="cb">✓</span>post_id lookup from Lambda 2c</li>
+        <li data-i="2"><span class="cb">✓</span>INSERT rdl.sprinklr_raw_posts (JSONB, ON CONFLICT DO NOTHING)</li>
+        <li data-i="3"><span class="cb">✓</span>INSERT rdl.tag_pull_raw + rdl.sprinklr_raw_pulls</li>
       </ul>
-      <div class="progress-wrap"><span class="progress-label">0/7</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
+      <div class="pw"><span class="pl">0/4</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
     </div>
-
-    <div class="step-card">
-      <div class="step-number">Step 2.3</div>
-      <div class="step-title">T2: Merge</div>
-      <div class="step-desc">Extract Lambda 3 logic. Daily merge, paid data join (Monday), write odl.post_metrics_daily snapshots. No gc.collect() needed in Fargate.</div>
-      <ul class="checklist" data-phase="2" data-step="3">
-        <li data-i="0"><span class="check-box">✓</span>Extract 9 GOOD_FILES merge from Lambda 3</li>
-        <li data-i="1"><span class="check-box">✓</span>Extract paid data join (adjectivemapping.xlsx, Paid_Reach calc)</li>
-        <li data-i="2"><span class="check-box">✓</span>Write odl.post_metrics_daily (PK: post_id, pull_date, is_paiddata)</li>
-        <li data-i="3"><span class="check-box">✓</span>Remove gc.collect() (Fargate has configurable RAM)</li>
-        <li data-i="4"><span class="check-box">✓</span>Still write master_table.csv to S3 (backward compat)</li>
-        <li data-i="5"><span class="check-box">✓</span>Dockerfile for T2, push to ECR</li>
-        <li data-i="6"><span class="check-box">✓</span>Test: row counts match existing Lambda 3 output</li>
+    <div class="sc done-step">
+      <div class="sn">Step 2.3</div><span class="badge b-done">COMPLETE</span>
+      <div class="st">T2: Merge (Metrics + Attributes)</div>
+      <ul class="cl" data-phase="2" data-step="3">
+        <li data-i="0"><span class="cb">✓</span>Extract metrics → odl.post_metrics_daily (spend_usd added)</li>
+        <li data-i="1"><span class="cb">✓</span>Extract attributes → odl.post_attributes SCD Type 2</li>
+        <li data-i="2"><span class="cb">✓</span>New fields: author_name, post_message, to_be_deleted, is_manual_tracker</li>
+        <li data-i="3"><span class="cb">✓</span>account_renames applied on ingest (Amazon IG - Unpacked → Amazon News IG - US)</li>
+        <li data-i="4"><span class="cb">✓</span>Backward compat: still writes master_table.csv to S3</li>
       </ul>
-      <div class="progress-wrap"><span class="progress-label">0/7</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
+      <div class="pw"><span class="pl">0/5</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
     </div>
-
-    <div class="step-card">
-      <div class="step-number">Step 2.4</div>
-      <div class="step-title">Shadow Run Validation</div>
-      <div class="step-desc">Run T0→T1→T2 daily alongside existing Lambdas. Compare outputs. Fix discrepancies before Phase 3.</div>
-      <ul class="checklist" data-phase="2" data-step="4">
-        <li data-i="0"><span class="check-box">✓</span>Run T0-T2 in parallel with existing for 5+ days</li>
-        <li data-i="1"><span class="check-box">✓</span>Compare rdl.sprinklr_raw_posts count vs S3 file count</li>
-        <li data-i="2"><span class="check-box">✓</span>Compare odl.post_metrics_daily vs master_table.csv</li>
-        <li data-i="3"><span class="check-box">✓</span>Zero discrepancy for 3 consecutive runs</li>
-        <li data-i="4"><span class="check-box">✓</span>Sign-off from David on Phase 2 data accuracy</li>
+    <div class="sc done-step">
+      <div class="sn">Step 2.4</div><span class="badge b-done">COMPLETE</span>
+      <div class="st">Phase 2 Shadow Run</div>
+      <ul class="cl" data-phase="2" data-step="4">
+        <li data-i="0"><span class="cb">✓</span>E2E run T0→T2 via Step Functions: 13 min, all green</li>
+        <li data-i="1"><span class="cb">✓</span>Slack alert cards working with step progress bars</li>
+        <li data-i="2"><span class="cb">✓</span>qa.pipeline_runs completing correctly</li>
+        <li data-i="3"><span class="cb">✓</span>UUID cast fix, silent except fix, run_type/triggered_by fix</li>
       </ul>
-      <div class="progress-wrap"><span class="progress-label">0/5</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
+      <div class="pw"><span class="pl">0/4</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
     </div>
   </div>
 </div>
 
 <!-- PHASE 3 -->
-<div class="phase-view" id="phase-3">
-  <div class="phase-header">
-    <h2>Phase 3 — Transform + Filter</h2>
-    <p>Extract Lambda 3b, 4, 8, 9, and 5 logic into Fargate tasks T3 (Collab+LINE), T4 (Filter R1-10), and T5 (Tags). Daniel's decision: Collab+LINE BEFORE filters for modular isolation.</p>
-  </div>
-  <div class="steps-grid">
-    <div class="step-card">
-      <div class="step-number">Step 3.1</div>
-      <div class="step-title">T3: Collab + LINE (Monday)</div>
-      <div class="step-desc">Extract Lambda 8 + 9 logic. Collab 4-priority-rule dedup. LINE sci notation fix + SUM aggregation. Runs before filters per Daniel's architecture decision.</div>
-      <ul class="checklist" data-phase="3" data-step="1">
-        <li data-i="0"><span class="check-box">✓</span>Extract Lambda 8 Google Sheets reader (2 sheets, hardcoded URLs)</li>
-        <li data-i="1"><span class="check-box">✓</span>Extract 4 Collab dedup priority rules</li>
-        <li data-i="2"><span class="check-box">✓</span>Extract Lambda 9 LINE reader (2 tabs, sci notation fix)</li>
-        <li data-i="3"><span class="check-box">✓</span>LINE SUM aggregation by Post URL</li>
-        <li data-i="4"><span class="check-box">✓</span>Write rdl.manual_tracker_raw (raw before rules)</li>
-        <li data-i="5"><span class="check-box">✓</span>Write odl.manual_tracker_posts (processed with rule_applied)</li>
-        <li data-i="6"><span class="check-box">✓</span>Skip on non-Monday (Step Functions day check)</li>
-        <li data-i="7"><span class="check-box">✓</span>Test: compare output vs Lambda 8+9 processed_data.csv</li>
+<div class="pv" id="phase-3">
+  <div class="ph"><h2>Phase 3 — Transform + Filter</h2><p>T3 Collab+LINE with Lambda 8 priority logic, T4 all 22 filter rules corrected from full Lambda audit, T5 full tag refresh with 25+ columns. All 19 REF tables seeded.</p></div>
+  <div class="grid">
+    <div class="sc done-step">
+      <div class="sn">Step 3.1</div><span class="badge b-done">COMPLETE</span>
+      <div class="st">REF Table Seeding (all 19 tables)</div>
+      <div class="sd">All mapping files migrated from S3/Google Sheets to Aurora PostgreSQL. seed_ref_tables_standalone.py runs from VS Code.</div>
+      <ul class="cl" data-phase="3" data-step="1">
+        <li data-i="0"><span class="cb">✓</span>ref.country_mapping — 88 rows (account_metadataa.xlsx)</li>
+        <li data-i="1"><span class="cb">✓</span>ref.platform_mapping — 14 rows + platform_category populated</li>
+        <li data-i="2"><span class="cb">✓</span>ref.twitter_account_mapping — 18 rows</li>
+        <li data-i="3"><span class="cb">✓</span>ref.blacklist — 124 rows</li>
+        <li data-i="4"><span class="cb">✓</span>ref.url_corrections — 76 rows</li>
+        <li data-i="5"><span class="cb">✓</span>ref.apac_author_mapping — 93 rows (Rule 18)</li>
+        <li data-i="6"><span class="cb">✓</span>ref.post_message_mapping — 52 rows (PostMessage_tagging.xlsx)</li>
+        <li data-i="7"><span class="cb">✓</span>ref.linkedin_region_lookup — 111 rows</li>
+        <li data-i="8"><span class="cb">✓</span>ref.excluded_countries — 8 rows (AT,BE,NL,PL,SE,TR,SG,CN)</li>
+        <li data-i="9"><span class="cb">✓</span>ref.xcm_post_messages — 8 rows (Lambda 7 values_to_remove)</li>
+        <li data-i="10"><span class="cb">✓</span>ref.post_message_rules — 8 rows (NA/APAC_IN/EMEA valid messages)</li>
+        <li data-i="11"><span class="cb">✓</span>ref.filter_exemptions — 6 rows (R14/R16 account + platform)</li>
+        <li data-i="12"><span class="cb">✓</span>ref.permalink_bypasses, ref.account_renames, ref.silent_account_exclusions</li>
+        <li data-i="13"><span class="cb">✓</span>ref.custom_metric_corrections — 2 pending rows (Google Sheet)</li>
+        <li data-i="14"><span class="cb">✓</span>ref.mbs_updates — 954 rows (mbs_update_data.csv)</li>
+        <li data-i="15"><span class="cb">✓</span>ref.x_quote_deletions — 5 rows (remove_x_quote_posts.csv)</li>
+        <li data-i="16"><span class="cb">✓</span>adl.benchmarks — 1,370 rows (median + mean, organic + paid)</li>
       </ul>
-      <div class="progress-wrap"><span class="progress-label">0/8</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
+      <div class="pw"><span class="pl">0/17</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
     </div>
-
-    <div class="step-card">
-      <div class="step-number">Step 3.2</div>
-      <div class="step-title">T4: Filter Rules 1–10</div>
-      <div class="step-desc">Extract Lambda 4 filter rules + Lambda 6 Rules 9-10 (null country, zero spend). Read from ref.* tables. All filtered posts → qa.filtered_posts.</div>
-      <ul class="checklist" data-phase="3" data-step="2">
-        <li data-i="0"><span class="check-box">✓</span>Extract Rules 1-6 from Lambda 4</li>
-        <li data-i="1"><span class="check-box">✓</span>Add Rules 9-10 from Lambda 6 (null country, SPENT=0)</li>
-        <li data-i="2"><span class="check-box">✓</span>Read mappings from ref.country_mapping (not S3 xlsx)</li>
-        <li data-i="3"><span class="check-box">✓</span>Read ref.platform_mapping, ref.twitter_account_mapping</li>
-        <li data-i="4"><span class="check-box">✓</span>Apply ref.url_corrections</li>
-        <li data-i="5"><span class="check-box">✓</span>Write ALL filtered rows → qa.filtered_posts with rule number</li>
-        <li data-i="6"><span class="check-box">✓</span>Still write filtered_posts/lambda_4_*.csv (backward compat)</li>
-        <li data-i="7"><span class="check-box">✓</span>Test: filtered row counts match Lambda 4 output</li>
+    <div class="sc done-step">
+      <div class="sn">Step 3.2</div><span class="badge b-done">COMPLETE</span>
+      <div class="st">T3: Collab + LINE (Lambda 8)</div>
+      <ul class="cl" data-phase="3" data-step="2">
+        <li data-i="0"><span class="cb">✓</span>extract_post_identifier() replicated in SQL (fbid=, pfbid, /p|reel|tv/, rsplit default)</li>
+        <li data-i="1"><span class="cb">✓</span>Priority 1: Sprinklr Organic/Boosted wins over Collab</li>
+        <li data-i="2"><span class="cb">✓</span>Priority 2: Collab Organic > Collab Boosted (no Sprinklr)</li>
+        <li data-i="3"><span class="cb">✓</span>Priority 3: Collab Boosted (no Organic at all)</li>
+        <li data-i="4"><span class="cb">✓</span>Paid always additive — never dropped</li>
+        <li data-i="5"><span class="cb">✓</span>Pre-filter: Valid Post=TRUE AND Upload to CORE=TRUE</li>
+        <li data-i="6"><span class="cb">✓</span>Decisions logged → qa.collab_priority_decisions</li>
+        <li data-i="7"><span class="cb">✓</span>LINE: is_manual_tracker=2, Delivery=Organic, SUM aggregation</li>
       </ul>
-      <div class="progress-wrap"><span class="progress-label">0/8</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
+      <div class="pw"><span class="pl">0/8</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
     </div>
-
-    <div class="step-card">
-      <div class="step-number">Step 3.3</div>
-      <div class="step-title">T5: Tag Refresh + Merge</div>
-      <div class="step-desc">Extract Lambda 5 logic. Merge tags by PERMALINK. Merge manual tracker data from T3. Write odl.post_attributes (SCD Type 2 optional).</div>
-      <ul class="checklist" data-phase="3" data-step="3">
-        <li data-i="0"><span class="check-box">✓</span>Extract tag merge logic from Lambda 5</li>
-        <li data-i="1"><span class="check-box">✓</span>Read Organic_Tags + Paid_Tags from latest_tag_mapping/</li>
-        <li data-i="2"><span class="check-box">✓</span>Merge manual tracker output from T3</li>
-        <li data-i="3"><span class="check-box">✓</span>Write odl.post_attributes (overwrite or SCD Type 2)</li>
-        <li data-i="4"><span class="check-box">✓</span>No 90-day filter limitation (reads full tag data)</li>
-        <li data-i="5"><span class="check-box">✓</span>Test: tag coverage matches Lambda 5 output</li>
+    <div class="sc done-step">
+      <div class="sn">Step 3.3</div><span class="badge b-done">COMPLETE</span>
+      <div class="st">T4: All 22 Filter Rules (Full Lambda Audit)</div>
+      <div class="sd">Full audit of Lambda 4/5/6/7 — 11 rules were wrong or missing. All corrected. PostMessage canonical mapping applied for R14/15/16.</div>
+      <ul class="cl" data-phase="3" data-step="3">
+        <li data-i="0"><span class="cb">✓</span>R2: ref.permalink_bypasses bypass support</li>
+        <li data-i="1"><span class="cb">✓</span>R3: Facebook-only file extension filter (was applied to all platforms)</li>
+        <li data-i="2"><span class="cb">✓</span>R5b: 250-499 impressions + &lt;50 engagements for 2026+ posts</li>
+        <li data-i="3"><span class="cb">✓</span>R7: ref.excluded_countries (AT≠MENA — was using wrong mechanism)</li>
+        <li data-i="4"><span class="cb">✓</span>R8: Deleted posts filter (to_be_deleted flag), LINE exempt</li>
+        <li data-i="5"><span class="cb">✓</span>R11: Fixed cutoff 2023-09-04 (was rolling 90d window). WeChat always exempt.</li>
+        <li data-i="6"><span class="cb">✓</span>R13: Exact match 'Amazon News X - EU' (was ILIKE)</li>
+        <li data-i="7"><span class="cb">✓</span>R14/15/16: valid message lists via ref.post_message_rules + canonical mapping + account/platform exemptions</li>
+        <li data-i="8"><span class="cb">✓</span>R18: APAC author exclusions via ref.apac_author_mapping</li>
+        <li data-i="9"><span class="cb">✓</span>R21: XCM Post Messages via ref.xcm_post_messages</li>
+        <li data-i="10"><span class="cb">✓</span>R22: Collab dedup safety net (was missing entirely)</li>
+        <li data-i="11"><span class="cb">✓</span>qa.filter_run_summary + qa.post_journey populated per run</li>
       </ul>
-      <div class="progress-wrap"><span class="progress-label">0/6</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
+      <div class="pw"><span class="pl">0/12</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
     </div>
-
-    <div class="step-card">
-      <div class="step-number">Step 3.4</div>
-      <div class="step-title">Shadow Run T3-T5</div>
-      <div class="step-desc">Run T3→T4→T5 alongside existing Monday chain. Compare filtered + tagged outputs.</div>
-      <ul class="checklist" data-phase="3" data-step="4">
-        <li data-i="0"><span class="check-box">✓</span>Run T3-T5 in parallel for 3+ Monday cycles</li>
-        <li data-i="1"><span class="check-box">✓</span>Compare qa.filtered_posts vs Lambda 4/7 CSVs</li>
-        <li data-i="2"><span class="check-box">✓</span>Compare tagged output vs Lambda 5 finalmaster/</li>
-        <li data-i="3"><span class="check-box">✓</span>Zero data discrepancy for 2 consecutive Mondays</li>
+    <div class="sc done-step">
+      <div class="sn">Step 3.4</div><span class="badge b-done">COMPLETE</span>
+      <div class="st">T5: Full Tag Refresh (Lambda 5)</div>
+      <div class="sd">Was 6 columns. Now 25+ columns including Reputational Sub Topic (9 source columns) and Editorial Format logic.</div>
+      <ul class="cl" data-phase="3" data-step="4">
+        <li data-i="0"><span class="cb">✓</span>Post Message: raw → ref.post_message_mapping → canonical; empty → 'Global'</li>
+        <li data-i="1"><span class="cb">✓</span>Reputational Sub Topic: 9 RST columns, disambiguation, sorted, joined</li>
+        <li data-i="2"><span class="cb">✓</span>Editorial Format Pillar + Type (pillar-format validation)</li>
+        <li data-i="3"><span class="cb">✓</span>content_source, breaking_news, is_reactive, is_repeatable, entertainment_sub_type</li>
+        <li data-i="4"><span class="cb">✓</span>team, sub_campaign, content_intent, social_events, collab_kind</li>
+        <li data-i="5"><span class="cb">✓</span>LinkedIn region via ref.linkedin_region_lookup</li>
+        <li data-i="6"><span class="cb">✓</span>Manual tracker rows (is_manual_tracker IN 1,2) never overwritten</li>
+        <li data-i="7"><span class="cb">✓</span>Migration 007: 19 new columns on odl.post_attributes</li>
       </ul>
-      <div class="progress-wrap"><span class="progress-label">0/4</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
+      <div class="pw"><span class="pl">0/8</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
     </div>
   </div>
 </div>
 
 <!-- PHASE 4 -->
-<div class="phase-view" id="phase-4">
-  <div class="phase-header">
-    <h2>Phase 4 — Benchmark + Push + QA</h2>
-    <p>Extract Lambda 6 + 7 logic into T6 (Benchmark) and T7 (Push+QA+MBS). This is the hardest phase — Lambda 7 is 1,456 lines. Includes MBS automation via ref.manual_overrides. Full E2E testing, Tableau cutover, Lambda decommission.</p>
+<div class="pv" id="phase-4">
+  <div class="ph"><h2>Phase 4 — Benchmark + Push + T8</h2><p>T6 full 156-column build with benchmarks, T7 QA + post_journey, T8 post-pipeline corrections replacing Lambda 10. Full pipeline runs E2E in 13 minutes.</p></div>
+  <div class="grid">
+    <div class="sc done-step">
+      <div class="sn">Step 4.1</div><span class="badge b-done">COMPLETE</span>
+      <div class="st">T6: Full 156-Column Build</div>
+      <ul class="cl" data-phase="4" data-step="1">
+        <li data-i="0"><span class="cb">✓</span>Matcher = LOWER(country+platform+delivery+quarter), Boosted uses 'all'</li>
+        <li data-i="1"><span class="cb">✓</span>Benchmark Type: Median + Average (CROSS JOIN — each post appears twice)</li>
+        <li data-i="2"><span class="cb">✓</span>Fallback: quarterly sample &lt;10 → annual ('all' suffix)</li>
+        <li data-i="3"><span class="cb">✓</span>ER/LPI/CPI raw + vs Benchmark + BPS columns</li>
+        <li data-i="4"><span class="cb">✓</span>Organic &amp; Boosted, Beats Benchmark, post_id_key, Lookup Key</li>
+        <li data-i="5"><span class="cb">✓</span>Paid date shift (Paid Only → Date = pull_date)</li>
+        <li data-i="6"><span class="cb">✓</span>Amazon LI - Global → Amazon LI - {Country}</li>
+        <li data-i="7"><span class="cb">✓</span>WeChat Video - CN Platform Granular fix</li>
+        <li data-i="8"><span class="cb">✓</span>40+ null-holding paid benchmark columns</li>
+      </ul>
+      <div class="pw"><span class="pl">0/9</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
+    </div>
+    <div class="sc done-step">
+      <div class="sn">Step 4.2</div><span class="badge b-done">COMPLETE</span>
+      <div class="st">T7: QA + Observability</div>
+      <ul class="cl" data-phase="4" data-step="2">
+        <li data-i="0"><span class="cb">✓</span>4 dedup SQL checks → qa.duplicate_checks</li>
+        <li data-i="1"><span class="cb">✓</span>qa.post_journey: full lifecycle per post per run (published/filtered/deleted)</li>
+        <li data-i="2"><span class="cb">✓</span>qa.filter_run_summary: count per rule per run</li>
+        <li data-i="3"><span class="cb">✓</span>qa.pipeline_runs: completed_at, duration, rows_ingested all populated</li>
+        <li data-i="4"><span class="cb">✓</span>REFRESH MATERIALIZED VIEW adl.daily_aggregates</li>
+      </ul>
+      <div class="pw"><span class="pl">0/5</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
+    </div>
+    <div class="sc done-step">
+      <div class="sn">Step 4.3</div><span class="badge b-done">COMPLETE</span>
+      <div class="st">T8: Post-Pipeline Corrections (Lambda 10)</div>
+      <div class="sd">Lambda 10 fully replaced. All sources moved from S3/Google Sheets to ref.* tables.</div>
+      <ul class="cl" data-phase="4" data-step="3">
+        <li data-i="0"><span class="cb">✓</span>Step 1: Custom metric corrections — ref.custom_metric_corrections (was Google Sheet 18W6Z1…)</li>
+        <li data-i="1"><span class="cb">✓</span>Step 2: MBS bulk impression updates — ref.mbs_updates (was mbs_update_data.csv)</li>
+        <li data-i="2"><span class="cb">✓</span>Step 3: X Quote deletions — ref.x_quote_deletions (was remove_x_quote_posts.csv)</li>
+        <li data-i="3"><span class="cb">✓</span>Auto-recalc of ER/LPI/CPI/Organic Impressions/Total Reach after impressions change</li>
+        <li data-i="4"><span class="cb">✓</span>Every correction logged → qa.t8_corrections_log (before/after)</li>
+        <li data-i="5"><span class="cb">✓</span>Step Functions: T7 → T8 → Pipeline-Success</li>
+      </ul>
+      <div class="pw"><span class="pl">0/6</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
+    </div>
+    <div class="sc done-step">
+      <div class="sn">Step 4.4</div><span class="badge b-done">COMPLETE</span>
+      <div class="st">Pipeline E2E Test Run</div>
+      <ul class="cl" data-phase="4" data-step="4">
+        <li data-i="0"><span class="cb">✓</span>Full E2E T0→T7 via Step Functions: 13 min, 8/8 steps green</li>
+        <li data-i="1"><span class="cb">✓</span>Slack alert cards: PNG with step progress, coloured buttons, CloudWatch link</li>
+        <li data-i="2"><span class="cb">✓</span>UUID cast fix, SQL :param::TYPE cast fix, duration 0.0 fix</li>
+        <li data-i="3"><span class="cb">✓</span>11 SQL performance optimisations (DISTINCT ON, anti-joins, RETURNING CTEs)</li>
+        <li data-i="4"><span class="cb">✓</span>22 missing indexes added across all tables</li>
+      </ul>
+      <div class="pw"><span class="pl">0/5</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
+    </div>
   </div>
-  <div class="steps-grid">
-    <div class="step-card">
-      <div class="step-number">Step 4.1</div>
-      <div class="step-title">T6: Benchmarking</div>
-      <div class="step-desc">Extract Lambda 6 Matcher logic. No row doubling — single row per post with median + mean columns. PK on adl.benchmarks. Write adl.metric_changes + daily_aggregates.</div>
-      <ul class="checklist" data-phase="4" data-step="1">
-        <li data-i="0"><span class="check-box">✓</span>Extract Matcher logic (Country+Platform+Delivery+Quarter)</li>
-        <li data-i="1"><span class="check-box">✓</span>Extract benchmark fallback (<10 samples → annual)</li>
-        <li data-i="2"><span class="check-box">✓</span>Eliminate row doubling: median_vs_benchmark + mean_vs_benchmark columns</li>
-        <li data-i="3"><span class="check-box">✓</span>Write adl.benchmarks with PK (matcher, benchmark_type)</li>
-        <li data-i="4"><span class="check-box">✓</span>Write adl.metric_changes (WoW delta detection)</li>
-        <li data-i="5"><span class="check-box">✓</span>REFRESH MATERIALIZED VIEW adl.daily_aggregates</li>
-        <li data-i="6"><span class="check-box">✓</span>Paid benchmarks: RegionObjective key</li>
-        <li data-i="7"><span class="check-box">✓</span>Test: benchmark scores match Lambda 6 output</li>
-      </ul>
-      <div class="progress-wrap"><span class="progress-label">0/8</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
-    </div>
+</div>
 
-    <div class="step-card">
-      <div class="step-number">Step 4.2</div>
-      <div class="step-title">T7: Push + QA + MBS Override</div>
-      <div class="step-desc">The big one. Extract Lambda 7 (1,456 lines). Rules 11-21. Translation. LI Global split. UPSERT to adl.posts_current. MBS automation via ref.manual_overrides. 4 dedup queries.</div>
-      <ul class="checklist" data-phase="4" data-step="2">
-        <li data-i="0"><span class="check-box">✓</span>Extract Rules 11-21 from Lambda 7</li>
-        <li data-i="1"><span class="check-box">✓</span>deep_translator integration (no timeout in Fargate)</li>
-        <li data-i="2"><span class="check-box">✓</span>Comment sentiment CSV merge</li>
-        <li data-i="3"><span class="check-box">✓</span>LI Global → LI {Country} split logic</li>
-        <li data-i="4"><span class="check-box">✓</span>Paid Only date shift (-7 days)</li>
-        <li data-i="5"><span class="check-box">✓</span>UPSERT adl.posts_current ON CONFLICT (post_id_key)</li>
-        <li data-i="6"><span class="check-box">✓</span>UPSERT adl.lookup_check ON CONFLICT (Lookup Key)</li>
-        <li data-i="7"><span class="check-box">✓</span>Stage via adl.import_staging → UPSERT</li>
-        <li data-i="8"><span class="check-box">✓</span>ref.manual_overrides: read pending → apply → mark done</li>
-        <li data-i="9"><span class="check-box">✓</span>4 dedup SQL queries → qa.duplicate_checks</li>
-        <li data-i="10"><span class="check-box">✓</span>Update qa.pipeline_runs (status=complete, duration)</li>
-        <li data-i="11"><span class="check-box">✓</span>Write check/finalsql_*.csv + filtered_posts/*.csv (backward compat)</li>
-        <li data-i="12"><span class="check-box">✓</span>Test: sprinklr_table row count matches adl.posts_current</li>
+<!-- PHASE 5 -->
+<div class="pv" id="phase-5">
+  <div class="ph"><h2>Phase 5 — Validation + Production Cutover</h2><p>Register T8 ECS task definition. Update Step Functions in AWS console. Create EventBridge Scheduler. Fix stale pipeline_runs. Shadow run on Monday. Tableau cutover. Lambda decommission.</p></div>
+  <div class="grid">
+    <div class="sc active-step">
+      <div class="sn">Step 5.1</div><span class="badge b-now">IN PROGRESS</span>
+      <div class="st">Register T8 + Update Infrastructure</div>
+      <div class="sd">Register the T8 ECS task definition, update Step Functions state machine to include T8, and create EventBridge Scheduler for daily 7AM UTC trigger.</div>
+      <ul class="cl" data-phase="5" data-step="1">
+        <li data-i="0"><span class="cb">✓</span>T8 task definition JSON created: infrastructure/task_definitions/sprinklr-t8.json</li>
+        <li data-i="1"><span class="cb">✓</span>Step Functions JSON updated: T7→T8→Pipeline-Success (infrastructure/step_functions.json)</li>
+        <li data-i="2"><span class="cb">✓</span>EventBridge config written: infrastructure/eventbridge.json (DISABLED initially)</li>
+        <li data-i="3"><span class="cb">✓</span>T8 log stream prefix fixed (was sprinklr-t7, now sprinklr-t8)</li>
+        <li data-i="4"><span class="cb">✓</span>T8 TaskDefinition reference fixed in Step Functions (was sprinklr-t7)</li>
+        <li data-i="5">Register sprinklr-t8 task definition in AWS ECS console</li>
+        <li data-i="6">Update Step Functions state machine with new JSON (T8 added)</li>
+        <li data-i="7">Create IAM role: sprinklr-etl-v2-eventbridge-role (scheduler.amazonaws.com trust + states:StartExecution)</li>
+        <li data-i="8">Create EventBridge Scheduler: sprinklr-etl-v2-daily (cron 0 7 * * ? * UTC) → DISABLED</li>
       </ul>
-      <div class="progress-wrap"><span class="progress-label">0/13</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
+      <div class="pw"><span class="pl">0/9</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
     </div>
-
-    <div class="step-card">
-      <div class="step-number">Step 4.3</div>
-      <div class="step-title">Full E2E Pipeline Test</div>
-      <div class="step-desc">Run T0→T7 end-to-end. Compare adl.posts_current vs sprinklr_table. Verify 156 columns identical. Zero discrepancy required.</div>
-      <ul class="checklist" data-phase="4" data-step="3">
-        <li data-i="0"><span class="check-box">✓</span>E2E run T0→T7 via Step Functions</li>
-        <li data-i="1"><span class="check-box">✓</span>Compare adl.posts_current vs sprinklr_table (156 cols)</li>
-        <li data-i="2"><span class="check-box">✓</span>Compare row counts (should be half due to no row doubling)</li>
-        <li data-i="3"><span class="check-box">✓</span>Verify qa.filtered_posts covers all 21 rules</li>
-        <li data-i="4"><span class="check-box">✓</span>Verify qa.pipeline_runs green for 5+ days</li>
-        <li data-i="5"><span class="check-box">✓</span>Test MBS override: insert row in ref.manual_overrides → verify applied</li>
-        <li data-i="6"><span class="check-box">✓</span>Run for 2 full weeks (incl 2 Mondays) with zero issues</li>
+    <div class="sc">
+      <div class="sn">Step 5.2</div><span class="badge b-pen">PENDING</span>
+      <div class="st">DB Housekeeping</div>
+      <ul class="cl" data-phase="5" data-step="2">
+        <li data-i="0">Fix stale pipeline_runs: UPDATE qa.pipeline_runs SET status='abandoned' WHERE status='running' AND run_date &lt; CURRENT_DATE</li>
+        <li data-i="1">Verify adl.benchmarks has 1,370 rows (SELECT COUNT(*) FROM adl.benchmarks)</li>
+        <li data-i="2">Verify all 19 ref tables populated (run: python3 seed_ref_tables_standalone.py --verify-only)</li>
+        <li data-i="3">Confirm migration 007 applied (19 tag columns on odl.post_attributes)</li>
       </ul>
-      <div class="progress-wrap"><span class="progress-label">0/7</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
+      <div class="pw"><span class="pl">0/4</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
     </div>
-
-    <div class="step-card">
-      <div class="step-number">Step 4.4</div>
-      <div class="step-title">Tableau Cutover</div>
-      <div class="step-desc">Point Tableau from sprinklr_table → adl.posts_current. Verify all dashboards work. Then disable Lambdas 4-7 Monday triggers.</div>
-      <ul class="checklist" data-phase="4" data-step="4">
-        <li data-i="0"><span class="check-box">✓</span>Update Tableau data source: sprinklr_table → adl.posts_current</li>
-        <li data-i="1"><span class="check-box">✓</span>Verify all existing dashboards render correctly</li>
-        <li data-i="2"><span class="check-box">✓</span>Add QA dashboard: pipeline_runs + filtered_posts + dedup trends</li>
-        <li data-i="3"><span class="check-box">✓</span>Disable Lambda 3b→4→5→6→7 S3 triggers</li>
-        <li data-i="4"><span class="check-box">✓</span>Keep Lambda 1-3 running in parallel for 1 more week</li>
-        <li data-i="5"><span class="check-box">✓</span>Sign-off from David on daily Tableau data</li>
-        <li data-i="6"><span class="check-box">✓</span>Disable remaining Lambdas, mark as archived</li>
-        <li data-i="7"><span class="check-box">✓</span>Update architecture documentation</li>
+    <div class="sc">
+      <div class="sn">Step 5.3</div><span class="badge b-pen">PENDING</span>
+      <div class="st">Monday Shadow Run</div>
+      <div class="sd">Enable EventBridge for one Monday run. Compare v2 output vs live Lambda pipeline side by side.</div>
+      <ul class="cl" data-phase="5" data-step="3">
+        <li data-i="0">Enable EventBridge Scheduler for ONE Monday run</li>
+        <li data-i="1">Verify pipeline completes T0→T8 without errors</li>
+        <li data-i="2">Compare row counts: SELECT COUNT(*) FROM adl.posts_current vs sprinklr_table</li>
+        <li data-i="3">Compare platform distribution (top 10 platforms match within 1%)</li>
+        <li data-i="4">Compare country distribution (top 10 countries match within 1%)</li>
+        <li data-i="5">Verify filter rule counts match Lambda 4/7 filtered_posts CSVs</li>
+        <li data-i="6">Verify Collab priority decisions match Lambda 8 dedup log</li>
+        <li data-i="7">Check adl.benchmarks joining correctly (ER vs Benchmark not all NULL)</li>
+        <li data-i="8">Sign-off from David on data accuracy</li>
       </ul>
-      <div class="progress-wrap"><span class="progress-label">0/8</span><div class="progress-bar"><div class="progress-fill" style="width:0"></div></div></div>
+      <div class="pw"><span class="pl">0/9</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
+    </div>
+    <div class="sc">
+      <div class="sn">Step 5.4</div><span class="badge b-pen">PENDING</span>
+      <div class="st">Tableau Cutover</div>
+      <ul class="cl" data-phase="5" data-step="4">
+        <li data-i="0">Update Tableau data source: sprinklr_table → adl.posts_current</li>
+        <li data-i="1">Verify all existing dashboards render correctly</li>
+        <li data-i="2">Verify benchmark columns (ER vs Benchmark BPS, Beats Benchmark) visible</li>
+        <li data-i="3">Verify Reputational Sub Topic + Editorial Format columns present</li>
+        <li data-i="4">Sign-off from David on all dashboards</li>
+      </ul>
+      <div class="pw"><span class="pl">0/5</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
+    </div>
+    <div class="sc">
+      <div class="sn">Step 5.5</div><span class="badge b-pen">PENDING</span>
+      <div class="st">Parallel Run (1 Week)</div>
+      <ul class="cl" data-phase="5" data-step="5">
+        <li data-i="0">Enable EventBridge permanently (daily 7AM UTC)</li>
+        <li data-i="1">Keep old Lambda chain running in parallel for 1 week</li>
+        <li data-i="2">Monitor qa.pipeline_runs daily — zero failures for 5 consecutive runs</li>
+        <li data-i="3">Monitor Slack alerts — all green cards</li>
+        <li data-i="4">Monitor adl.posts_current row count vs sprinklr_table — stable</li>
+      </ul>
+      <div class="pw"><span class="pl">0/5</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
+    </div>
+    <div class="sc">
+      <div class="sn">Step 5.6</div><span class="badge b-pen">PENDING</span>
+      <div class="st">Lambda Decommission</div>
+      <ul class="cl" data-phase="5" data-step="6">
+        <li data-i="0">Disable Lambda 3b → 4 → 5 → 6 → 7 S3 event triggers</li>
+        <li data-i="1">Disable Lambda 8 + Lambda 9 Monday triggers</li>
+        <li data-i="2">Disable Lambda 10 scheduled trigger</li>
+        <li data-i="3">Archive all Lambda functions (keep code, disable triggers)</li>
+        <li data-i="4">Update architecture documentation + README</li>
+        <li data-i="5">Final sign-off from Daniel + David</li>
+      </ul>
+      <div class="pw"><span class="pl">0/6</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
     </div>
   </div>
 </div>
 
 <div class="footer">
-  <span>Amazon CORE ETL · M+C Saatchi Fluency · Asad Ikram</span>
-  <span>Repo: github.com/Fluency-M-C-Saatchi/amazon_sprinklr_etl_v2</span>
+  <span>Amazon CORE ETL · M+C Saatchi Fluency · Asad Ikram · <span id="last-updated"></span></span>
+  <span>github.com/Fluency-M-C-Saatchi/amazon_sprinklr_etl_v2</span>
 </div>
 
 <script>
-// Phase switching
-function setPhase(n) {
-  document.querySelectorAll('.phase-pill').forEach(p => p.classList.remove('active'));
-  document.querySelector(`.phase-pill[data-phase="${n}"]`).classList.add('active');
-
-  document.querySelectorAll('.ov-card').forEach(c => c.classList.remove('active-card'));
-  const card = document.querySelector(`.ov-card[data-phase="${n}"]`);
-  if (card) card.classList.add('active-card');
-
-  // Toggle overview vs phase views
-  const overview = document.getElementById('phase-0-overview');
-  document.querySelectorAll('.phase-view').forEach(v => v.classList.remove('active'));
-
-  if (n === 0) {
-    overview.style.display = '';
-  } else {
-    overview.style.display = 'none';
-    document.getElementById(`phase-${n}`).classList.add('active');
-  }
+function go(n){
+  document.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
+  document.querySelector(`.pill[data-phase="${n}"]`).classList.add('active');
+  document.querySelectorAll('.oc').forEach(c=>c.classList.remove('lit'));
+  const card=document.querySelector(`.oc[data-phase="${n}"]`);
+  if(card)card.classList.add('lit');
+  const ov=document.getElementById('phase-0-overview');
+  document.querySelectorAll('.pv').forEach(v=>v.classList.remove('active'));
+  if(n===0){ov.style.display=''}
+  else{ov.style.display='none';document.getElementById(`phase-${n}`).classList.add('active')}
 }
 
-// Checklist persistence
-const STORAGE_KEY = 'sprinklr_v2_checks_v16';
+const SK='sprinklr_v2_roadmap_v3';
+function load(){try{return JSON.parse(localStorage.getItem(SK))||{}}catch{return{}}}
+function save(d){localStorage.setItem(SK,JSON.stringify(d))}
 
-// Items completed so far — pre-ticked on first load
-const DEFAULTS = {
-  // Step 1.1 — GitHub Repo + CI/CD (ALL DONE)
-  'p1s1_0': true, 'p1s1_1': true, 'p1s1_2': true, 'p1s1_3': true,
-  'p1s1_4': true, 'p1s1_5': true, 'p1s1_6': true, 'p1s1_7': true,
-
-  // Step 1.2 — IAM Roles + Security (ALL DONE)
-  'p1s2_0': true, 'p1s2_1': true, 'p1s2_2': true, 'p1s2_3': true,
-  'p1s2_4': true, 'p1s2_5': true, 'p1s2_6': true, 'p1s2_7': true,
-
-  // Step 1.3 — VPC + Networking (ALL DONE)
-  'p1s3_0': true, 'p1s3_1': true, 'p1s3_2': true, 'p1s3_3': true, 'p1s3_4': true,
-
-  // Step 1.4 — ECR Repository (ALL DONE)
-  'p1s4_0': true, 'p1s4_1': true, 'p1s4_2': true, 'p1s4_3': true,
-
-  // Step 1.5 — ECS Cluster + Task Definitions (ALL DONE)
-  'p1s5_0': true, 'p1s5_1': true, 'p1s5_2': true, 'p1s5_3': true,
-  'p1s5_4': true, 'p1s5_5': true, 'p1s5_6': true, 'p1s5_7': true,
-  'p1s5_8': true, 'p1s5_9': true, 'p1s5_10': true, 'p1s5_11': true, 'p1s5_12': true,
-
-  // Step 1.6 — Step Functions State Machine (ALL DONE)
-  'p1s6_0': true, 'p1s6_1': true, 'p1s6_2': true, 'p1s6_3': true,
-  'p1s6_4': true, 'p1s6_5': true, 'p1s6_6': true,
-
-  // Step 1.7 — EventBridge Daily Trigger (ALL DONE)
-  'p1s7_0': true, 'p1s7_1': true, 'p1s7_2': true, 'p1s7_3': true, 'p1s7_4': true, 'p1s7_5': true,
-
-  // Step 1.8 — SNS + SES Alerting (ALL DONE)
-  'p1s8_0': true, 'p1s8_1': true, 'p1s8_2': true, 'p1s8_4': true,
-
-  // Step 1.9 — S3 Buckets + Paths (ALL DONE)
-  'p1s9_0': true, 'p1s9_1': true, 'p1s9_2': true, 'p1s9_3': true, 'p1s9_4': true,
-
-  // Step 1.10 — RDS Database Setup (ALL DONE — 28 tables + 3 migrations applied 23 Apr)
-  'p1s10_0': true, 'p1s10_1': true, 'p1s10_2': true, 'p1s10_3': true,
-  'p1s10_4': true, 'p1s10_5': true, 'p1s10_6': true, 'p1s10_7': true,
-  'p1s10_8': true, 'p1s10_9': true, 'p1s10_10': true,
-
-  // Step 1.11 — REF Table Seeds (ALL DONE — scripts written + seeded 23 Apr)
-  'p1s11_0': true, 'p1s11_1': true, 'p1s11_2': true, 'p1s11_3': true,
-  'p1s11_4': true, 'p1s11_5': true, 'p1s11_6': true, 'p1s11_7': true,
-
-  // Step 1.12 — Dockerfile + Shared Module (ALL DONE — Open Sans bundled, pushed to ECR)
-  'p1s12_0': true, 'p1s12_1': true, 'p1s12_2': true, 'p1s12_3': true,
-  'p1s12_4': true, 'p1s12_5': true, 'p1s12_6': true, 'p1s12_7': true,
-  'p1s12_8': true, 'p1s12_9': true,
-
-  // Step 1.13 — CloudWatch + Monitoring (ALL DONE)
-  'p1s13_0': true, 'p1s13_1': true, 'p1s13_2': true, 'p1s13_3': true,
-
-  // Step 2.1 — T0: Schema Validation (ALL DONE — FK fix + column mapping fix applied, tested 23 Apr)
-  'p2s1_0': true, 'p2s1_1': true, 'p2s1_2': true, 'p2s1_3': true,
-  'p2s1_4': true, 'p2s1_5': true, 'p2s1_6': true,
-
-  // Step 2.2 — T1: Copy + Ingest (ALL DONE — tested, passing)
-  'p2s2_0': true, 'p2s2_1': true, 'p2s2_2': true, 'p2s2_3': true, 'p2s2_4': true, 'p2s2_5': true,
-
-  // Step 2.3 — T2: Merge (ALL DONE — SQL-first, tested passing 23 Apr)
-  'p2s3_0': true, 'p2s3_1': true, 'p2s3_2': true, 'p2s3_3': true, 'p2s3_4': true, 'p2s3_5': true,
-
-  // Step 2.4 — T3: Collab + LINE (ALL DONE — SQL written, tested passing 23 Apr)
-  'p2s4_0': true, 'p2s4_1': true, 'p2s4_2': true, 'p2s4_3': true,
-  'p2s4_4': true, 'p2s4_5': true, 'p2s4_6': true, 'p2s4_7': true,
-
-  // Step 3.1 — T4: Filter Rules 1-20 (ALL DONE — optimised with CTEs 23 Apr, tested passing)
-  'p3s1_0': true, 'p3s1_1': true, 'p3s1_2': true, 'p3s1_3': true,
-  'p3s1_4': true, 'p3s1_5': true,
-
-  // Step 3.2 — T5: Tag Refresh (ALL DONE — RETURNING optimisation applied, tested passing)
-  'p3s2_0': true, 'p3s2_1': true, 'p3s2_2': true, 'p3s2_3': true,
-  'p3s2_4': true, 'p3s2_5': true, 'p3s2_6': true,
-
-  // Step 3.3 — T6 shadow validation (PENDING — needs real data)
-  'p3s3_0': true, 'p3s3_1': true, 'p3s3_2': true, 'p3s3_3': true, 'p3s3_4': true,
-
-  // Step 4.1 — T6: Benchmarking (ALL DONE — optimised, DELETE removed, tested passing 23 Apr)
-  'p4s1_0': true, 'p4s1_1': true, 'p4s1_2': true, 'p4s1_3': true,
-  'p4s1_4': true, 'p4s1_5': true, 'p4s1_6': true,
-
-  // Step 4.2 — T7: Push + QA (ALL DONE — retention policy added, tested passing 23 Apr)
-  'p4s2_0': true, 'p4s2_1': true, 'p4s2_2': true, 'p4s2_3': true,
-  'p4s2_4': true, 'p4s2_5': true, 'p4s2_6': true, 'p4s2_7': true,
-  'p4s2_8': true, 'p4s2_9': true, 'p4s2_10': true,
-
-  // Step 4.3 — Slack Alerts (ALL DONE — cards, Open Sans font, correct step numbers, CW deep-link)
-  'p4s3_0': true, 'p4s3_1': true, 'p4s3_2': true, 'p4s3_3': true, 'p4s3_4': true,
-
-  // Step 4.4 — REF Table Seeds applied (DONE 23 Apr)
-  'p4s4_0': true, 'p4s4_1': true, 'p4s4_2': true, 'p4s4_3': true, 'p4s4_4': true,
-
-  // Step 4.5 — Task Definitions re-registered (DONE — RUN_TYPE + TRIGGERED_BY added 23 Apr)
-  'p4s5_0': true, 'p4s5_1': true,
-};
-
-function loadChecks() {
-  try {
-    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    if (stored && Object.keys(stored).length > 0) return stored;
-    // First visit — seed with defaults
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULTS));
-    return { ...DEFAULTS };
-  } catch {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULTS));
-    return { ...DEFAULTS };
-  }
-}
-function saveChecks(data) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-}
-
-function initChecks() {
-  const data = loadChecks();
-
-  document.querySelectorAll('.checklist').forEach(list => {
-    const phase = list.dataset.phase;
-    const step = list.dataset.step;
-    const key = `p${phase}s${step}`;
-
-    list.querySelectorAll('li').forEach(li => {
-      const i = li.dataset.i;
-      const itemKey = `${key}_${i}`;
-      if (data[itemKey]) li.classList.add('done');
-
-      li.addEventListener('click', () => {
+function init(){
+  const data=load();
+  document.querySelectorAll('.cl').forEach(list=>{
+    const p=list.dataset.phase,s=list.dataset.step,k=`p${p}s${s}`;
+    list.querySelectorAll('li').forEach(li=>{
+      const i=li.dataset.i,ik=`${k}_${i}`;
+      if(data[ik])li.classList.add('done');
+      li.addEventListener('click',()=>{
         li.classList.toggle('done');
-        const checks = loadChecks();
-        checks[itemKey] = li.classList.contains('done');
-        saveChecks(checks);
-        updateProgress();
+        const d=load();d[ik]=li.classList.contains('done');save(d);update();
       });
     });
   });
-
-  updateProgress();
+  update();
+  document.getElementById('last-updated').textContent='Updated '+new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
 }
 
-function updateProgress() {
-  const data = loadChecks();
-  const phaseTotals = { 1: { done: 0, total: 0 }, 2: { done: 0, total: 0 }, 3: { done: 0, total: 0 }, 4: { done: 0, total: 0 } };
-
-  document.querySelectorAll('.checklist').forEach(list => {
-    const phase = list.dataset.phase;
-    const step = list.dataset.step;
-    const key = `p${phase}s${step}`;
-    const items = list.querySelectorAll('li');
-    let done = 0;
-    items.forEach(li => { if (li.classList.contains('done')) done++; });
-
-    // Update step progress bar
-    const wrap = list.nextElementSibling;
-    if (wrap && wrap.classList.contains('progress-wrap')) {
-      wrap.querySelector('.progress-label').textContent = `${done}/${items.length}`;
-      wrap.querySelector('.progress-fill').style.width = `${(done / items.length) * 100}%`;
+function update(){
+  const data=load();
+  const totals={1:{d:0,t:0},2:{d:0,t:0},3:{d:0,t:0},4:{d:0,t:0},5:{d:0,t:0}};
+  document.querySelectorAll('.cl').forEach(list=>{
+    const p=list.dataset.phase,s=list.dataset.step,k=`p${p}s${s}`;
+    const items=list.querySelectorAll('li');
+    let done=0;
+    items.forEach(li=>{if(li.classList.contains('done'))done++;});
+    const wrap=list.nextElementSibling;
+    if(wrap&&wrap.classList.contains('pw')){
+      wrap.querySelector('.pl').textContent=`${done}/${items.length}`;
+      wrap.querySelector('.pf').style.width=`${(done/items.length)*100}%`;
     }
-
-    if (phaseTotals[phase]) {
-      phaseTotals[phase].done += done;
-      phaseTotals[phase].total += items.length;
-    }
+    if(totals[p]){totals[p].d+=done;totals[p].t+=items.length;}
   });
-
-  // Update overview rings
-  Object.entries(phaseTotals).forEach(([phase, { done, total }]) => {
-    const ring = document.querySelector(`.ring-progress[data-phase="${phase}"]`);
-    if (ring && total > 0) {
-      const pct = done / total;
-      ring.setAttribute('stroke-dasharray', `${pct * 94.2} 94.2`);
-    }
+  Object.entries(totals).forEach(([p,{d,t}])=>{
+    const ring=document.querySelector(`.ring-progress[data-phase="${p}"]`);
+    if(ring&&t>0)ring.setAttribute('stroke-dasharray',`${(d/t)*94.2} 94.2`);
   });
-
-  // Update status bar
-  const allDone = Object.values(phaseTotals).reduce((s, p) => s + p.done, 0);
-  const allTotal = Object.values(phaseTotals).reduce((s, p) => s + p.total, 0);
-  const pct = allTotal > 0 ? Math.round((allDone / allTotal) * 100) : 0;
-
-  let currentPhase = 0;
-  for (let i = 1; i <= 4; i++) {
-    if (phaseTotals[i].done < phaseTotals[i].total) { currentPhase = i; break; }
-    if (i === 4 && phaseTotals[i].done === phaseTotals[i].total) currentPhase = 5;
+  const allD=Object.values(totals).reduce((s,x)=>s+x.d,0);
+  const allT=Object.values(totals).reduce((s,x)=>s+x.t,0);
+  const pct=allT>0?Math.round((allD/allT)*100):0;
+  let cur=0;
+  for(let i=1;i<=5;i++){
+    if(totals[i].d<totals[i].t){cur=i;break;}
+    if(i===5&&totals[i].d===totals[i].t)cur=6;
   }
-
-  const statusText = document.getElementById('status-text');
-  if (currentPhase === 0) statusText.textContent = 'Phase 0 — Planning';
-  else if (currentPhase === 5) statusText.textContent = `Complete — All ${allTotal} items done`;
-  else statusText.textContent = `Phase ${currentPhase} — In Progress (${pct}%)`;
+  const st=document.getElementById('status-text');
+  if(cur===0)st.textContent='Phase 0 — Planning';
+  else if(cur===6)st.textContent=`Complete — All ${allT} items done ✓`;
+  else st.textContent=`Phase ${cur} — In Progress (${pct}% overall)`;
 }
 
-// Keyboard nav
-document.addEventListener('keydown', e => {
-  const active = document.querySelector('.phase-pill.active');
-  const cur = parseInt(active.dataset.phase);
-  if (e.key === 'ArrowRight' && cur < 4) setPhase(cur + 1);
-  if (e.key === 'ArrowLeft' && cur > 0) setPhase(cur - 1);
+document.addEventListener('keydown',e=>{
+  const cur=parseInt(document.querySelector('.pill.active').dataset.phase);
+  if(e.key==='ArrowRight'&&cur<5)go(cur+1);
+  if(e.key==='ArrowLeft'&&cur>0)go(cur-1);
 });
 
-document.addEventListener('DOMContentLoaded', initChecks);
+document.addEventListener('DOMContentLoaded',()=>{init();go(5);});
 </script>
 </body>
 </html>
