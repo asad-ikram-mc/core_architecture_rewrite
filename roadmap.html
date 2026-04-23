@@ -637,7 +637,7 @@ function setPhase(n) {
 }
 
 // Checklist persistence
-const STORAGE_KEY = 'sprinklr_v2_checks_v14';
+const STORAGE_KEY = 'sprinklr_v2_checks_v15';
 
 // Items completed so far — pre-ticked on first load
 const DEFAULTS = {
@@ -704,6 +704,12 @@ const DEFAULTS = {
   'p4s2_0': true, 'p4s2_1': true, 'p4s2_2': true, 'p4s2_3': true,
   'p4s2_4': true, 'p4s2_5': true, 'p4s2_6': true, 'p4s2_7': true,
   'p4s2_8': true, 'p4s2_9': true, 'p4s2_10': true,
+  // Step 4.3 — Slack Alerts (COMPLETE)
+  'p4s3_0': true, 'p4s3_1': true, 'p4s3_2': true, 'p4s3_3': true, 'p4s3_4': true,
+  // Step 4.4 — REF Table Seeds (COMPLETE — seeded 23 April)
+  'p4s4_0': true, 'p4s4_1': true, 'p4s4_2': true, 'p4s4_3': true, 'p4s4_4': true,
+  // Step 4.5 — Re-register Task Definitions (IN PROGRESS)
+  'p4s5_0': true,  // Updated env vars in JSON files
 };
 
 function loadChecks() {
