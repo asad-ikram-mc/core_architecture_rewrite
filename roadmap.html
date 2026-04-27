@@ -51,7 +51,7 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 
 /* ── OVERVIEW ── */
 .ov{padding:28px 40px}
-.ov-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:14px}
+.ov-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:14px}
 .oc{padding:16px 14px;border-radius:10px;border:1px solid var(--border);background:var(--panel);
   cursor:pointer;transition:.25s;position:relative;overflow:hidden}
 .oc:hover{border-color:var(--cyan);transform:translateY(-2px)}
@@ -131,7 +131,7 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
     <div class="amz-pill">amazon</div>
     <div class="hdr-text">
       <h1>CORE ETL — Architecture Rewrite</h1>
-      <p>12 Lambdas → 9 Fargate Tasks · Step Functions · 33 Tables · 5 Schemas · 19 REF Tables · adl.benchmarks 1,370 rows</p>
+      <p>12 Lambdas → 10 Fargate Tasks · Step Functions · 30 Tables · 5 Schemas · 19 REF Tables · Auto-detect dedup ★</p>
     </div>
   </div>
   <div class="status-pill"><span class="dot"></span><span id="status-text">Loading...</span></div>
@@ -142,8 +142,9 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   <button class="pill" data-phase="1" onclick="go(1)"><span class="pn">01</span>Foundation</button>
   <button class="pill" data-phase="2" onclick="go(2)"><span class="pn">02</span>Database + Ingest</button>
   <button class="pill" data-phase="3" onclick="go(3)"><span class="pn">03</span>Transform + Filter</button>
-  <button class="pill" data-phase="4" onclick="go(4)"><span class="pn">04</span>Benchmark + Push + T8</button>
-  <button class="pill" data-phase="5" onclick="go(5)"><span class="pn">05</span>Validation + Cutover</button>
+  <button class="pill" data-phase="4" onclick="go(4)"><span class="pn">04</span>Benchmark + Push + QA</button>
+  <button class="pill" data-phase="5" onclick="go(5)"><span class="pn">05</span>Hardening + Dedup</button>
+  <button class="pill" data-phase="6" onclick="go(6)"><span class="pn">06</span>Production Cutover</button>
 </div>
 
 <!-- OVERVIEW -->
@@ -172,17 +173,24 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
     </div>
     <div class="oc done-card" data-phase="4" onclick="go(4)">
       <div class="oc-lbl">Phase 4</div>
-      <div class="oc-title">Benchmark + Push + T8</div>
-      <div class="oc-desc">T6 156-col build, T7 QA, T8 corrections. adl.benchmarks 1,370 rows. Pipeline runs E2E.</div>
+      <div class="oc-title">Benchmark + Push + QA</div>
+      <div class="oc-desc">T6 122-col build with benchmarks, T7 UPSERT to Tableau, schema parity with Lambda 7. Full E2E in 13 min.</div>
       <div class="oc-time">Complete ✓</div>
       <svg class="oc-ring" viewBox="0 0 36 36"><circle cx="18" cy="18" r="15" fill="none" stroke="#1c2540" stroke-width="3"/><circle class="ring-progress" data-phase="4" cx="18" cy="18" r="15" fill="none" stroke="var(--orange)" stroke-width="3" stroke-dasharray="0 94.2" stroke-linecap="round" transform="rotate(-90 18 18)"/></svg>
     </div>
-    <div class="oc lit" data-phase="5" onclick="go(5)">
-      <div class="oc-lbl">Phase 5 — Active</div>
-      <div class="oc-title">Validation + Cutover</div>
-      <div class="oc-desc">Register T8 ECS task def. Update Step Functions. Create EventBridge. Shadow run. Tableau cutover. Lambda decommission.</div>
+    <div class="oc done-card" data-phase="5" onclick="go(5)">
+      <div class="oc-lbl">Phase 5</div>
+      <div class="oc-title">Hardening + Dedup</div>
+      <div class="oc-desc">T8 corrections deployed. T9 dedup detection ★ NEW. URL canonicalisation in T1. qa.duplicate_candidates with SQL approval helpers.</div>
+      <div class="oc-time">Complete ✓</div>
+      <svg class="oc-ring" viewBox="0 0 36 36"><circle cx="18" cy="18" r="15" fill="none" stroke="#1c2540" stroke-width="3"/><circle class="ring-progress" data-phase="5" cx="18" cy="18" r="15" fill="none" stroke="var(--purple)" stroke-width="3" stroke-dasharray="0 94.2" stroke-linecap="round" transform="rotate(-90 18 18)"/></svg>
+    </div>
+    <div class="oc lit" data-phase="6" onclick="go(6)">
+      <div class="oc-lbl">Phase 6 — Active</div>
+      <div class="oc-title">Production Cutover</div>
+      <div class="oc-desc">Historical backfill (Fix C). 4-week parallel run. Tableau cutover. Decommission old Lambdas 4-7-10 permanently.</div>
       <div class="oc-time">In Progress →</div>
-      <svg class="oc-ring" viewBox="0 0 36 36"><circle cx="18" cy="18" r="15" fill="none" stroke="#1c2540" stroke-width="3"/><circle class="ring-progress" data-phase="5" cx="18" cy="18" r="15" fill="none" stroke="var(--green)" stroke-width="3" stroke-dasharray="0 94.2" stroke-linecap="round" transform="rotate(-90 18 18)"/></svg>
+      <svg class="oc-ring" viewBox="0 0 36 36"><circle cx="18" cy="18" r="15" fill="none" stroke="#1c2540" stroke-width="3"/><circle class="ring-progress" data-phase="6" cx="18" cy="18" r="15" fill="none" stroke="var(--green)" stroke-width="3" stroke-dasharray="0 94.2" stroke-linecap="round" transform="rotate(-90 18 18)"/></svg>
     </div>
   </div>
 </div>
@@ -415,7 +423,7 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 
 <!-- PHASE 4 -->
 <div class="pv" id="phase-4">
-  <div class="ph"><h2>Phase 4 — Benchmark + Push + T8</h2><p>T6 full 156-column build with benchmarks, T7 QA + post_journey, T8 post-pipeline corrections replacing Lambda 10. Full pipeline runs E2E in 13 minutes.</p></div>
+  <div class="ph"><h2>Phase 4 — Benchmark + Push + QA</h2><p>T6 full 122-column build with benchmarks, T7 UPSERT to Tableau with schema parity matching old Lambda 7 exactly. Full pipeline runs E2E in 13 minutes.</p></div>
   <div class="grid">
     <div class="sc done-step">
       <div class="sn">Step 4.1</div><span class="badge b-done">COMPLETE</span>
@@ -476,89 +484,188 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 
 <!-- PHASE 5 -->
 <div class="pv" id="phase-5">
-  <div class="ph"><h2>Phase 5 — Validation + Production Cutover</h2><p>Register T8 ECS task definition. Update Step Functions in AWS console. Create EventBridge Scheduler. Fix stale pipeline_runs. Shadow run on Monday. Tableau cutover. Lambda decommission.</p></div>
+  <div class="ph"><h2>Phase 5 — Production Hardening + Dedup</h2><p>Now that the pipeline runs end-to-end, harden it for production. Replace Lambda 10 with T8 (post-pipeline corrections). Add T9 dedup detection ★ to automate the manual Monday HILC workflow. Add URL canonicalisation in T1 so duplicates never enter the system in the first place. Sprinklr's <code>post_id</code> and <code>permalink</code> are both unstable — this phase makes v2 robust against that without losing the human review safety net.</p></div>
   <div class="grid">
-    <div class="sc active-step">
-      <div class="sn">Step 5.1</div><span class="badge b-now">IN PROGRESS</span>
-      <div class="st">Register T8 + Update Infrastructure</div>
-      <div class="sd">Register the T8 ECS task definition, update Step Functions state machine to include T8, and create EventBridge Scheduler for daily 7AM UTC trigger.</div>
+
+    <div class="sc done-step">
+      <div class="sn">Step 5.1</div><span class="badge b-done">COMPLETE</span>
+      <div class="st">T8 — Post-pipeline Corrections</div>
+      <div class="sd">Replaces Lambda 10. Reads from ref.* tables in Aurora (not S3 CSVs/Google Sheets). Auto-recalculates ER/LPI/CPI when impressions change.</div>
       <ul class="cl" data-phase="5" data-step="1">
-        <li data-i="0"><span class="cb">✓</span>T8 task definition JSON created: infrastructure/task_definitions/sprinklr-t8.json</li>
-        <li data-i="1"><span class="cb">✓</span>Step Functions JSON updated: T7→T8→Pipeline-Success (infrastructure/step_functions.json)</li>
-        <li data-i="2"><span class="cb">✓</span>EventBridge config written: infrastructure/eventbridge.json (DISABLED initially)</li>
-        <li data-i="3"><span class="cb">✓</span>T8 log stream prefix fixed (was sprinklr-t7, now sprinklr-t8)</li>
-        <li data-i="4"><span class="cb">✓</span>T8 TaskDefinition reference fixed in Step Functions (was sprinklr-t7)</li>
-        <li data-i="5">Register sprinklr-t8 task definition in AWS ECS console</li>
-        <li data-i="6">Update Step Functions state machine with new JSON (T8 added)</li>
-        <li data-i="7">Create IAM role: sprinklr-etl-v2-eventbridge-role (scheduler.amazonaws.com trust + states:StartExecution)</li>
-        <li data-i="8">Create EventBridge Scheduler: sprinklr-etl-v2-daily (cron 0 7 * * ? * UTC) → DISABLED</li>
+        <li data-i="0"><span class="cb">✓</span>Move data sources from S3 CSVs + Google Sheets → ref.* tables in Aurora</li>
+        <li data-i="1"><span class="cb">✓</span>Per-row dynamic column UPDATE (Python — can't be pure SQL)</li>
+        <li data-i="2"><span class="cb">✓</span>Auto-recalculate ER/LPI/CPI/Organic Impressions/Total Reach on triggers</li>
+        <li data-i="3"><span class="cb">✓</span>MBS bulk updates from ref.mbs_updates (SQL)</li>
+        <li data-i="4"><span class="cb">✓</span>X Quote deletions from ref.x_quote_deletions (SQL)</li>
+        <li data-i="5"><span class="cb">✓</span>Audit log to qa.t8_corrections_log</li>
+        <li data-i="6"><span class="cb">✓</span>ECS task definition sprinklr-t8 registered + Step Functions updated</li>
       </ul>
-      <div class="pw"><span class="pl">0/9</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
+      <div class="pw"><span class="pl">7/7</span><div class="pb"><div class="pf" style="width:100%"></div></div></div>
     </div>
-    <div class="sc">
-      <div class="sn">Step 5.2</div><span class="badge b-pen">PENDING</span>
-      <div class="st">DB Housekeeping</div>
+
+    <div class="sc done-step">
+      <div class="sn">Step 5.2</div><span class="badge b-done">COMPLETE</span>
+      <div class="st">URL canonicalisation in T1</div>
+      <div class="sd">Sprinklr returns same logical post under different URL forms (FB /posts/X vs /photo.php?fbid=X, IG /p/abc vs /reel/abc). T1 normalises both forms before INSERT — kills Q4 + Q5 duplicates at source.</div>
       <ul class="cl" data-phase="5" data-step="2">
-        <li data-i="0">Fix stale pipeline_runs: UPDATE qa.pipeline_runs SET status='abandoned' WHERE status='running' AND run_date &lt; CURRENT_DATE</li>
-        <li data-i="1">Verify adl.benchmarks has 1,370 rows (SELECT COUNT(*) FROM adl.benchmarks)</li>
-        <li data-i="2">Verify all 19 ref tables populated (run: python3 seed_ref_tables_standalone.py --verify-only)</li>
-        <li data-i="3">Confirm migration 007 applied (19 tag columns on odl.post_attributes)</li>
+        <li data-i="0"><span class="cb">✓</span>fargate_tasks/shared/url_canonical.py — pure function with 11/11 unit tests</li>
+        <li data-i="1"><span class="cb">✓</span>Facebook /photo.php?fbid=X → /&lt;page&gt;/posts/X</li>
+        <li data-i="2"><span class="cb">✓</span>Facebook /&lt;page&gt;/photos|videos|reel/X → /&lt;page&gt;/posts/X</li>
+        <li data-i="3"><span class="cb">✓</span>Instagram /reel/X → /p/X</li>
+        <li data-i="4"><span class="cb">✓</span>Strip query strings + fragments (set=…, t=…, __cft__=…)</li>
+        <li data-i="5"><span class="cb">✓</span>Preserve original URL in raw_data->>'PERMALINK_ORIGINAL' for traceback</li>
+        <li data-i="6"><span class="cb">✓</span>Wired into T1 ingest loop before rdl.sprinklr_raw_posts INSERT</li>
+        <li data-i="7">Add TikTok / LinkedIn / X canonicalisation rules (rules unclear — defer)</li>
+      </ul>
+      <div class="pw"><span class="pl">7/8</span><div class="pb"><div class="pf" style="width:88%"></div></div></div>
+    </div>
+
+    <div class="sc done-step">
+      <div class="sn">Step 5.3</div><span class="badge b-done">COMPLETE</span>
+      <div class="st">qa.duplicate_candidates table + helpers</div>
+      <div class="sd">Stages flagged duplicates for human review. SQL helper functions provide one-line approval/rejection. Status lifecycle: pending → approved (deleted) | rejected (kept) | resolved (no longer dup).</div>
+      <ul class="cl" data-phase="5" data-step="3">
+        <li data-i="0"><span class="cb">✓</span>Migration 009: qa.duplicate_candidates with status lifecycle</li>
+        <li data-i="1"><span class="cb">✓</span>UNIQUE (run_id, source_query, post_id_key) — idempotent re-runs</li>
+        <li data-i="2"><span class="cb">✓</span>CHECK constraints on status + source_query values</li>
+        <li data-i="3"><span class="cb">✓</span>qa.preview_dedup() — show what approve would delete</li>
+        <li data-i="4"><span class="cb">✓</span>qa.approve_dedup() — delete from posts_current + mark approved</li>
+        <li data-i="5"><span class="cb">✓</span>qa.approve_dedup('Q4_FB_FORMAT') — approve only one query group</li>
+        <li data-i="6"><span class="cb">✓</span>qa.reject_dedup(id, note) — mark not-a-dup, keep the row</li>
+      </ul>
+      <div class="pw"><span class="pl">7/7</span><div class="pb"><div class="pf" style="width:100%"></div></div></div>
+    </div>
+
+    <div class="sc done-step">
+      <div class="sn">Step 5.4</div><span class="badge b-done">COMPLETE</span>
+      <div class="st">T9 ★ — Duplicate Detection task</div>
+      <div class="sd">Runs the 6 HILC detection queries against adl.posts_current after T8. Stages flagged rows for review. NEVER auto-deletes — operator approves via SQL on Mondays. Q1 always defaults is_to_remove=FALSE (human decides).</div>
+      <ul class="cl" data-phase="5" data-step="4">
+        <li data-i="0"><span class="cb">✓</span>Q1 HILC: same Post text, different URLs (human review only)</li>
+        <li data-i="1"><span class="cb">✓</span>Q2 AUTO: null vs non-null post_id (auto-approvable)</li>
+        <li data-i="2"><span class="cb">✓</span>Q3 MANUAL: manual tracker overlap (Rule 22 backstop, should be ~0)</li>
+        <li data-i="3"><span class="cb">✓</span>Q4 FB FORMAT: /posts/ vs /photo.php (canonicalised in T1, should be ~0)</li>
+        <li data-i="4"><span class="cb">✓</span>Q5 IG FORMAT: /p/ vs /reel/ (canonicalised in T1, should be ~0)</li>
+        <li data-i="5"><span class="cb">✓</span>Q6 FLOAT KEY: '.0' suffix bug (fixed earlier, should be 0)</li>
+        <li data-i="6"><span class="cb">✓</span>Slack alert on Mondays with summary by query + SQL commands</li>
+        <li data-i="7"><span class="cb">✓</span>Step Functions: T8 → T9 → Pipeline-Success</li>
+        <li data-i="8"><span class="cb">✓</span>ECS task definition sprinklr-t9 registered</li>
+        <li data-i="9"><span class="cb">✓</span>Alert card extended: 8 → 10 nodes, "10 / 10" steps display</li>
+      </ul>
+      <div class="pw"><span class="pl">10/10</span><div class="pb"><div class="pf" style="width:100%"></div></div></div>
+    </div>
+
+    <div class="sc done-step">
+      <div class="sn">Step 5.5</div><span class="badge b-done">COMPLETE</span>
+      <div class="st">post_id_key stability</div>
+      <div class="sd">post_id from Sprinklr is unstable (duplicates, nulls). Old pipeline used RowID (DB sequence). v2 uses Permalink for organic/boosted (stable per URL). UNIQUE post_id_key constraint enforces atomicity.</div>
+      <ul class="cl" data-phase="5" data-step="5">
+        <li data-i="0"><span class="cb">✓</span>Organic/Boosted: post_id_key = permalink + benchmark + 'NONPAID'</li>
+        <li data-i="1"><span class="cb">✓</span>Manual tracker: post_id_key = post_id + benchmark (internal stable IDs)</li>
+        <li data-i="2"><span class="cb">✓</span>Paid: post_id_key = permalink + benchmark + date + post_id + 'PAID'</li>
+        <li data-i="3"><span class="cb">✓</span>Eliminated float key bug ('.0' → integer)</li>
+        <li data-i="4"><span class="cb">✓</span>UNIQUE constraint on adl.posts_current.post_id_key</li>
+      </ul>
+      <div class="pw"><span class="pl">5/5</span><div class="pb"><div class="pf" style="width:100%"></div></div></div>
+    </div>
+
+    <div class="sc done-step">
+      <div class="sn">Step 5.6</div><span class="badge b-done">COMPLETE</span>
+      <div class="st">Schema parity with old pipeline</div>
+      <div class="sd">adl.posts_current expanded from 96 → 122 columns to match Lambda 7's full output schema. All tag columns now populated with Lambda 5 'Global' defaults. Filter reason strings standardised.</div>
+      <ul class="cl" data-phase="5" data-step="6">
+        <li data-i="0"><span class="cb">✓</span>Fix A: Lambda 5 'Global' defaults applied (Reputational Topic, Team, …)</li>
+        <li data-i="1"><span class="cb">✓</span>Fix B: Filter reason strings match Lambda 7 exactly ('Rule N: …')</li>
+        <li data-i="2"><span class="cb">✓</span>T6 expanded INSERT 96 → 122 columns matching old Lambda 7 schema</li>
+        <li data-i="3"><span class="cb">✓</span>MESSAGE_TYPE = 'Update' (always set, since Rule 1 filters non-Update)</li>
+        <li data-i="4"><span class="cb">✓</span>RowID = post_id_key (legacy column for Tableau compatibility)</li>
+        <li data-i="5"><span class="cb">✓</span>Total Reach, Total Video Views, Video Length populated</li>
+        <li data-i="6"><span class="cb">✓</span>Editorial Pillar, Editorial Type, Reputational Sub Topic populated</li>
+        <li data-i="7"><span class="cb">✓</span>Rule 19 fixed to require is_branded='True' (was over-filtering)</li>
+      </ul>
+      <div class="pw"><span class="pl">8/8</span><div class="pb"><div class="pf" style="width:100%"></div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- PHASE 6 -->
+<div class="pv" id="phase-6">
+  <div class="ph"><h2>Phase 6 — Production Cutover</h2><p>Final phase: bring 3 years of historical data into v2 (Fix C migration), run 4 Mondays in parallel with the old Lambda chain, then cut Tableau over and decommission the old Lambdas permanently.</p></div>
+  <div class="grid">
+
+    <div class="sc active-step">
+      <div class="sn">Step 6.1</div><span class="badge b-now">IN PROGRESS</span>
+      <div class="st">Historical backfill (Fix C)</div>
+      <div class="sd">One-time SQL migration: 69,778 rows from adl.sprinklr_table_backup (last Lambda 7 output) into adl.posts_current. Gives Tableau the full 3-year history immediately rather than waiting for v2 to accumulate.</div>
+      <ul class="cl" data-phase="6" data-step="1">
+        <li data-i="0">Run fix_c_migrate_backup.sql Steps 1+2 (sanity check)</li>
+        <li data-i="1">Run Step 3 INSERT — dedup on Permalink + Benchmark Type + Delivery</li>
+        <li data-i="2">Run Step 4 — verify posts_current has 71k+ rows total</li>
+        <li data-i="3">Verify Tableau dashboards render correctly with merged history</li>
       </ul>
       <div class="pw"><span class="pl">0/4</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
     </div>
-    <div class="sc">
-      <div class="sn">Step 5.3</div><span class="badge b-pen">PENDING</span>
-      <div class="st">Monday Shadow Run</div>
-      <div class="sd">Enable EventBridge for one Monday run. Compare v2 output vs live Lambda pipeline side by side.</div>
-      <ul class="cl" data-phase="5" data-step="3">
-        <li data-i="0">Enable EventBridge Scheduler for ONE Monday run</li>
-        <li data-i="1">Verify pipeline completes T0→T8 without errors</li>
-        <li data-i="2">Compare row counts: SELECT COUNT(*) FROM adl.posts_current vs sprinklr_table</li>
-        <li data-i="3">Compare platform distribution (top 10 platforms match within 1%)</li>
-        <li data-i="4">Compare country distribution (top 10 countries match within 1%)</li>
-        <li data-i="5">Verify filter rule counts match Lambda 4/7 filtered_posts CSVs</li>
-        <li data-i="6">Verify Collab priority decisions match Lambda 8 dedup log</li>
-        <li data-i="7">Check adl.benchmarks joining correctly (ER vs Benchmark not all NULL)</li>
-        <li data-i="8">Sign-off from David on data accuracy</li>
+
+    <div class="sc active-step">
+      <div class="sn">Step 6.2</div><span class="badge b-now">IN PROGRESS</span>
+      <div class="st">First T9-included pipeline run</div>
+      <div class="sd">Trigger a manual Step Functions execution to verify the full T0→T9 flow: 10 nodes, 10/10 alert card, qa.duplicate_candidates populated, Monday Slack review alert (test with is_monday:true).</div>
+      <ul class="cl" data-phase="6" data-step="2">
+        <li data-i="0"><span class="cb">✓</span>migration 009 deployed (qa.duplicate_candidates + 3 helper functions)</li>
+        <li data-i="1"><span class="cb">✓</span>sprinklr-t9 ECS task definition registered</li>
+        <li data-i="2"><span class="cb">✓</span>Step Functions updated: T8 → T9 → Pipeline-Success</li>
+        <li data-i="3">Trigger run with is_monday:true → verify 10/10 alert + Monday review Slack</li>
+        <li data-i="4">Inspect qa.duplicate_candidates: Q4/Q5/Q6 should be ~0 (canonicalised)</li>
+        <li data-i="5">Operator dry-run: SELECT * FROM qa.preview_dedup()</li>
       </ul>
-      <div class="pw"><span class="pl">0/9</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
+      <div class="pw"><span class="pl">3/6</span><div class="pb"><div class="pf" style="width:50%"></div></div></div>
     </div>
+
     <div class="sc">
-      <div class="sn">Step 5.4</div><span class="badge b-pen">PENDING</span>
+      <div class="sn">Step 6.3</div><span class="badge b-pen">PENDING</span>
+      <div class="st">4-Week Parallel Run</div>
+      <div class="sd">Enable EventBridge permanently. Keep old Lambda chain running in parallel for 4 Mondays. Compare row counts and metric distributions weekly. Zero failures + David sign-off required to proceed.</div>
+      <ul class="cl" data-phase="6" data-step="3">
+        <li data-i="0">Enable EventBridge Scheduler permanently (daily 7AM UTC)</li>
+        <li data-i="1">Keep old Lambda chain running in parallel</li>
+        <li data-i="2">Monday 1: row count match, top-10 platforms within 1%, top-10 countries within 1%</li>
+        <li data-i="3">Monday 2: stable across the week (no drift)</li>
+        <li data-i="4">Monday 3: dedup workflow tested end-to-end (operator approves at least once)</li>
+        <li data-i="5">Monday 4: David sign-off on Tableau accuracy</li>
+        <li data-i="6">Zero failures across all 4 weeks</li>
+      </ul>
+      <div class="pw"><span class="pl">0/7</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
+    </div>
+
+    <div class="sc">
+      <div class="sn">Step 6.4</div><span class="badge b-pen">PENDING</span>
       <div class="st">Tableau Cutover</div>
-      <ul class="cl" data-phase="5" data-step="4">
+      <div class="sd">Update Tableau data source from sprinklr_table to adl.posts_current. Schema parity (122 cols matching old Lambda 7) means no dashboard rework required. Verify all existing dashboards render correctly.</div>
+      <ul class="cl" data-phase="6" data-step="4">
         <li data-i="0">Update Tableau data source: sprinklr_table → adl.posts_current</li>
         <li data-i="1">Verify all existing dashboards render correctly</li>
-        <li data-i="2">Verify benchmark columns (ER vs Benchmark BPS, Beats Benchmark) visible</li>
-        <li data-i="3">Verify Reputational Sub Topic + Editorial Format columns present</li>
-        <li data-i="4">Sign-off from David on all dashboards</li>
+        <li data-i="2">Verify benchmark columns visible (ER vs Benchmark BPS, Beats Benchmark)</li>
+        <li data-i="3">Verify all 122 columns present including new tag columns</li>
+        <li data-i="4">Add QA dashboard: pipeline_runs + filtered_posts + duplicate_candidates trends</li>
+        <li data-i="5">Sign-off from David on all dashboards</li>
       </ul>
-      <div class="pw"><span class="pl">0/5</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
+      <div class="pw"><span class="pl">0/6</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
     </div>
+
     <div class="sc">
-      <div class="sn">Step 5.5</div><span class="badge b-pen">PENDING</span>
-      <div class="st">Parallel Run (1 Week)</div>
-      <ul class="cl" data-phase="5" data-step="5">
-        <li data-i="0">Enable EventBridge permanently (daily 7AM UTC)</li>
-        <li data-i="1">Keep old Lambda chain running in parallel for 1 week</li>
-        <li data-i="2">Monitor qa.pipeline_runs daily — zero failures for 5 consecutive runs</li>
-        <li data-i="3">Monitor Slack alerts — all green cards</li>
-        <li data-i="4">Monitor adl.posts_current row count vs sprinklr_table — stable</li>
-      </ul>
-      <div class="pw"><span class="pl">0/5</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
-    </div>
-    <div class="sc">
-      <div class="sn">Step 5.6</div><span class="badge b-pen">PENDING</span>
+      <div class="sn">Step 6.5</div><span class="badge b-pen">PENDING</span>
       <div class="st">Lambda Decommission</div>
-      <ul class="cl" data-phase="5" data-step="6">
+      <div class="sd">Permanently disable the old Lambda chain once Tableau cutover is signed off. Keep code archived for reference, disable triggers and unsubscribe S3 events. The old sprinklr_table itself is preserved as adl.sprinklr_table_backup.</div>
+      <ul class="cl" data-phase="6" data-step="5">
         <li data-i="0">Disable Lambda 3b → 4 → 5 → 6 → 7 S3 event triggers</li>
         <li data-i="1">Disable Lambda 8 + Lambda 9 Monday triggers</li>
         <li data-i="2">Disable Lambda 10 scheduled trigger</li>
         <li data-i="3">Archive all Lambda functions (keep code, disable triggers)</li>
-        <li data-i="4">Update architecture documentation + README</li>
+        <li data-i="4">Update Tableau workbooks: any remaining sprinklr_table references → adl.posts_current</li>
         <li data-i="5">Final sign-off from Daniel + David</li>
+        <li data-i="6">Update architecture documentation + this roadmap (mark Phase 6 complete)</li>
       </ul>
-      <div class="pw"><span class="pl">0/6</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
+      <div class="pw"><span class="pl">0/7</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
     </div>
   </div>
 </div>
@@ -591,7 +698,10 @@ function init(){
     const p=list.dataset.phase,s=list.dataset.step,k=`p${p}s${s}`;
     list.querySelectorAll('li').forEach(li=>{
       const i=li.dataset.i,ik=`${k}_${i}`;
-      if(data[ik])li.classList.add('done');
+      // Default: items with <span class="cb">✓</span> in HTML are pre-completed
+      const builtInDone=li.querySelector('.cb')&&li.querySelector('.cb').textContent.trim()==='✓';
+      const stored=ik in data?data[ik]:builtInDone;
+      if(stored)li.classList.add('done');
       li.addEventListener('click',()=>{
         li.classList.toggle('done');
         const d=load();d[ik]=li.classList.contains('done');save(d);update();
@@ -604,7 +714,7 @@ function init(){
 
 function update(){
   const data=load();
-  const totals={1:{d:0,t:0},2:{d:0,t:0},3:{d:0,t:0},4:{d:0,t:0},5:{d:0,t:0}};
+  const totals={1:{d:0,t:0},2:{d:0,t:0},3:{d:0,t:0},4:{d:0,t:0},5:{d:0,t:0},6:{d:0,t:0}};
   document.querySelectorAll('.cl').forEach(list=>{
     const p=list.dataset.phase,s=list.dataset.step,k=`p${p}s${s}`;
     const items=list.querySelectorAll('li');
@@ -625,23 +735,23 @@ function update(){
   const allT=Object.values(totals).reduce((s,x)=>s+x.t,0);
   const pct=allT>0?Math.round((allD/allT)*100):0;
   let cur=0;
-  for(let i=1;i<=5;i++){
+  for(let i=1;i<=6;i++){
     if(totals[i].d<totals[i].t){cur=i;break;}
-    if(i===5&&totals[i].d===totals[i].t)cur=6;
+    if(i===6&&totals[i].d===totals[i].t)cur=7;
   }
   const st=document.getElementById('status-text');
   if(cur===0)st.textContent='Phase 0 — Planning';
-  else if(cur===6)st.textContent=`Complete — All ${allT} items done ✓`;
+  else if(cur===7)st.textContent=`Complete — All ${allT} items done ✓`;
   else st.textContent=`Phase ${cur} — In Progress (${pct}% overall)`;
 }
 
 document.addEventListener('keydown',e=>{
   const cur=parseInt(document.querySelector('.pill.active').dataset.phase);
-  if(e.key==='ArrowRight'&&cur<5)go(cur+1);
+  if(e.key==='ArrowRight'&&cur<6)go(cur+1);
   if(e.key==='ArrowLeft'&&cur>0)go(cur-1);
 });
 
-document.addEventListener('DOMContentLoaded',()=>{init();go(5);});
+document.addEventListener('DOMContentLoaded',()=>{init();go(6);});
 </script>
 </body>
 </html>
