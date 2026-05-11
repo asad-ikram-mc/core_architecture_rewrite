@@ -614,11 +614,15 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
         <li data-i="0"><span class="cb">✓</span>migration 009 deployed (qa.duplicate_candidates + 3 helper functions)</li>
         <li data-i="1"><span class="cb">✓</span>sprinklr-t9 ECS task definition registered</li>
         <li data-i="2"><span class="cb">✓</span>Step Functions updated: T8 → T9 → Pipeline-Success</li>
-        <li data-i="3">Trigger run with is_monday:true → verify 10/10 alert + Monday review Slack</li>
-        <li data-i="4">Inspect qa.duplicate_candidates: Q4/Q5/Q6 should be ~0 (canonicalised)</li>
-        <li data-i="5">Operator dry-run: SELECT * FROM qa.preview_dedup()</li>
+        <li data-i="3"><span class="cb">✓</span>T1 Apify resolver parallelised (8 workers, ~5x speedup) · commit 868e099</li>
+        <li data-i="4"><span class="cb">✓</span>T9 Q7_LAMBDA10 query added (ports validated Lambda 10 dedup pattern) · commit 6d4d4be</li>
+        <li data-i="5"><span class="cb">✓</span>Migration 021 deployed: registry CHECK widened for apify_recovered + sprinklr_pid_fallback</li>
+        <li data-i="6"><span class="cb">✓</span>ref.permalink_registry reseeded from validated Lambda 10 export · 29,188 rows</li>
+        <li data-i="7">Trigger run with is_monday:true → verify 10/10 alert + Monday review Slack</li>
+        <li data-i="8">Inspect qa.duplicate_candidates: Q4/Q5/Q6 should be ~0 (canonicalised); Q7 should match Lambda 10 CSVs</li>
+        <li data-i="9">Operator dry-run: SELECT * FROM qa.preview_dedup()</li>
       </ul>
-      <div class="pw"><span class="pl">3/6</span><div class="pb"><div class="pf" style="width:50%"></div></div></div>
+      <div class="pw"><span class="pl">7/10</span><div class="pb"><div class="pf" style="width:70%"></div></div></div>
     </div>
 
     <div class="sc">
