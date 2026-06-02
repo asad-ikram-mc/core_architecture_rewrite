@@ -60,6 +60,9 @@ T4 Filter (22 rules)  →  T5 Tags  →  T6 Benchmark  →  T7 Push+QA
 
 | Date | Milestone |
 |---|---|
+| **May–Jun 2026** | **Legacy parity sprint** — built `scripts/run_qa.sh` 4-layer V2-vs-legacy diff; resolved paid/organic decoupling, NULL-vs-0 policy, country leakage, multi-region LI, LINE aggregation, paid-data ingestion, and the T3 → `post_attributes`/`post_metrics_daily` propagation that previously left T3 a write-only sink. SCD2 closes now match on `(permalink, account, is_manual_tracker)`. |
+| **May–Jun 2026** | **Dry-test-before-deploy discipline** — `scripts/dry_test_t3.py` runs the real T3 SQL end-to-end inside a transaction (rollback, no writes) before any deploy, catching PK / NOT-NULL / date-format failures without a billed Fargate run. |
+| **May 2026** | Migrations 022–030 — prefilter column, Q7_LAMBDA10 dedup source, account→country mappings, paid-benchmark wiring. Schema now 50 tables across 5 schemas. |
 | **Apr 2026** | T9 Duplicate Detection deployed ★ — 6 detection queries, `qa.duplicate_candidates` table, SQL approval helpers (`qa.approve_dedup`, `qa.preview_dedup`, `qa.reject_dedup`), Slack Monday review alert |
 | **Apr 2026** | URL canonicalisation in T1 — FB `/photo.php?fbid=X` and IG `/reel/X` rewritten at ingest |
 | **Apr 2026** | T8 Post-pipeline Corrections deployed — replaces Lambda 10, automates MBS bulk updates, custom metric corrections, X quote deletions |

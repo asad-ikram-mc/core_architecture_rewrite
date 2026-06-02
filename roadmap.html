@@ -590,7 +590,7 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 
 <!-- PHASE 6 -->
 <div class="pv" id="phase-6">
-  <div class="ph"><h2>Phase 6 — Production Cutover</h2><p>Final phase: bring 3 years of historical data into v2 (Fix C migration), run 4 Mondays in parallel with the old Lambda chain, then cut Tableau over and decommission the old Lambdas permanently.</p></div>
+  <div class="ph"><h2>Phase 6 — Production Cutover</h2><p>Final phase: validate row-for-row parity against the legacy <code>sprinklr_table</code> (the active workstream), bring historical data into v2, run Mondays in parallel with the old Lambda chain, then cut Tableau over and decommission the old Lambdas permanently.</p></div>
   <div class="grid">
 
     <div class="sc active-step">
@@ -625,8 +625,29 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
       <div class="pw"><span class="pl">7/10</span><div class="pb"><div class="pf" style="width:70%"></div></div></div>
     </div>
 
+    <div class="sc active-step">
+      <div class="sn">Step 6.3</div><span class="badge b-now">IN PROGRESS</span>
+      <div class="st">Legacy Parity Validation</div>
+      <div class="sd">Prove adl.posts_current matches the legacy sprinklr_table within tolerance before any parallel run. Driven by scripts/run_qa.sh — a 4-layer V2-vs-legacy diff (sanity, row counts, 18 gap spot-checks, deep diagnostics). All SQL changes are dry-tested end-to-end (transaction + rollback) before deploy via scripts/dry_test_t3.py.</div>
+      <ul class="cl" data-phase="6" data-step="6">
+        <li data-i="0"><span class="cb">✓</span>QA harness built — 4 layers, 16-column sampled value-diff, date-bounded comparison</li>
+        <li data-i="1"><span class="cb">✓</span>Paid/organic decoupling, comment sentiment, YouTube VV, multi-region LI, paid Reach/Topic/Benchmark (Gaps 1–8, 18)</li>
+        <li data-i="2"><span class="cb">✓</span>NULL-vs-0 engagement policy reverted to legacy semantics</li>
+        <li data-i="3"><span class="cb">✓</span>Paid data ingestion fixed — Paid_Data_9_FluencyWeekly.json added to DATA_FILES</li>
+        <li data-i="4"><span class="cb">✓</span>Collab priority rules re-applied every run vs new Sprinklr data (T3 Step 4)</li>
+        <li data-i="5"><span class="cb">✓</span>T3 propagates manual-tracker rows to post_attributes + post_metrics_daily (Steps 5/6) — was a write-only sink</li>
+        <li data-i="6"><span class="cb">✓</span>SCD2 close key fixed to (permalink, account, is_manual_tracker); stale bootstrap metrics removed (Step 6a)</li>
+        <li data-i="7"><span class="cb">✓</span>Dry-test-before-deploy discipline established (dry_test_t3.py)</li>
+        <li data-i="8">Resolve Sprinklr-side country leakage (T6 country derivation, mt=0 rows)</li>
+        <li data-i="9">Paid CPC/CTR/CPE — verify on next fresh weekly Paid_Data file</li>
+        <li data-i="10">Layer 2 sampled value-diff &lt; 50% rows differing</li>
+        <li data-i="11">LINE / collab row counts within ~10% of legacy</li>
+      </ul>
+      <div class="pw"><span class="pl">8/12</span><div class="pb"><div class="pf" style="width:67%"></div></div></div>
+    </div>
+
     <div class="sc">
-      <div class="sn">Step 6.3</div><span class="badge b-pen">PENDING</span>
+      <div class="sn">Step 6.4</div><span class="badge b-pen">PENDING</span>
       <div class="st">4-Week Parallel Run</div>
       <div class="sd">Enable EventBridge permanently. Keep old Lambda chain running in parallel for 4 Mondays. Compare row counts and metric distributions weekly. Zero failures + David sign-off required to proceed.</div>
       <ul class="cl" data-phase="6" data-step="3">
@@ -642,7 +663,7 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
     </div>
 
     <div class="sc">
-      <div class="sn">Step 6.4</div><span class="badge b-pen">PENDING</span>
+      <div class="sn">Step 6.5</div><span class="badge b-pen">PENDING</span>
       <div class="st">Tableau Cutover</div>
       <div class="sd">Update Tableau data source from sprinklr_table to adl.posts_current. Schema parity (122 cols matching old Lambda 7) means no dashboard rework required. Verify all existing dashboards render correctly.</div>
       <ul class="cl" data-phase="6" data-step="4">
@@ -657,7 +678,7 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
     </div>
 
     <div class="sc">
-      <div class="sn">Step 6.5</div><span class="badge b-pen">PENDING</span>
+      <div class="sn">Step 6.6</div><span class="badge b-pen">PENDING</span>
       <div class="st">Lambda Decommission</div>
       <div class="sd">Permanently disable the old Lambda chain once Tableau cutover is signed off. Keep code archived for reference, disable triggers and unsubscribe S3 events. The old sprinklr_table itself is preserved as adl.sprinklr_table_backup.</div>
       <ul class="cl" data-phase="6" data-step="5">
