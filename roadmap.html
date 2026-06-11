@@ -590,20 +590,24 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 
 <!-- PHASE 6 -->
 <div class="pv" id="phase-6">
-  <div class="ph"><h2>Phase 6 — Production Cutover</h2><p>Final phase: validate row-for-row parity against the legacy <code>sprinklr_table</code> (the active workstream), bring historical data into v2, run Mondays in parallel with the old Lambda chain, then cut Tableau over and decommission the old Lambdas permanently.</p></div>
+  <div class="ph"><h2>Phase 6 — Production Cutover</h2><p>Final phase: validate row-for-row parity against the legacy <code>sprinklr_table</code>, bring historical data into v2, run Mondays in parallel with the old Lambda chain, then cut Tableau over and decommission the old Lambdas permanently.</p><p style="margin-top:8px"><strong>Live dashboards:</strong> <a href="http://amazon-core-quality-dashboard.s3-website.eu-west-2.amazonaws.com/" style="color:var(--cyan)" target="_blank">Quality Dashboard</a> · <a href="https://asad-ikram-mc.github.io/core_architecture_rewrite/" style="color:var(--cyan)" target="_blank">Architecture Explorer</a></p></div>
   <div class="grid">
 
     <div class="sc active-step">
       <div class="sn">Step 6.1</div><span class="badge b-now">IN PROGRESS</span>
-      <div class="st">Historical backfill (Fix C)</div>
-      <div class="sd">One-time SQL migration: 69,778 rows from adl.sprinklr_table_backup (last Lambda 7 output) into adl.posts_current. Gives Tableau the full 3-year history immediately rather than waiting for v2 to accumulate.</div>
+      <div class="st">Controlled comparison run — match v2 output to old DB</div>
+      <div class="sd">DB wiped clean (ref tables + permalink_registry preserved, 41,095 rows). Re-run pipeline for same pull dates as old DB (last ran 2026-06-07). Compare v2 vs old DB: reptopic distribution, platform row counts, is_reactive fill rate. Only backfill after confirmed match. T5 post_id join confirmed working (numeric POST_ID_VALUE fix); T5 SCD2 same-day conflict under active fix.</div>
       <ul class="cl" data-phase="6" data-step="1">
-        <li data-i="0">Run fix_c_migrate_backup.sql Steps 1+2 (sanity check)</li>
-        <li data-i="1">Run Step 3 INSERT — dedup on Permalink + Benchmark Type + Delivery</li>
-        <li data-i="2">Run Step 4 — verify posts_current has 71k+ rows total</li>
-        <li data-i="3">Verify Tableau dashboards render correctly with merged history</li>
+        <li data-i="0"><span class="cb">✓</span>First full E2E run SUCCEEDED (T0→T9, 17 min, 2026-06-10)</li>
+        <li data-i="1"><span class="cb">✓</span>Schema contract seeded — Organic_Tags_1 updated to 63 cols (Sprinklr CCR→GCCI rename 2026-06)</li>
+        <li data-i="2"><span class="cb">✓</span>POST_ID_VALUE fix in T1 — tag_pull_raw stores numeric post_ids (was URLs, broke T5 join)</li>
+        <li data-i="3"><span class="cb">✓</span>7 per-country collab trackers wired (L8 parity) + T11 follower task built (L11 parity)</li>
+        <li data-i="4">Fix T5 SCD2 same-day valid_from conflict (rows closed with no new current version)</li>
+        <li data-i="5">Re-run pipeline for same dates as old DB (2026-06-07 range)</li>
+        <li data-i="6">Compare: reptopic, platform counts, is_reactive fill rate vs old sprinklr_table</li>
+        <li data-i="7">Match confirmed → backfill full historical data via permalink_registry join</li>
       </ul>
-      <div class="pw"><span class="pl">0/4</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
+      <div class="pw"><span class="pl">4/8</span><div class="pb"><div class="pf" style="width:50%"></div></div></div>
     </div>
 
     <div class="sc active-step">
