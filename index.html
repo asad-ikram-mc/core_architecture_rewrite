@@ -1243,16 +1243,244 @@ function renderHITL(){
 const el=document.getElementById('hitl-content');
 if(!el)return;
 
-const AMB='#FF9900', BLU='#3b82f6', GRN='#22c55e', RED='#ef4444', DIM='#8b949e', BRD='#30363d', BG2='#161b22', BG3='#1f2937';
+const AMB='#FF9900',BLU='#3b82f6',GRN='#22c55e',RED='#ef4444',PUR='#6366f1',TEA='#14b8a6',DIM='#8b949e',BRD='#30363d',BG2='#161b22',BG3='#1f2937';
 
-function card(title, color, body){
-  return `<div style="background:${BG2};border:1px solid ${color}30;border-radius:12px;overflow:hidden;margin-bottom:1rem">
-  <div style="padding:.8rem 1.2rem;border-bottom:1px solid ${BRD};display:flex;align-items:center;gap:.6rem">
-    <div style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0"></div>
-    <span style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${color};font-family:'Sora',sans-serif">${title}</span>
+function card(title,color,body){return`<div style="background:${BG2};border:1px solid ${color}30;border-radius:12px;overflow:hidden;margin-bottom:1.2rem"><div style="padding:.8rem 1.2rem;border-bottom:1px solid ${BRD};display:flex;align-items:center;gap:.6rem"><div style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0"></div><span style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${color};font-family:'Sora',sans-serif">${title}</span></div><div style="padding:1rem 1.2rem">${body}</div></div>`;}
+function step(n,title,color,body){return`<div style="display:grid;grid-template-columns:32px 1fr;gap:.8rem;margin-bottom:1.2rem"><div style="width:32px;height:32px;border-radius:50%;background:${color}15;border:2px solid ${color}60;display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:800;color:${color};font-family:'JetBrains Mono',monospace;flex-shrink:0">${n}</div><div><div style="font-size:.9rem;font-weight:700;color:#e6edf3;margin-bottom:.3rem;font-family:'Sora',sans-serif">${title}</div><div style="font-size:.85rem;color:${DIM};line-height:1.6">${body}</div></div></div>`;}
+function mono(s){return`<code style="font-family:'JetBrains Mono',monospace;font-size:.8rem;color:${AMB};background:#FF990012;padding:.1rem .35rem;border-radius:4px;border:1px solid #FF990025">${s}</code>`;}
+function tag(s,c){return`<span style="display:inline-block;padding:.1rem .5rem;border-radius:4px;font-size:.7rem;font-weight:700;background:${c}15;color:${c};border:1px solid ${c}30;font-family:'Sora',sans-serif;margin:.1rem .1rem 0 0">${s}</span>`;}
+function kv(k,v,kc){return`<div style="display:grid;grid-template-columns:180px 1fr;gap:.3rem .6rem;padding:.4rem 0;border-bottom:1px solid ${BRD}20"><div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:${kc||DIM};font-family:'Sora',sans-serif;padding-top:.1rem">${k}</div><div style="font-size:.83rem;color:#e6edf3;line-height:1.5;font-family:'JetBrains Mono'">${v}</div></div>`;}
+function sql(s){return`<div style="background:#0d1117;border:1px solid ${BRD};border-radius:8px;padding:1rem;font-family:'JetBrains Mono',monospace;font-size:.78rem;color:#8b949e;line-height:1.9;overflow-x:auto;margin:.6rem 0">${s}</div>`;}
+function warn(s){return`<div style="padding:.7rem .9rem;background:#ef444408;border:1px solid #ef444430;border-radius:8px;font-size:.83rem;color:${DIM};margin:.6rem 0;line-height:1.5">${s}</div>`;}
+function info(s){return`<div style="padding:.7rem .9rem;background:#FF990008;border:1px solid #FF990025;border-radius:8px;font-size:.83rem;color:${DIM};margin:.6rem 0;line-height:1.5">${s}</div>`;}
+
+let h='';
+
+// ── 0. What Lambda 10 Is ─────────────────────────────────
+h+=card('What Lambda 10 Does — Two Jobs In One',AMB,`
+<p style="color:${DIM};line-height:1.6;font-size:.9rem;margin-bottom:.8rem">Lambda 10 runs every Monday after the main pipeline completes. It does <strong style="color:#e6edf3">two separate things</strong> in sequence — custom data corrections first, then duplicate detection. Both write audit trails. Neither blocks the other if it errors.</p>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-bottom:.8rem">
+  <div style="background:${BG3};border-radius:8px;padding:.8rem;border-left:3px solid ${AMB}">
+    <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${AMB};margin-bottom:.4rem;font-family:'Sora',sans-serif">Part 1 — Custom Data Updates</div>
+    <div style="font-size:.83rem;color:${DIM};line-height:1.5">Four correction streams run in order: Google Sheet ad-hoc fixes → MBS quarterly impression bulk update → LinkedIn impression replacement → X Quote post deletions. Each writes a before/after audit log to S3.</div>
   </div>
-  <div style="padding:1rem 1.2rem">${body}</div>
+  <div style="background:${BG3};border-radius:8px;padding:.8rem;border-left:3px solid ${BLU}">
+    <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${BLU};margin-bottom:.4rem;font-family:'Sora',sans-serif">Part 2 — Dedup Monitor</div>
+    <div style="font-size:.83rem;color:${DIM};line-height:1.5">After corrections, runs the registry-backed duplicate detection SQL. Surfaces candidates to S3 as CSVs. Never deletes. Human reviews and runs approved DELETEs manually.</div>
+  </div>
+</div>
+<div style="display:flex;gap:.4rem;flex-wrap:wrap">${tag('Monday only',AMB)}${tag('Always audited',GRN)}${tag('Non-fatal errors',DIM)}${tag('Both tables updated',BLU)}${tag('Before/after snapshots',TEA)}</div>`);
+
+// ── 1. Execution Order ────────────────────────────────────
+h+=card('Execution Order Inside lambda_handler',BLU,`
+${step(1,'resolve_newline_columns()',TEA,`Reads ${mono('sprinklr_table')} column names that contain literal newline characters (a known Sprinklr export quirk). Builds a mapping dict used by all UPDATE statements below — so ${mono('Engagement Rate')} with a newline in its name gets the right column reference.`)}
+${step(2,'process_sheet_updates()',AMB,`Reads the Google Sheet correction requests. Rows where "Updated Date" is blank are pending. Updates both ${mono('sprinklr_table')} and ${mono('sprinklr_lookup_check')}. If the changed column is impression-related, auto-recalculates derived rates.`)}
+${step(3,'process_mbs_updates_bulk()',AMB,`Quarterly MBS impression bulk update from S3 CSV. Uses a temp table JOIN to match on permalink + old impression value. Updates 6 derived fields. Before/after snapshot captured.`)}
+${step(4,'process_linkedin_impressions_bulk()',AMB,`LinkedIn impression replacement from David's export CSV. Permalink-only match (unlike MBS). Does NOT touch Total Reach. UTF-8 BOM stripped from header.`)}
+${step(5,'process_x_quote_deletions()',RED,`Hard DELETE of X Quote repost URLs from both tables. Only operation in Lambda 10 that deletes rows. Before snapshot captured before DELETE runs.`)}
+${step(6,'save_audit_log()',GRN,`All audit entries from steps 2–5 merged and written to ${mono('custom_updates_audit_log/YYYY-MM-DD_HH-MM-SS.json')} in S3. Contains before/after row snapshots for every change.`)}
+${step(7,'run_dedup_monitor()',BLU,`Registry-backed duplicate detection. Last step — runs only after all corrections are applied. Non-fatal: if this step errors, the lambda still returns 200 and SNS fires.`)}
+${step(8,'send_sns()',PUR,`Publishes success/failure message to ${mono('sprinklr-custom-updates-alerts')} SNS topic → email (prabhat, david, asad) + Slack. Includes counts for every stream and dedup results.`)}`);
+
+// ── 2. Stream A: Google Sheet ─────────────────────────────
+h+=card('Stream A — Google Sheet Ad-hoc Corrections',AMB,`
+<p style="color:${DIM};line-height:1.6;font-size:.88rem;margin-bottom:.8rem">
+  Anyone on the team can request a metric correction by adding a row to the shared Google Sheet. Lambda 10 reads it every Monday and processes all rows where <strong style="color:#e6edf3">Updated Date is blank</strong> (pending). Once processed, the date is stamped (manually or by convention — the script itself doesn't write back to the sheet).
+</p>
+${kv('Source',`Google Sheet ID 18W6Z1src75v4x6deGB9KChnth7095P49BtvWwEFyVbI (GID=0)`,AMB)}
+${kv('Trigger condition',`Row has no value in "Updated Date" column`,AMB)}
+${kv('Required columns',`Permalink · Column Name · New Value`,AMB)}
+${kv('Match key',`TRIM("Permalink") exact match`,AMB)}
+${kv('Tables updated',`sprinklr_table AND sprinklr_lookup_check (both, in one transaction)`,AMB)}
+<div style="margin:.8rem 0">
+  <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${AMB};margin-bottom:.4rem;font-family:'Sora',sans-serif">Auto-recalculation trigger columns</div>
+  <div style="font-size:.83rem;color:${DIM};line-height:1.5;margin-bottom:.6rem">If the corrected column is any of the following, Lambda 10 immediately recalculates the derived rate columns in the same transaction:</div>
+  <div style="display:flex;gap:.3rem;flex-wrap:wrap;margin-bottom:.8rem">
+    ${['Total Impressions','Paid Impressions','Organic Impressions','Organic Reach','Paid Reach','Engagements','Likes','Comments'].map(c=>tag(c,AMB)).join('')}
+  </div>
+  ${sql(`<span style="color:#6366f1">UPDATE</span> sprinklr_table<br>
+<span style="color:#6366f1">SET</span> "Organic Impressions" = COALESCE("Total Impressions", 0) - COALESCE("Paid Impressions", 0),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"Total Reach" = COALESCE("Organic Reach", 0) + COALESCE("Paid Reach", 0),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"Engagement Rate" = CASE WHEN "Total Impressions" > 0 AND "Engagements" IS NOT NULL<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;THEN "Engagements"::numeric / "Total Impressions" ELSE "Engagement Rate" END,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"Likes per Impression" = CASE WHEN "Total Impressions" > 0 AND "Likes" > 0<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;THEN "Likes"::numeric / "Total Impressions" ELSE NULL END,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"Comments per Impression" = CASE WHEN "Total Impressions" > 0 AND "Comments" > 0<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;THEN "Comments"::numeric / "Total Impressions" ELSE NULL END<br>
+<span style="color:#6366f1">WHERE</span> TRIM("Permalink") = :permalink`)}
+  <div style="font-size:.8rem;color:${DIM}">Column names like "Engagement Rate" that contain literal newlines in the DB are resolved via ${mono('resolve_newline_columns()')} before any UPDATE runs.</div>
+</div>`);
+
+// ── 3. Stream B: MBS ──────────────────────────────────────
+h+=card('Stream B — MBS Quarterly Bulk Impression Update',AMB,`
+<p style="color:${DIM};line-height:1.6;font-size:.88rem;margin-bottom:.8rem">
+  Every quarter, Amazon's MBS (Media Buying System) releases verified impression figures that differ from what Sprinklr reported at pull time. Lambda 10 bulk-updates these in 6 steps using a temp table pattern for performance — not row-by-row.
+</p>
+${kv('Source CSV',`s3://wikitablescrapexample/amazon_sprinklr_pull/custom_updates/mbs_update_data.csv`,AMB)}
+${kv('Required columns',`Permalink · Old Impressions · Organic Impressions (= new value)`,AMB)}
+${kv('Match key',`TRIM(Permalink) = permalink AND Total Impressions = old_imp (double-check safety)`,AMB)}
+${kv('Tables updated',`sprinklr_table AND sprinklr_lookup_check`,AMB)}
+${kv('Dedup within CSV',`drop_duplicates(subset=permalink, keep=last) before upload`,AMB)}
+<div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${AMB};margin-bottom:.4rem;margin-top:.8rem;font-family:'Sora',sans-serif">6-Step Temp Table Pattern</div>
+${step('1','Create temp table',BLU,`${mono('DROP TABLE IF EXISTS mbs_updates_temp')} → ${mono('CREATE TEMP TABLE mbs_updates_temp (permalink TEXT PRIMARY KEY, old_imp BIGINT, new_imp BIGINT)')}`)  }
+${step('2','Upload MBS CSV to temp table',BLU,`${mono('DataFrame.to_sql(mbs_updates_temp, ...)')} — deduped on permalink, chunks of 500`)}
+${step('3','Capture BEFORE snapshot',TEA,`${mono('INNER JOIN mbs_updates_temp')} on permalink + old_imp — saves current values of all impression + rate columns for both tables to audit log`)}
+${step('4','Bulk UPDATE main table',GRN,`Single SQL UPDATE: sets Total Impressions, recalculates Organic Impressions, Total Reach, ER, LPI, CPI. Matches on permalink AND old impression value (safety net against stale data).`)}
+${step('5','Bulk UPDATE lookup table',GRN,`Same UPDATE on sprinklr_lookup_check`)}
+${step('6','Capture AFTER snapshot + audit',TEA,`Re-reads updated rows, writes full before/after to audit log JSON on S3`)}
+${info(`<strong style="color:${AMB}">Old impression match:</strong> Unlike the LinkedIn update, MBS matches on <em>both</em> permalink AND the old impression value. This prevents accidentally overwriting rows that have already been corrected in a previous MBS run.`)}`);
+
+// ── 4. Stream C: LinkedIn ─────────────────────────────────
+h+=card('Stream C — LinkedIn Impressions Replacement',TEA,`
+<p style="color:${DIM};line-height:1.6;font-size:.88rem;margin-bottom:.8rem">
+  LinkedIn impression data from the API is unreliable for certain post types. David exports verified figures from LinkedIn Campaign Manager, and Lambda 10 replaces the DB values. This stream is deliberately different from MBS — it matches on permalink only (not old value), and does not touch Total Reach.
+</p>
+${kv('Source CSV',`s3://wikitablescrapexample/amazon_sprinklr_pull/custom_updates/linkedIn_impressions_replacement.csv`,TEA)}
+${kv('Encoding note',`UTF-8 BOM stripped (utf-8-sig) — LinkedIn exports have BOM on header row`,TEA)}
+${kv('Required columns',`Permalink · Organic Impressions (old, reference only) · URN · New Impressions`,TEA)}
+${kv('Match key',`TRIM(Permalink) only — old impression value NOT used (LI export values ≠ DB values)`,TEA)}
+${kv('Tables updated',`sprinklr_table AND sprinklr_lookup_check`,TEA)}
+${kv('NOT touched',`Total Reach, Organic Reach, Paid Reach, Engagements, Likes, Comments, Paid Impressions`,TEA)}
+${kv('IS updated',`Total Impressions · Organic Impressions · Engagement Rate · Likes per Impression · Comments per Impression`,TEA)}
+${kv('Same 6-step pattern',`Temp table linkedin_imp_temp · BEFORE snapshot · bulk UPDATE × 2 · AFTER snapshot · audit log`,TEA)}
+${warn(`<strong style="color:${RED}">Why permalink-only match?</strong> The LinkedIn export's "Organic Impressions" column represents LinkedIn's own metric, which does not equal what Sprinklr stored as "Total Impressions" in the DB. A double-match (permalink + old value) would skip every row. Safe because DB deduplication means one Average + one Median row per permalink — no false matches.`)}`);
+
+// ── 5. Stream D: X Quote Deletions ───────────────────────
+h+=card('Stream D — X Quote Post Deletions',RED,`
+<p style="color:${DIM};line-height:1.6;font-size:.88rem;margin-bottom:.8rem">
+  X (Twitter) quote-retweets pull through from Sprinklr as posts in their own right, but they're not original Amazon content and shouldn't appear in Tableau. Lambda 10 hard-deletes them from both tables. This is the <strong style="color:#e6edf3">only operation in Lambda 10 that issues DELETEs</strong>.
+</p>
+${kv('Source CSV',`s3://wikitablescrapexample/amazon_sprinklr_pull/custom_updates/remove_x_quote_posts.csv`,RED)}
+${kv('Input','Column of Post URLs to delete — deduplicated before processing',RED)}
+${kv('Match key','TRIM("Permalink") = post_url',RED)}
+${kv('Tables affected','sprinklr_table AND sprinklr_lookup_check — both DELETEd in one transaction',RED)}
+${kv('not_found tracking','URLs in the CSV that had no matching row in the main table are counted separately',RED)}
+<div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${RED};margin-bottom:.4rem;margin-top:.8rem;font-family:'Sora',sans-serif">5-Step Deletion Pattern</div>
+${step('1','Create temp table',BLU,`${mono('CREATE TEMP TABLE x_quote_delete_temp (post_url TEXT PRIMARY KEY)')}`)}
+${step('2','Upload URLs to temp table',BLU,`${mono('DataFrame.to_sql(...)')} — deduped URLs in chunks of 500`)}
+${step('3','Capture BEFORE snapshot',TEA,`${mono('SELECT t.* FROM sprinklr_table t INNER JOIN x_quote_delete_temp u ON TRIM(t."Permalink") = u.post_url')} — full row snapshot saved to audit log`)}
+${step('4','DELETE from main table',RED,`${mono('DELETE FROM sprinklr_table USING x_quote_delete_temp WHERE TRIM("Permalink") = post_url')}`)}
+${step('5','DELETE from lookup table',RED,`Same DELETE on sprinklr_lookup_check`)}
+${warn(`<strong style="color:${RED}">Note:</strong> X Quote deletions are permanent and immediate. Unlike the dedup monitor, there is no human approval step — whoever adds the URL to the CSV is making the call. The before-snapshot in the audit log is the only recovery path.`)}`);
+
+// ── 6. Audit Log ─────────────────────────────────────────
+h+=card('Audit Log — Full Before/After For Every Change',GRN,`
+<p style="color:${DIM};line-height:1.6;font-size:.88rem;margin-bottom:.8rem">
+  Every change across all four streams is merged into a single audit log and written to S3 after all updates complete. The log contains the complete before and after row snapshots for every affected permalink, in both tables.
+</p>
+${kv('Location',`s3://wikitablescrapexample/custom_updates_audit_log/YYYY-MM-DD_HH-MM-SS_audit.json`,GRN)}
+${kv('Format','JSON lines — one entry per correction row, nested before/after arrays',GRN)}
+${kv('Fields per entry','source (Sheet/MBS/LinkedIn/XQuote) · timestamp_utc · permalink · column_name · new_value · sprinklr_table_rows · sprinklr_lookup_check_rows · before_sprinklr_table · after_sprinklr_table · before_sprinklr_lookup_check · after_sprinklr_lookup_check',GRN)}
+${kv('X Quote entries','before_sprinklr_table contains full deleted row · after is empty (row gone)',GRN)}
+${kv('Recovery','If a correction needs reverting, the before-snapshot contains the exact values to restore',GRN)}`);
+
+// ── 7. Dedup Monitor ─────────────────────────────────────
+h+=card('Part 2 — Dedup Monitor (runs last)',BLU,`
+<p style="color:${DIM};line-height:1.6;font-size:.88rem;margin-bottom:.8rem">
+  After all corrections are applied, Lambda 10 runs the duplicate detection pass. It runs last so the dedup results reflect the cleaned data, not pre-correction figures. It is explicitly non-fatal — if it errors, the lambda still returns 200 and SNS fires with the corrections summary.
+</p>
+
+<div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${BLU};margin-bottom:.6rem;font-family:'Sora',sans-serif">Pre-step: Resolve new rows missing from permalink_registry</div>
+<div style="font-size:.83rem;color:${DIM};line-height:1.5;margin-bottom:.8rem">
+  Before the dedup SQL runs, Lambda 10 identifies today's rows (by MAX Dateoflastedit) that are not yet in ${mono('permalink_registry')}. These go through three-strategy resolution:
+</div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;margin-bottom:.8rem">
+  <div style="background:${BG3};border-radius:8px;padding:.7rem">
+    <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${PUR};margin-bottom:.3rem;font-family:'Sora',sans-serif">Strategy 1 — Exact</div>
+    <div style="font-size:.8rem;color:${DIM}">Normalised URL match (strip scheme/www/query/slash, lowercase)</div>
+  </div>
+  <div style="background:${BG3};border-radius:8px;padding:.7rem">
+    <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${PUR};margin-bottom:.3rem;font-family:'Sora',sans-serif">Strategy 2 — Regex</div>
+    <div style="font-size:.8rem;color:${DIM}">Per-platform canonical ID — IG shortcode (${mono('_extract_instagram_id')}), Twitter status ID, TikTok video ID, YouTube v=, Threads /post/, LinkedIn URN, Facebook fbid/story_fbid/reel/pfbid (${mono('_fb_fallback')})</div>
+  </div>
+  <div style="background:${BG3};border-radius:8px;padding:.7rem">
+    <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${PUR};margin-bottom:.3rem;font-family:'Sora',sans-serif">Strategy 3 — Apify</div>
+    <div style="font-size:.8rem;color:${DIM}">Facebook page-name URLs (${mono('_resolve_fb_batch')}) — batches of 20, actor ${mono('apify~facebook-url-to-id')}, token in code. Skipped if URL already in registry.</div>
+  </div>
+</div>
+<div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${BLU};margin-bottom:.6rem;font-family:'Sora',sans-serif">The Detection SQL</div>
+${sql(`<span style="color:#6366f1">WITH</span> all_dupes <span style="color:#6366f1">AS</span> (<br>
+&nbsp;&nbsp;<span style="color:#6366f1">SELECT</span> s."RowID", s."Permalink", s."Account", s."Delivery", s."Benchmark Type",<br>
+&nbsp;&nbsp;&nbsp;&nbsp;s."Date", s."Total Impressions", s."Dateoflastedit", s.is_manual_tracker,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;LEFT(COALESCE(s."Post",''),200) AS post_preview, r.stable_post_id,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:${GRN}">COUNT(*) OVER</span> (<span style="color:#6366f1">PARTITION BY</span> r.stable_post_id, s."Benchmark Type") <span style="color:#6366f1">AS</span> dupe_count,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:${GRN}">RANK() OVER</span> (<span style="color:#6366f1">PARTITION BY</span> r.stable_post_id, s."Benchmark Type"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#6366f1">ORDER BY</span> s."Total Impressions" <span style="color:#6366f1">DESC NULLS LAST</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s."Date" <span style="color:#6366f1">DESC NULLS LAST</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CAST(SPLIT_PART(CAST(s.post_id <span style="color:#6366f1">AS</span> TEXT),'.', 1) <span style="color:#6366f1">AS</span> BIGINT) <span style="color:#6366f1">DESC</span>) <span style="color:#6366f1">AS</span> impression_rank<br>
+&nbsp;&nbsp;<span style="color:#6366f1">FROM</span> sprinklr_table s<br>
+&nbsp;&nbsp;<span style="color:${AMB}">INNER JOIN</span> permalink_registry r<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#6366f1">ON</span> TRIM(s."Permalink") = r.permalink<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#6366f1">AND</span> TRIM(s."Account") = r.account<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#6366f1">AND</span> TRIM(s."Delivery") = r.delivery<br>
+&nbsp;&nbsp;<span style="color:#6366f1">WHERE</span> s.is_manual_tracker = 0 <span style="color:#6366f1">AND</span> s."Delivery" <span style="color:#6366f1">IN</span> ('Organic','Boosted')<br>
+),<br>
+today_stable_ids <span style="color:#6366f1">AS</span> (<br>
+&nbsp;&nbsp;<span style="color:#ff6b6b">-- Only groups touching today's batch — avoids re-surfacing known historical dupes</span><br>
+&nbsp;&nbsp;<span style="color:#6366f1">SELECT DISTINCT</span> r2.stable_post_id<br>
+&nbsp;&nbsp;<span style="color:#6366f1">FROM</span> sprinklr_table s2<br>
+&nbsp;&nbsp;<span style="color:#6366f1">INNER JOIN</span> permalink_registry r2 <span style="color:#6366f1">ON</span> TRIM(s2."Permalink")=r2.permalink<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#6366f1">AND</span> TRIM(s2."Account")=r2.account <span style="color:#6366f1">AND</span> TRIM(s2."Delivery")=r2.delivery<br>
+&nbsp;&nbsp;<span style="color:#6366f1">WHERE</span> DATE(s2."Dateoflastedit"::timestamp) = (<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#6366f1">SELECT</span> DATE(MAX("Dateoflastedit"::timestamp))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#6366f1">FROM</span> sprinklr_table <span style="color:#6366f1">WHERE</span> is_manual_tracker = 0)<br>
+&nbsp;&nbsp;<span style="color:#6366f1">AND</span> s2.is_manual_tracker = 0<br>
+)<br>
+<span style="color:#6366f1">SELECT</span> d.*, <span style="color:#6366f1">CASE WHEN</span> d.impression_rank = 1 <span style="color:#6366f1">THEN</span> 0 <span style="color:#6366f1">ELSE</span> 1 <span style="color:#6366f1">END AS</span> is_to_remove<br>
+<span style="color:#6366f1">FROM</span> all_dupes d<br>
+<span style="color:#6366f1">WHERE</span> d.dupe_count > 1 <span style="color:#6366f1">AND</span> d.stable_post_id <span style="color:#6366f1">IN</span> (<span style="color:#6366f1">SELECT</span> stable_post_id <span style="color:#6366f1">FROM</span> today_stable_ids)<br>
+<span style="color:#6366f1">ORDER BY</span> d.stable_post_id, d."Benchmark Type", d.impression_rank`)}
+
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.6rem;margin-top:.6rem">
+  <div style="background:${BG3};border-radius:8px;padding:.7rem">
+    <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${GRN};margin-bottom:.3rem;font-family:'Sora',sans-serif">Keep rule</div>
+    <div style="font-size:.8rem;color:${DIM}">${mono('impression_rank = 1')} → ${mono('is_to_remove = 0')}. Highest Total Impressions wins. Tie-break: Date DESC, then post_id DESC (${mono('assign_to_remove()')} function).</div>
+  </div>
+  <div style="background:${BG3};border-radius:8px;padding:.7rem">
+    <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${BLU};margin-bottom:.3rem;font-family:'Sora',sans-serif">Scope exclusions</div>
+    <div style="font-size:.8rem;color:${DIM}">is_manual_tracker ≠ 0 excluded (no Collab/LINE). Paid Only excluded (Delivery IN Organic/Boosted only). Groups with no today-batch row excluded.</div>
+  </div>
+  <div style="background:${BG3};border-radius:8px;padding:.7rem">
+    <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${AMB};margin-bottom:.3rem;font-family:'Sora',sans-serif">S3 outputs</div>
+    <div style="font-size:.8rem;color:${DIM}">${mono('dedup_monitor/duplicate_pairs_DATE.csv')} — all rows in dupe groups. ${mono('dedup_monitor/rows_to_remove_DATE.csv')} — proposed removals only (${mono('is_to_remove = 1')}).</div>
+  </div>
+</div>`);
+
+// ── 8. Human Review Workflow ──────────────────────────────
+h+=card('Human-in-the-Loop Review Workflow',AMB,`
+${step(1,'SNS notification fires',PUR,`Lambda 10 publishes to ${mono('sprinklr-custom-updates-alerts')} SNS → email to prabhat/david/asad + Slack. Message includes total DB changes from all 4 streams, dedup group count, rows flagged for removal, and S3 paths.`)}
+${step(2,'Operator downloads rows_to_remove CSV',BLU,`${mono('s3://wikitablescrapexample/amazon_sprinklr_pull/dedup_monitor/rows_to_remove_YYYY-MM-DD.csv')}. Columns: RowID, Permalink, Account, Delivery, Benchmark Type, Date, Total Impressions, post_preview, stable_post_id, dupe_count, impression_rank, is_to_remove.`)}
+${step(3,'Review proposed removals',AMB,`Check: do these permalinks actually refer to the same real post? Is the "keep" row correct (highest impressions = most complete data)? Cross-reference post_preview to verify. Flag any rows that should NOT be deleted.`)}
+${step(4,'Execute approved DELETEs',RED,`Run against sprinklr_table using approved RowIDs. Typically via RDS Query Editor or Prabhat's SQL client:<br><br>${sql(`<span style="color:#6366f1">DELETE FROM</span> sprinklr_table<br><span style="color:#6366f1">WHERE</span> "RowID" <span style="color:#6366f1">IN</span> (...approved RowIDs...)<br><span style="color:#6366f1">AND</span> is_manual_tracker = 0; <span style="color:#ff6b6b">-- safety guard</span>`)}`)}
+${step(5,'Verify in Tableau',GRN,`Confirm affected accounts/platforms show correct post counts. Since Lambda 10 runs Monday alongside the pipeline, review typically happens Monday afternoon or Tuesday morning.`)}`);
+
+// ── 9. HILC distinction ───────────────────────────────────
+h+=card('HILC Posts — Always Human Review, Never Auto-propose',RED,`
+<p style="color:${DIM};line-height:1.6;font-size:.88rem;margin-bottom:.8rem">
+  <strong style="color:#e6edf3">HILC (Human-Initiated Legacy Check)</strong> refers to posts where the same post text appears on different ${mono('post_id')} values — Sprinklr-generated duplicates that can't be resolved by URL matching alone, because they have genuinely different post_ids. Lambda 10 surfaces these for awareness, but always sets ${mono('is_to_remove = 0')}.
+</p>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem">
+  <div style="background:${BG3};border-radius:8px;padding:.8rem;border-left:3px solid ${BLU}">
+    <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${BLU};margin-bottom:.4rem;font-family:'Sora',sans-serif">Registry duplicates — auto-propose</div>
+    <div style="font-size:.83rem;color:${DIM};line-height:1.5">Same ${mono('stable_post_id')}, different URL form (e.g. /p/ vs /reel/). Lambda 10 proposes which to remove based on impressions rank. Operator verifies and executes.</div>
+  </div>
+  <div style="background:${BG3};border-radius:8px;padding:.8rem;border-left:3px solid ${AMB}">
+    <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${AMB};margin-bottom:.4rem;font-family:'Sora',sans-serif">HILC posts — human-only</div>
+    <div style="font-size:.83rem;color:${DIM};line-height:1.5">Same post text, genuinely different ${mono('post_id')} values. ${mono('is_to_remove = 0')} always. Operator must read the post content and make the call on which RowID represents the real post.</div>
+  </div>
+</div>`);
+
+// ── 10. What Lambda 10 never does ────────────────────────
+h+=`<div style="background:#ef444408;border:1px solid #ef444430;border-radius:12px;padding:1rem 1.2rem;margin-bottom:1.2rem">
+<div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${RED};margin-bottom:.8rem;font-family:'Sora',sans-serif">What Lambda 10 deliberately never does</div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem">
+  <div style="background:#0d1117;border-radius:6px;padding:.7rem;border-top:2px solid ${RED}40"><strong style="color:#e6edf3;display:block;margin-bottom:.3rem">No dedup auto-delete</strong><div style="font-size:.82rem;color:${DIM};line-height:1.5">The dedup monitor never issues a DELETE. It produces CSVs. A human runs the DELETE. The only automatic DELETEs in Lambda 10 are X Quote posts — which is a different, human-managed input list.</div></div>
+  <div style="background:#0d1117;border-radius:6px;padding:.7rem;border-top:2px solid ${RED}40"><strong style="color:#e6edf3;display:block;margin-bottom:.3rem">No collab/LINE in dedup</strong><div style="font-size:.82rem;color:${DIM};line-height:1.5">${mono('is_manual_tracker != 0')} rows are excluded from the dedup SQL. Collab and LINE data is managed by Lambda 8 and Lambda 9 with their own DELETE + re-insert logic.</div></div>
+  <div style="background:#0d1117;border-radius:6px;padding:.7rem;border-top:2px solid ${RED}40"><strong style="color:#e6edf3;display:block;margin-bottom:.3rem">Dedup is non-fatal</strong><div style="font-size:.82rem;color:${DIM};line-height:1.5">The dedup monitor is wrapped in try/except inside ${mono('run_dedup_monitor()')}. If it errors for any reason, the corrections (Streams A–D) are unaffected, lambda returns 200, and SNS fires with the corrections summary.</div></div>
+</div>
 </div>`;
+
+el.innerHTML=h;
 }
 
 function step(n, title, color, body){
