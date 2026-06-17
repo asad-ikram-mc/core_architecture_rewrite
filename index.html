@@ -88,6 +88,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .svg-wrap svg .erd-node:hover rect{stroke-opacity:.8!important;filter:brightness(1.3)}
 
 @media(max-width:768px){.hero,.tabs,.vw{padding-left:1rem;padding-right:1rem}.hero h1{font-size:1.6rem}.nd{min-width:100px;padding:.5rem .7rem}.tab{padding:.55rem .7rem;font-size:.8rem}}
+.tab-old{display:inline-block;padding:.1rem .4rem;border-radius:4px;font-size:.6rem;font-weight:800;background:rgba(255,153,0,.15);color:#FF9900;border:1px solid rgba(255,153,0,.4);margin-right:.4rem;letter-spacing:.05em;font-family:'Sora',sans-serif}
+.tab-new{display:inline-block;padding:.1rem .4rem;border-radius:4px;font-size:.6rem;font-weight:800;background:rgba(34,197,94,.12);color:#22c55e;border:1px solid rgba(34,197,94,.35);margin-right:.4rem;letter-spacing:.05em;font-family:'Sora',sans-serif}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 </style>
 </head>
@@ -102,13 +104,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 </div>
 
 <div class="tabs">
-<button class="tab active" data-v="existing"><span class="tn">01</span>Old Pipeline — Lambdas</button>
-<button class="tab" data-v="new"><span class="tn">02</span>New Architecture — Fargate</button>
-<button class="tab" data-v="erd"><span class="tn">03</span>New — Database ERD</button>
-<button class="tab" data-v="diagram"><span class="tn">04</span>New — Flow Diagram</button>
-<button class="tab" data-v="analyst"><span class="tn">05</span>Analyst View</button>
-<button class="tab" data-v="flow"><span class="tn">06</span>Old — Flow Diagram</button>
-<button class="tab" data-v="hitl"><span class="tn">07</span>Human-in-the-Loop</button>
+<button class="tab active" data-v="existing"><span class="tab-old">OLD</span>Pipeline — Lambdas</button>
+<button class="tab" data-v="flow"><span class="tab-old">OLD</span>Flow Diagram</button>
+<button class="tab" data-v="new"><span class="tab-new">NEW</span>Architecture — Fargate</button>
+<button class="tab" data-v="diagram"><span class="tab-new">NEW</span>Flow Diagram</button>
+<button class="tab" data-v="erd"><span class="tab-new">NEW</span>Database ERD</button>
+<button class="tab" data-v="analyst"><span class="tn">→</span>Analyst View</button>
+<button class="tab" data-v="hitl"><span class="tn">⟳</span>Human-in-Loop</button>
 </div>
 
 <div class="vw active" id="vw-existing">
@@ -145,6 +147,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 </div>
 <div style="max-width:960px;margin:0 auto" id="hitl-content"></div>
 </div>
+<div class="vw" id="vw-flow"><div class="vi"><h2>Old Pipeline — Data Flow</h2><p>How data moves from Sprinklr S3 through 14 Lambdas to Tableau. 🔵 Daily steps in blue · 🟠 Monday steps in amber. Click any node for detail.</p></div><div id="flow-svg-wrap" style="max-width:1100px;margin:0 auto;overflow-x:auto;padding-bottom:2rem"></div><div id="exist-det" style="max-width:1060px;margin:0 auto;padding:0 0 2rem"></div></div>
+<div class="vw" id="vw-hitl"><div class="vi"><h2>Human-in-the-Loop — Lambda 10</h2><p>Lambda 10 runs every Monday. Part 1: four custom data correction streams. Part 2: registry-backed duplicate detection. Neither auto-deletes without human approval.</p></div><div style="max-width:960px;margin:0 auto" id="hitl-content"></div></div>
 <div class="vw" id="vw-analyst">
 <div class="vi"><h2>Analyst View — What Changes For You</h2><p>You won't touch a pipeline, a database, or a Lambda. Here's what the new architecture means for the person opening Tableau every morning.</p></div>
 <div id="analyst-content"></div>
@@ -204,55 +208,33 @@ e3:{title:'Paid Data',type:'Monday Source',typeColor:'var(--s3)',story:'On Monda
 e4:{title:'S3 Event Trigger Chain',type:'Infrastructure',typeColor:'var(--infra)',story:'Each step drops a "done.txt" file in a bucket. The next step is watching that bucket. If any step fails, it never drops the file, so the next step waits forever — silently. Nobody knows the pipeline stopped until someone notices Tableau hasn\'t updated.',tech:'done.txt relay: λ1→λ2a/2b(done.txt)→λ3→weeklybackup→λ3b→monthlybackeup(typo intentional)→λ4→for_tagging→λ5→finalmaster→λ6→tableau_layer→λ7. λ8/9 NOT in this chain (separate trigger, race condition). S3 event notifications on bucket prefixes.',table:[]},
 e5:{title:'240-Second Sleep',type:'Infrastructure',typeColor:'var(--infra)',story:'After copying files, the pipeline sets a 4-minute timer and just waits. Nothing is happening. It\'s like paying a delivery driver to sit in the parking lot after every delivery. 365 days × 8 minutes = 48+ hours a year of paid napping.',tech:'Lambda 2a line 248: time.sleep(240). Lambda 2b line 346: time.sleep(240). Both wait for S3 eventual consistency after copy. Billed as Lambda compute. 8 min/run × 365 = 48+ hrs/yr idle billing.',table:[]},
 e6:{title:'SES + CloudWatch',type:'Infrastructure',typeColor:'var(--infra)',story:'When something goes wrong, the pipeline sends an email. If email itself is down, it writes to a log nobody checks in real-time. Like a fire alarm that only works if the fire hasn\'t burned the wiring.',tech:'SES: λ1 validation failures + λ7 dedup watch. Recipients: prabhat, david, asad. CloudWatch: all Lambda print() statements. No structured dashboard. Finding errors = manual log group navigation per Lambda per date.',table:[]},
-e7:{title:'Lambda 1 — Validate',type:'Lambda · 1,496 lines',typeColor:'var(--lambda)',story:'The quality inspector opens every box and checks the packing list. Are all 45 columns in the Facebook file? Did Sprinklr rename anything? If something\'s off, the inspector sounds the alarm and stops everything.',tech:'Validates 23 files against expected_file_structure dict (exact column count + names per file type). Applies COLUMN_MAPPINGS_sprinklr.json for renames. Backs up ALL files to copy_production_data/ BEFORE validation. Missing daily/weekly → SES email + stop. Missing tags → invokes lambda_for_missing_tags (fallback: today → latest folder → backup). On success → triggers λ2a or λ2b.',table:[['CADENCE','Every day — Daily chain'],['TRIGGER','S3 event on RAWDATA/ prefix in amazon-global-gsmc-sprinklr'],['INPUT','23 files: 9 daily JSONs · 4 tag files · 3 tag-only files · follower JSON · paid JSON (Mon)'],['VALIDATES','Column count + column names per file vs expected_file_structure dict'],['ON PASS','Invokes Lambda 2a or Lambda 2b'],['ON FAIL','SES email to prabhat/david/asad · pipeline stops'],['BACKUP','All source files copied to copy_production_data/ BEFORE validation'],['OUTPUT','CloudWatch logs · SES on failure · no data written to S3 on pass'],['NEXT','→ Lambda 2a (weekday) or Lambda 2b (with stricter tag validation)']]},
-e8:{title:'Lambda 2a/2b — Copy + Sleep',type:'Lambda · 646 lines',typeColor:'var(--lambda)',story:'The approved delivery is moved to the workshop floor. Then the driver parks and naps for 4 minutes — not because anything needs to happen, but because someone once decided "4 minutes should be enough." This is the most expensive nap in the pipeline.',tech:'λ2a (266 lines): copies 4 folders (weekly/daily/fluency_tag_only/tag_pull) without validation. done.txt to tag folder → time.sleep(240) → done.txt to daily folder. Monday: also copies Follower_Data_6. λ2b (380 lines): copies WITH tag column validation. Fluency-Tags-Only-Pull first, then Tag-Pull. Same 240s sleep. done.txt to 4 folders.',table:[['CADENCE','Every day — Daily chain'],['TRIGGER','Invoked directly by Lambda 1 on success'],['λ2a INPUT','Fluency-Weekly/ · Fluency-Monthly/ · Tags-Only-Pull/ · Tag-Pull/ folders'],['λ2b INPUT','Same as 2a but also validates tag column structure (stricter check)'],['SLEEP','time.sleep(240) — 4 min wait for S3 consistency · ~48 hrs/yr billed idle'],['λ2a OUTPUT','done.txt to tag + daily folders → triggers Lambda 3'],['λ2b OUTPUT','done.txt to 4 folders → triggers Lambda 3'],['MONDAY EXTRA','Lambda 2a also copies Follower_Data_6_FluencyWeekly.json'],['NEXT','→ Lambda 3 (via done.txt S3 event trigger)']]},
-e9:{title:'Lambda 2c — Post ID Lookup',type:'Lambda · 581 lines',typeColor:'var(--lambda)',story:'A librarian updates the card catalogue. When Instagram changes a post\'s URL, this librarian notes "same post, new address." With Sprinklr now giving us stable IDs, this librarian has less work.',tech:'Parallel with 2a/2b. Builds post_id ↔ permalink mapping table. Tracks URL evolution (e.g. instagram.com/p/ABC → instagram.com/reel/ABC). Maintains is_current flag. Writes lookup_by_permalink.csv. Less critical with stable post_id from Sprinklr.',table:[['CADENCE','Every day — parallel with Lambda 2a/2b'],['TRIGGER','Parallel invocation from Lambda 1'],['INPUT','Raw Sprinklr JSON files from source bucket'],['BUILDS','post_id ↔ permalink mapping · tracks URL evolution (e.g. /p/ABC → /reel/ABC)'],['OUTPUT','lookup_by_permalink.csv to wikitablescrapexample S3'],['TRACKS','is_current flag — which URL form is canonical today'],['NOTE','Less critical now Sprinklr provides stable post_ids directly from API'],['NEXT','→ Lambda 3b reads this on Monday for permalink correction']]},
+e7:{title:'Lambda 1 — Validate',type:'Lambda · 1,496 lines',typeColor:'var(--lambda)',story:'The quality inspector opens every box and checks the packing list. Are all 45 columns in the Facebook file? Did Sprinklr rename anything? If something\'s off, the inspector sounds the alarm and stops everything.',tech:'Validates 23 files against expected_file_structure dict (exact column count + names per file type). Applies COLUMN_MAPPINGS_sprinklr.json for renames. Backs up ALL files to copy_production_data/ BEFORE validation. Missing daily/weekly → SES email + stop. Missing tags → invokes lambda_for_missing_tags (fallback: today → latest folder → backup). On success → triggers λ2a or λ2b.',table:[['CADENCE','Every day — Daily chain'],['TRIGGER','S3 event on RAWDATA/ prefix'],['INPUT','23 files: 9 daily JSONs · 4 tag files · 3 tag-only files · follower JSON · paid JSON (Mon)'],['ON PASS','Invokes Lambda 2a or Lambda 2b'],['ON FAIL','SES email to prabhat/david/asad · pipeline stops'],['BACKUP','All files copied to copy_production_data/ BEFORE validation'],['OUTPUT','CloudWatch logs · SES on failure'],['NEXT','→ Lambda 2a (weekday) or Lambda 2b (with tag validation)']]},
+e8:{title:'Lambda 2a/2b — Copy + Sleep',type:'Lambda · 646 lines',typeColor:'var(--lambda)',story:'The approved delivery is moved to the workshop floor. Then the driver parks and naps for 4 minutes — not because anything needs to happen, but because someone once decided "4 minutes should be enough." This is the most expensive nap in the pipeline.',tech:'λ2a (266 lines): copies 4 folders (weekly/daily/fluency_tag_only/tag_pull) without validation. done.txt to tag folder → time.sleep(240) → done.txt to daily folder. Monday: also copies Follower_Data_6. λ2b (380 lines): copies WITH tag column validation. Fluency-Tags-Only-Pull first, then Tag-Pull. Same 240s sleep. done.txt to 4 folders.',table:[['CADENCE','Every day'],['TRIGGER','Invoked by Lambda 1 on success'],['λ2a INPUT','Fluency-Weekly/ · Fluency-Monthly/ · Tags-Only-Pull/ · Tag-Pull/'],['λ2b INPUT','Same + validates tag column structure'],['SLEEP','time.sleep(240) — 4 min · ~48 hrs/yr billed idle'],['λ2a OUTPUT','done.txt to tag + daily folders → triggers Lambda 3'],['λ2b OUTPUT','done.txt to 4 folders → triggers Lambda 3'],['MONDAY EXTRA','Lambda 2a copies Follower_Data_6_FluencyWeekly.json'],['NEXT','→ Lambda 3 (via done.txt S3 trigger)']]},
+e9:{title:'Lambda 2c — Post ID Lookup',type:'Lambda · 581 lines',typeColor:'var(--lambda)',story:'A librarian updates the card catalogue. When Instagram changes a post\'s URL, this librarian notes "same post, new address." With Sprinklr now giving us stable IDs, this librarian has less work.',tech:'Parallel with 2a/2b. Builds post_id ↔ permalink mapping table. Tracks URL evolution (e.g. instagram.com/p/ABC → instagram.com/reel/ABC). Maintains is_current flag. Writes lookup_by_permalink.csv. Less critical with stable post_id from Sprinklr.',table:[['CADENCE','Every day — parallel with 2a/2b'],['TRIGGER','Parallel invocation from Lambda 1'],['INPUT','Raw Sprinklr JSON files'],['BUILDS','post_id to permalink mapping · is_current flag · tracks URL evolution'],['OUTPUT','lookup_by_permalink.csv to wikitablescrapexample S3'],['NEXT','→ Lambda 3b reads this on Monday']]},
 e9d:{title:'Lambda 2d — Tag Mapping',type:'Lambda · latest_tag_mapping/ publisher',typeColor:'var(--lambda)',story:'After tag files are copied, Lambda 2d reads the organic and paid tag files and publishes the latest version to a single S3 location. Every downstream Lambda that needs tags reads from this one place — no more hunting across multiple folders.',tech:'Reads Organic_Tags_10_TagPull.json, Target_Geography_13_TagPull.json and paid tag variants from Fluency-Tags-Only-Pull. Falls back to fluency monthly folder if tag-pull is missing. Writes to amazon_sprinklr_pull/latest_tag_mapping/ as the canonical tag source consumed by Lambda 5.',table:[['Reads','Tag-Pull/ + Fluency-Tags-Only-Pull/ (amazon-global-gsmc-sprinklr)'],['Writes','amazon_sprinklr_pull/latest_tag_mapping/ (single source of truth for tags)']]},
-e10:{title:'Lambda 3 — Fargate Trigger (thin)',type:'Lambda · 81 lines',typeColor:'var(--lambda)',story:'Lambda 3 is now a thin trigger. The heavy master_table merge (which used to OOM at the 10GB Lambda ceiling) was moved to a Fargate task (task-old-lambda-3). This Lambda keeps the same S3 trigger, extracts pulldate from the S3 event key, and launches the Fargate container with PULLDATE as an env override. Posts done/failed to Slack #amazon-core-alerts.',tech:'Reads 9 GOOD_FILES. Appends to master_table.csv: dedup on all cols except row_number (keep="last"), row_number is running counter continuing from existing max. pull_date derived from S3 event key. gc.collect() at lines 252, 313. Monday: merges Paid_Data_9 via adjectivemapping.xlsx, applies filter_data() (organic >45d removed, paid >2d), writes weeklybackup/backupmaster_*.csv → triggers Monday chain.',table:[['CADENCE','Every day — thin trigger only (81 lines)'],['TRIGGER','S3 event on amazon_sprinklr_pull/fluency/ prefix (done.txt from Lambda 2)'],['INPUT','S3 event key containing pulldate string'],['DOES','Extracts pulldate → launches Fargate task task-old-lambda-3 via ECS RunTask API'],['FARGATE INPUT','9 GOOD_FILES from S3 + existing master_table.csv'],['FARGATE OUTPUT','master_table.csv (appended daily) · weeklybackup/backupmaster_*.csv (Monday)'],['DEDUP','keep=last on all columns except row_number (running counter from existing max)'],['MONDAY ONLY','Also merges Paid_Data_9 via adjectivemapping.xlsx · writes weeklybackup/'],['ALERTS','Slack #amazon-core-alerts on Fargate task done or failed'],['NEXT','→ Lambda 3b (Monday · via weeklybackup/ S3 trigger)']]},
-e11:{title:'Lambda 3b — Permalink',type:'Lambda · 258 lines',typeColor:'var(--lambda)',story:'Before Monday\'s cleaning crew arrives, the address book is updated. Posts whose URLs changed get corrected.',tech:'Monday only. Triggered by weeklybackup/backupmaster_*.csv. Loads lookup_by_permalink.csv. Updates stale permalinks via is_current flag. Writes monthlybackeup/mapped_data_*.csv (typo intentional — S3 trigger depends on it). Permalink changes report to permalink_changes/.',table:[['CADENCE','Monday only'],['TRIGGER','S3 event on weeklybackup/backupmaster_*.csv'],['INPUT','master_table.csv + lookup_by_permalink.csv (built by Lambda 2c)'],['DOES','Updates stale permalinks in master_table using is_current flag from lookup table'],['OUTPUT','monthlybackeup/mapped_data_*.csv (typo intentional — S3 trigger key hardcoded)'],['ALSO WRITES','permalink_changes/ report of URLs corrected this run'],['NEXT','→ Lambda 4 (via monthlybackeup/ S3 event trigger)']]},
-e12:{title:'Lambda 4 — Filter Rules 1–6',type:'Lambda · 1,242 lines',typeColor:'var(--lambda)',story:'The noise removal crew. Admin posts, empty posts, low-impression posts — all flagged and set aside. Every post also gets stamped with its country and platform using mapping files from the shelf.',tech:'Monday. Loads account_metadataa.xlsx, platformmapping.xlsx, twitter_mapping.xlsx. URL corrections from SQLTableNovember5thCleaned.xlsx. Maps accounts → countries, classifies platforms, determines delivery type. 6 rules: R1 MESSAGE_TYPE (paid exempt), R2 no text (1 Reel exempt), R3 file ext only, R4 cover photo/phone, R5a <250 impr, R5b 250-499 + <50 eng for 2026+, R6 LI dark post. Output: for_tagging/ → triggers λ5.',table:[['CADENCE','Monday only'],['TRIGGER','S3 event on monthlybackeup/ prefix'],['INPUT','mapped_data_*.csv · account_metadataa.xlsx · platformmapping.xlsx · twitter_mapping.xlsx · SQLTableNovember5thCleaned.xlsx'],['ENRICHMENT','Maps accounts → countries · classifies platforms · sets delivery type (Organic/Boosted/Paid Only)'],['RULE 1','MESSAGE_TYPE check (paid posts exempt)'],['RULE 2','No post text (1 Instagram Reel exempt)'],['RULE 3','File extension URLs only (not real posts)'],['RULE 4','Cover photo or phone number posts'],['RULE 5a','Total Impressions < 250 removed'],['RULE 5b','250–499 impr AND < 50 eng (2026+ posts only)'],['RULE 6','LinkedIn dark posts removed'],['OUTPUT','for_tagging/filtered_*.csv → S3 trigger for Lambda 5'],['FILTER AUDIT','filtered_posts/lambda_4_*.csv with filter_reason column'],['NEXT','→ Lambda 5 (via for_tagging/ S3 event trigger)']]},
-e13:{title:'Lambda 8 — Collab',type:'Lambda · 744 lines',typeColor:'var(--lambda)',story:'The Collab team wipes all previous collaborator data from the Tableau table and starts fresh from Google Sheets. If anything goes wrong downstream and the data isn\'t re-inserted, collaborator posts vanish from Tableau until next Monday.',tech:'Monday. NOT S3-triggered. Reads 2 Google Sheets (hardcoded URLs). backup_complete_table() first. DELETE FROM sprinklr_table WHERE is_manual_tracker = 1. Fetches entire sprinklr_table, combines with Collab data, applies 4 priority rules: (1) Paid additive, (2) Sprinklr Organic > Collab, (3) Collab Organic > Boosted, (4) Boosted if no Organic. Dedup by split_permalink + account_norm. Writes processed_data.csv + dedup decisions to filtered_posts/.',table:[['CADENCE','Monday only — NOT in S3 trigger chain'],['TRIGGER','Separate trigger · race condition risk with Lambda 5 (no ordering guarantee)'],['INPUT','7 per-country Google Sheet trackers (from 2026) · 2 combined sheets before 2026'],['FIRST ACTION','backup_complete_table() — full RDS snapshot before any DELETE'],['DELETES','DELETE FROM sprinklr_table WHERE is_manual_tracker = 1'],['PRIORITY RULES','(1) Paid additive · (2) Sprinklr Organic > Collab · (3) Collab Organic > Boosted · (4) Boosted if no Organic'],['DEDUP KEY','split_permalink + account_norm'],['OUTPUT CSV','processed_data.csv to S3 — consumed by Lambda 5'],['FILTER AUDIT','filtered_posts/ with collab dedup decisions'],['RISK','If Lambda 5 runs before Lambda 8 finishes · collab posts missing from final output']]},
-e14:{title:'Lambda 9 — LINE',type:'Lambda · 1,206 lines',typeColor:'var(--lambda)',story:'Same as Collab but for Japan\'s LINE app. Wipe everything, re-import fresh. Fix the scientific notation Google Sheets puts on Post IDs. Add up metrics for the same post across dates.',tech:'Monday. NOT S3-triggered. Reads Google Sheet (2 tabs). backup_complete_table(). DELETE FROM sprinklr_table WHERE "Platform" = \'LINE\'. Fixes scientific notation (1.78E+14 → regex). Aggregates by Post URL (SUM metrics). is_manual_tracker=2. Writes processed_line_data.csv.',table:[['CADENCE','Monday only — NOT in S3 trigger chain'],['TRIGGER','Separate trigger · same race condition risk as Lambda 8'],['INPUT','Google Sheet: 2 tabs (data + tags) · JP shares workbook with Lambda 8'],['FIRST ACTION','backup_complete_table() — full RDS snapshot before DELETE'],['DELETES','DELETE FROM sprinklr_table WHERE Platform = LINE'],['FIXES','Scientific notation in Post URLs: 1.78E+14 → regex → correct numeric ID'],['AGGREGATES','SUM metrics by Post URL across all pull dates for same post'],['SETS','is_manual_tracker = 2 for all LINE rows'],['OUTPUT CSV','processed_line_data.csv to S3 — consumed by Lambda 5'],['RISK','Lambda 5 has try/except on this file — silently uses last week data if missing']]},
-e15:{title:'Lambda 5 — Tags + Rules 7–8',type:'Lambda · 1,203 lines',typeColor:'var(--lambda)',story:'The tagging team labels every post with its topic and category. They also bring in the Collab and LINE data — but nobody guarantees those files are ready. If Collab\'s file is missing, this step crashes. If LINE\'s is missing, it silently uses last week\'s data.',tech:'Monday. Triggered by for_tagging/ from λ4. Reads processed_data.csv from λ8 (NO try/except — crash if missing) and processed_line_data.csv from λ9 (HAS try/except). Merges tags by PERMALINK from latest_tag_mapping/. R7: country exclusion (AT/BE/NL/PL/SE/TR/SG/CN). R8: deleted posts removed (LINE exempt). Writes finalmaster/cleaned_master_tab_*.csv → triggers λ6.',table:[['CADENCE','Monday only'],['TRIGGER','S3 event on for_tagging/ prefix (from Lambda 4)'],['INPUT 1','for_tagging/filtered_*.csv (from Lambda 4)'],['INPUT 2','processed_data.csv from Lambda 8 — NO try/except · crash if missing'],['INPUT 3','processed_line_data.csv from Lambda 9 — HAS try/except · silent fallback'],['INPUT 4','latest_tag_mapping/ folder (built by Lambda 2d)'],['TAG MERGE','Matches by PERMALINK to Organic_Tags + Paid_Tags from tag mapping folder'],['RULE 7','Country exclusion: AT/BE/NL/PL/SE/TR/SG/CN removed'],['RULE 8','Deleted posts removed (LINE posts exempt)'],['OUTPUT','finalmaster/cleaned_master_tab_*.csv → S3 trigger for Lambda 6'],['FILTER AUDIT','filtered_posts/lambda_5_*.csv for R7 + R8 removals'],['NEXT','→ Lambda 6 (via finalmaster/ S3 event trigger)']]},
-e16:{title:'Lambda 6 — Benchmarks + R9–10',type:'Lambda · 476 lines',typeColor:'var(--lambda)',story:'The analyst asks: "Is 10,000 engagements good?" They compare every post against similar posts from the same country, platform, and quarter. Each post gets doubled — one row for the average benchmark, one for the median.',tech:'Monday. Triggered by finalmaster/. R9: null/empty Country removed. R10: paid rows where SPENT_USD=0 removed. Matcher = Country+Platform+Delivery+Quarter. <10 samples → annual fallback. Loads median_benchmarks.xlsx + mean_benchmarks.xlsx. Paid: RegionObjective key from median_paid.xlsx + average_paid.xlsx. Creates 2 rows per post (Median + Average). Writes tableau_layer/masterbenchmarks_*.csv → triggers λ7.',table:[['CADENCE','Monday only'],['TRIGGER','S3 event on finalmaster/ prefix (from Lambda 5)'],['INPUT','cleaned_master_tab_*.csv · median_benchmarks.xlsx · mean_benchmarks.xlsx · median_paid.xlsx · average_paid.xlsx'],['MATCH KEY','Country + Platform + Delivery + Quarter'],['FALLBACK','< 10 samples in quarter → uses full-year benchmark'],['RULE 9','Null or empty Country field → row removed'],['RULE 10','Paid rows where SPENT_USD = 0 → removed'],['ROW DOUBLING','Creates 2 rows per post: one Median benchmark row + one Average benchmark row'],['PAID MATCH','RegionObjective key from median_paid.xlsx + average_paid.xlsx'],['OUTPUT','tableau_layer/masterbenchmarks_*.csv → S3 trigger for Lambda 7'],['FILTER AUDIT','filtered_posts/lambda_6_*.csv for R9 + R10 removals'],['NEXT','→ Lambda 7 (via tableau_layer/ S3 event trigger)']]},
-e17:{title:'Lambda 7 — Push + Rules 11–21',type:'Lambda · 1,456 lines',typeColor:'var(--lambda)',story:'The grand finale. Translate foreign posts, merge comment sentiment (now with a two-pass fallback so collab posts also get their comments attached), apply 11 more filter rules, then push everything to Tableau. MBS corrections still applied manually after. Dedup detective runs 4 SQL checks and emails if violations found.',tech:'Monday. Triggered by tableau_layer/. Translation: deep_translator.GoogleTranslator (FREE, skips AU/US/UK + "instagram story"). Comment sentiment merge from comment_sentiment.csv by threadURL. LI Global split: "Amazon LI - Global" → "Amazon LI - {Country}". Paid Only date -7 days. R11 date filter (≤2023-09-04 except WeChat), R12 MENA, R13 News X-EU, R14 US msg, R15 IN msg, R16 EMEA msg, R17 APAC X Reply, R18 APAC author, R19 branded+Global, R20 blacklist, R21 XCM. UPSERT to sprinklr_table (ON CONFLICT post_id_key) + sprinklr_lookup_check (ON CONFLICT Lookup Key) via import_table staging. Appends to blacklist_table + is_branded_true_table. 4 dedup SQL queries → dupes_reports/ + SES. Full snapshot → check/finalsql_*.csv.',table:[['CADENCE','Monday only'],['TRIGGER','S3 event on tableau_layer/ prefix (from Lambda 6)'],['INPUT','masterbenchmarks_*.csv · comment_sentiment.csv · Blacklist.csv'],['TRANSLATION','deep_translator.GoogleTranslator (free) · skips AU/US/UK + instagram story type'],['SENTIMENT PASS 1','Match comment_sentiment.csv threadURL → stable_post_id via permalink_registry'],['SENTIMENT PASS 2','Collab post fallback: exact normalised URL match then per-platform regex ID match'],['LI GLOBAL SPLIT','"Amazon LI - Global" rows split into per-country rows'],['PAID DATE SHIFT','Paid Only posts: Published Date shifted -7 days'],['RULE 11','Date filter: posts ≤ 2023-09-04 removed (except WeChat)'],['RULES 12–16','Regional message filters: MENA · News X-EU · US · IN · EMEA'],['RULES 17–18','APAC X Reply + APAC author filters'],['RULES 19–21','Branded+Global · blacklist · XCM filters'],['RDS WRITES','sprinklr_table (UPSERT on post_id_key) · sprinklr_lookup_check · import_table · blacklist_table · is_branded_true_table'],['S3 WRITES','check/finalsql_*.csv · filtered_posts/lambda_7_*.csv · dupes_reports/*.txt'],['DEDUP','4 SQL dedup queries → dupes_reports/ + SES email to prabhat/david/asad'],['NEXT','→ Tableau reads sprinklr_table (Monday pipeline complete)']]},
+e10:{title:'Lambda 3 — Fargate Trigger (thin)',type:'Lambda · 81 lines',typeColor:'var(--lambda)',story:'Lambda 3 is now a thin trigger. The heavy master_table merge (which used to OOM at the 10GB Lambda ceiling) was moved to a Fargate task (task-old-lambda-3). This Lambda keeps the same S3 trigger, extracts pulldate from the S3 event key, and launches the Fargate container with PULLDATE as an env override. Posts done/failed to Slack #amazon-core-alerts.',tech:'Reads 9 GOOD_FILES. Appends to master_table.csv: dedup on all cols except row_number (keep="last"), row_number is running counter continuing from existing max. pull_date derived from S3 event key. gc.collect() at lines 252, 313. Monday: merges Paid_Data_9 via adjectivemapping.xlsx, applies filter_data() (organic >45d removed, paid >2d), writes weeklybackup/backupmaster_*.csv → triggers Monday chain.',table:[['CADENCE','Every day — thin trigger (81 lines)'],['TRIGGER','S3 event on amazon_sprinklr_pull/fluency/ (done.txt from Lambda 2)'],['INPUT','S3 event key containing pulldate'],['DOES','Extracts pulldate → launches Fargate task task-old-lambda-3 via ECS RunTask'],['FARGATE INPUT','9 GOOD_FILES + existing master_table.csv'],['FARGATE OUTPUT','master_table.csv (appended) · weeklybackup/backupmaster_*.csv (Monday)'],['DEDUP','keep=last on all cols except row_number (running counter)'],['MONDAY','Merges Paid_Data_9 via adjectivemapping.xlsx · writes weeklybackup/'],['ALERTS','Slack #amazon-core-alerts on done or failed'],['NEXT','→ Lambda 3b (Monday · via weeklybackup/ S3 trigger)']]},
+e11:{title:'Lambda 3b — Permalink',type:'Lambda · 258 lines',typeColor:'var(--lambda)',story:'Before Monday\'s cleaning crew arrives, the address book is updated. Posts whose URLs changed get corrected.',tech:'Monday only. Triggered by weeklybackup/backupmaster_*.csv. Loads lookup_by_permalink.csv. Updates stale permalinks via is_current flag. Writes monthlybackeup/mapped_data_*.csv (typo intentional — S3 trigger depends on it). Permalink changes report to permalink_changes/.',table:[['CADENCE','Monday only'],['TRIGGER','S3 event on weeklybackup/backupmaster_*.csv'],['INPUT','master_table.csv + lookup_by_permalink.csv (from Lambda 2c)'],['DOES','Updates stale permalinks using is_current flag from lookup table'],['OUTPUT','monthlybackeup/mapped_data_*.csv (typo intentional — trigger key hardcoded)'],['ALSO WRITES','permalink_changes/ — URLs corrected this run'],['NEXT','→ Lambda 4 (via monthlybackeup/ S3 trigger)']]},
+e12:{title:'Lambda 4 — Filter Rules 1–6',type:'Lambda · 1,242 lines',typeColor:'var(--lambda)',story:'The noise removal crew. Admin posts, empty posts, low-impression posts — all flagged and set aside. Every post also gets stamped with its country and platform using mapping files from the shelf.',tech:'Monday. Loads account_metadataa.xlsx, platformmapping.xlsx, twitter_mapping.xlsx. URL corrections from SQLTableNovember5thCleaned.xlsx. Maps accounts → countries, classifies platforms, determines delivery type. 6 rules: R1 MESSAGE_TYPE (paid exempt), R2 no text (1 Reel exempt), R3 file ext only, R4 cover photo/phone, R5a <250 impr, R5b 250-499 + <50 eng for 2026+, R6 LI dark post. Output: for_tagging/ → triggers λ5.',table:[['CADENCE','Monday only'],['TRIGGER','S3 event on monthlybackeup/ prefix'],['INPUT','mapped_data_*.csv · account_metadataa.xlsx · platformmapping.xlsx · twitter_mapping.xlsx'],['ENRICHMENT','Maps accounts to countries · classifies platforms · sets delivery type'],['RULE 1','MESSAGE_TYPE check (paid exempt)'],['RULE 2','No post text (1 Reel exempt)'],['RULE 3','File extension URLs only'],['RULE 4','Cover photo or phone number posts'],['RULE 5a','Total Impressions < 250'],['RULE 5b','250-499 impr AND < 50 eng (2026+ only)'],['RULE 6','LinkedIn dark posts'],['OUTPUT','for_tagging/filtered_*.csv → triggers Lambda 5'],['AUDIT','filtered_posts/lambda_4_*.csv with filter_reason'],['NEXT','→ Lambda 5 (via for_tagging/ S3 trigger)']]},
+e13:{title:'Lambda 8 — Collab',type:'Lambda · 744 lines',typeColor:'var(--lambda)',story:'The Collab team wipes all previous collaborator data from the Tableau table and starts fresh from Google Sheets. If anything goes wrong downstream and the data isn\'t re-inserted, collaborator posts vanish from Tableau until next Monday.',tech:'Monday. NOT S3-triggered. Reads 2 Google Sheets (hardcoded URLs). backup_complete_table() first. DELETE FROM sprinklr_table WHERE is_manual_tracker = 1. Fetches entire sprinklr_table, combines with Collab data, applies 4 priority rules: (1) Paid additive, (2) Sprinklr Organic > Collab, (3) Collab Organic > Boosted, (4) Boosted if no Organic. Dedup by split_permalink + account_norm. Writes processed_data.csv + dedup decisions to filtered_posts/.',table:[['CADENCE','Monday only — NOT in S3 trigger chain'],['TRIGGER','Separate trigger · race condition risk with Lambda 5'],['INPUT','7 per-country Google Sheet trackers (from 2026) · 2 combined sheets before'],['FIRST','backup_complete_table() — full RDS snapshot before DELETE'],['DELETES','DELETE FROM sprinklr_table WHERE is_manual_tracker = 1'],['PRIORITY','(1) Paid additive · (2) Sprinklr Organic > Collab · (3) Collab Organic > Boosted · (4) Boosted if no Organic'],['DEDUP KEY','split_permalink + account_norm'],['OUTPUT','processed_data.csv to S3 — consumed by Lambda 5'],['RISK','If Lambda 5 runs before Lambda 8 finishes · collab posts missing from output']]},
+e14:{title:'Lambda 9 — LINE',type:'Lambda · 1,206 lines',typeColor:'var(--lambda)',story:'Same as Collab but for Japan\'s LINE app. Wipe everything, re-import fresh. Fix the scientific notation Google Sheets puts on Post IDs. Add up metrics for the same post across dates.',tech:'Monday. NOT S3-triggered. Reads Google Sheet (2 tabs). backup_complete_table(). DELETE FROM sprinklr_table WHERE "Platform" = \'LINE\'. Fixes scientific notation (1.78E+14 → regex). Aggregates by Post URL (SUM metrics). is_manual_tracker=2. Writes processed_line_data.csv.',table:[['CADENCE','Monday only — NOT in S3 trigger chain'],['TRIGGER','Separate trigger · same race condition risk as Lambda 8'],['INPUT','Google Sheet: 2 tabs (data + tags) · JP shares workbook with Lambda 8'],['FIRST','backup_complete_table() — full RDS snapshot before DELETE'],['DELETES','DELETE FROM sprinklr_table WHERE Platform = LINE'],['FIXES','Scientific notation: 1.78E+14 → regex → correct numeric Post URL'],['AGGREGATES','SUM metrics by Post URL across all pull dates'],['SETS','is_manual_tracker = 2 for all LINE rows'],['OUTPUT','processed_line_data.csv to S3 — consumed by Lambda 5'],['RISK','Lambda 5 has try/except — silently uses last week data if missing']]},
+e15:{title:'Lambda 5 — Tags + Rules 7–8',type:'Lambda · 1,203 lines',typeColor:'var(--lambda)',story:'The tagging team labels every post with its topic and category. They also bring in the Collab and LINE data — but nobody guarantees those files are ready. If Collab\'s file is missing, this step crashes. If LINE\'s is missing, it silently uses last week\'s data.',tech:'Monday. Triggered by for_tagging/ from λ4. Reads processed_data.csv from λ8 (NO try/except — crash if missing) and processed_line_data.csv from λ9 (HAS try/except). Merges tags by PERMALINK from latest_tag_mapping/. R7: country exclusion (AT/BE/NL/PL/SE/TR/SG/CN). R8: deleted posts removed (LINE exempt). Writes finalmaster/cleaned_master_tab_*.csv → triggers λ6.',table:[['CADENCE','Monday only'],['TRIGGER','S3 event on for_tagging/ prefix (from Lambda 4)'],['INPUT 1','for_tagging/filtered_*.csv (from Lambda 4)'],['INPUT 2','processed_data.csv from Lambda 8 — NO try/except · crash if missing'],['INPUT 3','processed_line_data.csv from Lambda 9 — HAS try/except · silent fallback'],['INPUT 4','latest_tag_mapping/ folder (from Lambda 2d)'],['TAG MERGE','Matches by PERMALINK to Organic_Tags + Paid_Tags'],['RULE 7','Country exclusion: AT/BE/NL/PL/SE/TR/SG/CN'],['RULE 8','Deleted posts removed (LINE exempt)'],['OUTPUT','finalmaster/cleaned_master_tab_*.csv → triggers Lambda 6'],['AUDIT','filtered_posts/lambda_5_*.csv for R7 + R8'],['NEXT','→ Lambda 6 (via finalmaster/ S3 trigger)']]},
+e16:{title:'Lambda 6 — Benchmarks + R9–10',type:'Lambda · 476 lines',typeColor:'var(--lambda)',story:'The analyst asks: "Is 10,000 engagements good?" They compare every post against similar posts from the same country, platform, and quarter. Each post gets doubled — one row for the average benchmark, one for the median.',tech:'Monday. Triggered by finalmaster/. R9: null/empty Country removed. R10: paid rows where SPENT_USD=0 removed. Matcher = Country+Platform+Delivery+Quarter. <10 samples → annual fallback. Loads median_benchmarks.xlsx + mean_benchmarks.xlsx. Paid: RegionObjective key from median_paid.xlsx + average_paid.xlsx. Creates 2 rows per post (Median + Average). Writes tableau_layer/masterbenchmarks_*.csv → triggers λ7.',table:[['CADENCE','Monday only'],['TRIGGER','S3 event on finalmaster/ prefix (from Lambda 5)'],['INPUT','cleaned_master_tab_*.csv · median/mean benchmark xlsx files'],['MATCH KEY','Country + Platform + Delivery + Quarter'],['FALLBACK','< 10 samples in quarter → uses full-year benchmark'],['RULE 9','Null or empty Country → removed'],['RULE 10','Paid rows where SPENT_USD = 0 → removed'],['ROW DOUBLING','Creates 2 rows per post: Median + Average benchmark'],['PAID MATCH','RegionObjective key from median_paid.xlsx + average_paid.xlsx'],['OUTPUT','tableau_layer/masterbenchmarks_*.csv → triggers Lambda 7'],['AUDIT','filtered_posts/lambda_6_*.csv for R9 + R10'],['NEXT','→ Lambda 7 (via tableau_layer/ S3 trigger)']]},
+e17:{title:'Lambda 7 — Push + Rules 11–21',type:'Lambda · 1,456 lines',typeColor:'var(--lambda)',story:'The grand finale. Translate foreign posts, merge comment sentiment (now with a two-pass fallback so collab posts also get their comments attached), apply 11 more filter rules, then push everything to Tableau. MBS corrections still applied manually after. Dedup detective runs 4 SQL checks and emails if violations found.',tech:'Monday. Triggered by tableau_layer/. Translation: deep_translator.GoogleTranslator (FREE, skips AU/US/UK + "instagram story"). Comment sentiment merge from comment_sentiment.csv by threadURL. LI Global split: "Amazon LI - Global" → "Amazon LI - {Country}". Paid Only date -7 days. R11 date filter (≤2023-09-04 except WeChat), R12 MENA, R13 News X-EU, R14 US msg, R15 IN msg, R16 EMEA msg, R17 APAC X Reply, R18 APAC author, R19 branded+Global, R20 blacklist, R21 XCM. UPSERT to sprinklr_table (ON CONFLICT post_id_key) + sprinklr_lookup_check (ON CONFLICT Lookup Key) via import_table staging. Appends to blacklist_table + is_branded_true_table. 4 dedup SQL queries → dupes_reports/ + SES. Full snapshot → check/finalsql_*.csv.',table:[['CADENCE','Monday only'],['TRIGGER','S3 event on tableau_layer/ prefix (from Lambda 6)'],['INPUT','masterbenchmarks_*.csv · comment_sentiment.csv · Blacklist.csv'],['TRANSLATION','deep_translator.GoogleTranslator (free) · skips AU/US/UK + instagram story type'],['SENTIMENT 1','Match threadURL to stable_post_id via permalink_registry (Sprinklr posts)'],['SENTIMENT 2','Collab fallback: exact URL match then per-platform regex ID (IG/Twitter/TikTok/YouTube/Threads/FB)'],['LI SPLIT','Amazon LI - Global rows split into per-country rows'],['PAID DATE','Paid Only posts: Published Date shifted -7 days'],['RULES 11-21','Date filter · MENA · News X-EU · US/IN/EMEA msg · APAC X Reply/author · branded · blacklist · XCM'],['RDS WRITES','sprinklr_table (UPSERT) · sprinklr_lookup_check · import_table · blacklist_table · is_branded_true_table'],['S3 WRITES','check/finalsql_*.csv · filtered_posts/lambda_7_*.csv · dupes_reports/*.txt'],['DEDUP','4 SQL queries → dupes_reports/ + SES email'],['NEXT','→ Tableau reads sprinklr_table (Monday complete)']]},
 e17b:{title:'Lambda 10 — Permalink Registry',type:'Lambda · 1,411 lines',typeColor:'var(--lambda)',story:'The canonical address book for every post. When Instagram changes a URL from /p/ to /reel/, or the same post appears under different forms, Lambda 10 resolves them all to one stable_post_id. This makes comment sentiment merging and dedup detection reliable across all platforms.',tech:'Builds permalink_registry (permalink → stable_post_id). Three-strategy resolution: (1) exact match, (2) per-platform regex — IG shortcode, Twitter status ID, TikTok video ID, YouTube video ID, Threads post, LinkedIn URN, Facebook fbid/story_fbid/video/reel/pfbid patterns, (3) Apify actor for unresolvable Facebook URLs. Tracks is_current flag. resolve_newline_columns() fixes Sprinklr column naming issues. Registry is shared with Lambda 7 comment sentiment (Pass 2 regex fallback) and planned T9 dedup Q7 registry-backed query.',table:[['Reads','sprinklr_table permalinks + raw post data'],['Writes','permalink_registry (stable_post_id, is_current, resolved_method)'],['Used by','Lambda 7 comment sentiment attach + T9 dedup Q7']]},
 e17c:{title:'Lambda 11 — Follower Data',type:'Lambda · 398 lines',typeColor:'var(--lambda)',story:'Tracks follower counts for every Amazon account. LinkedIn follower numbers from the API are unreliable — Lambda 11 applies hardcoded country-level overrides to ensure Tableau always shows verified figures.',tech:'Monday only. Reads Follower_Data_6_FluencyWeekly.json. Reads Amazon_LinkedIn_Global_Followers.xlsx and follower_mapping_amazon_line_jp.xlsx. LinkedIn follower overrides: hardcoded in-code dict for UK/DE/FR/IT/ES/IN/JP (476 rows with confirmed values override API values which drift). Japan LINE followers from separate Excel. Writes to follower_table in RDS.',table:[['Reads','Follower_Data_6_FluencyWeekly.json + 2 Excel mapping files (S3)'],['Writes','follower_table (RDS)'],['Override scope','476 LinkedIn rows across 7 markets — hardcoded verified counts']]},
 e9d:{title:'Lambda 2d — Tag Mapping',type:'Lambda · DAILY',typeColor:'var(--lambda)',story:'After tag files are copied each day, Lambda 2d reads the organic and paid tag files and publishes the latest version to a single S3 location. Every downstream Lambda that needs tags reads from this one place.',tech:'Reads Organic_Tags_10_TagPull.json, Target_Geography_13_TagPull.json and paid tag variants. Falls back to fluency monthly folder if Tag-Pull is missing. Writes to amazon_sprinklr_pull/latest_tag_mapping/.',table:[['CADENCE','Every day — after tag files are copied by Lambda 2a/2b'],['INPUT','Organic_Tags_10_TagPull.json + Target_Geography_13_TagPull.json + paid tag variants from Fluency-Tags-Only-Pull'],['FALLBACK','Reads fluency monthly folder if Tag-Pull files are missing this run'],['OUTPUT','amazon_sprinklr_pull/latest_tag_mapping/ — single canonical tag location for all downstream lambdas'],['CONSUMED BY','Lambda 5 on Monday — reads tags from this exact folder'],['NEXT','→ Lambda 5 reads latest_tag_mapping/ on Monday']]},
 e17b:{title:'Lambda 10 — Permalink Registry',type:'Lambda · MONDAY · 1,411 lines',typeColor:'var(--lambda)',story:'The canonical address book for every post. When Instagram changes a URL from /p/ to /reel/, or the same post appears under different forms across platforms, Lambda 10 resolves them all to one stable_post_id.',tech:'Builds permalink_registry (permalink to stable_post_id). Three-strategy resolution: exact match, per-platform regex (IG/Twitter/TikTok/YouTube/Threads/LinkedIn/Facebook), Apify for unresolvable Facebook page-name URLs. Tracks is_current flag.',table:[['CADENCE','Monday only'],['INPUT','sprinklr_table permalinks + raw S3 post data'],['STRATEGY 1','Exact normalised URL match (strip scheme/www/query/slash, lowercase)'],['STRATEGY 2','Per-platform regex: IG shortcode + Twitter status ID + TikTok video ID + YouTube v= + Threads /post/ + LinkedIn URN + Facebook fbid/story_fbid/reel/pfbid'],['STRATEGY 3','Apify actor apify~facebook-url-to-id for unresolvable Facebook page-name URLs'],['OUTPUT','permalink_registry: (permalink, stable_post_id, is_current, resolved_method)'],['USED BY','Lambda 7 comment sentiment Pass 2 fallback + planned T9 dedup Q7 registry JOIN']]},
 e17c:{title:'Lambda 11 — Follower Data',type:'Lambda · MONDAY · 398 lines',typeColor:'var(--lambda)',story:'Tracks follower counts for every Amazon account. LinkedIn API returns inconsistent per-region numbers — Lambda 11 applies hardcoded verified overrides so Tableau always shows the right figures.',tech:'Monday only. Reads Follower_Data_6_FluencyWeekly.json. LinkedIn follower overrides hardcoded for UK/DE/FR/IT/ES/IN/JP (476 rows with confirmed values). Japan LINE followers from separate Excel. Writes to follower_table in RDS.',table:[['CADENCE','Monday only'],['INPUT','Follower_Data_6_FluencyWeekly.json (S3) + Amazon_LinkedIn_Global_Followers.xlsx + follower_mapping_amazon_line_jp.xlsx'],['LINKEDIN OVERRIDES','476 rows across UK/DE/FR/IT/ES/IN/JP — hardcoded verified counts override unreliable API values'],['JAPAN LINE','Reads separate Excel mapping for JP LINE follower counts'],['OUTPUT','follower_table in RDS (prod-fluency-sprinklr-db-eu2)'],['WHY OVERRIDES','LinkedIn API returns inconsistent per-region counts — verified figures kept in code as single source of truth']]},
+e9d:{title:'Lambda 2d — Tag Mapping',type:'Lambda · DAILY',typeColor:'var(--lambda)',story:'After tag files are copied each day, Lambda 2d publishes the latest version to a single canonical S3 location. Every downstream Lambda reads tags from this one place.',tech:'Reads Organic_Tags_10_TagPull.json + Target_Geography_13_TagPull.json + paid tag variants. Falls back to fluency monthly folder if Tag-Pull is missing. Writes to amazon_sprinklr_pull/latest_tag_mapping/.',table:[['CADENCE','Every day'],['INPUT','Organic_Tags_10_TagPull.json + Target_Geography_13_TagPull.json + paid tag variants'],['FALLBACK','Reads fluency monthly folder if Tag-Pull missing'],['OUTPUT','amazon_sprinklr_pull/latest_tag_mapping/ — canonical tag location'],['CONSUMED BY','Lambda 5 on Monday'],['NEXT','→ Lambda 5 reads latest_tag_mapping/ on Monday']]},
+e17b:{title:'Lambda 10 — Permalink Registry',type:'Lambda · MONDAY · 1411 lines',typeColor:'var(--lambda)',story:'The address book for every post. When Instagram changes a URL from /p/ to /reel/, Lambda 10 resolves both to one stable_post_id. Makes comment sentiment and dedup reliable across platforms.',tech:'Builds permalink_registry via 3-strategy resolution: exact normalised match, per-platform regex, Apify for Facebook. Also runs 4 custom data correction streams before dedup detection.',table:[['CADENCE','Monday only'],['STRATEGY 1','Exact normalised URL match'],['STRATEGY 2','Per-platform regex: IG shortcode · Twitter status ID · TikTok video ID · YouTube v= · Threads /post/ · LinkedIn URN · Facebook fbid/reel/pfbid'],['STRATEGY 3','Apify actor apify~facebook-url-to-id for page-name URLs'],['OUTPUT','permalink_registry: (permalink, stable_post_id, is_current, resolved_method)'],['ALSO RUNS','Sheet corrections · MBS bulk update · LinkedIn impressions · X Quote deletions · Audit log'],['DEDUP OUTPUT','dedup_monitor/duplicate_pairs_*.csv + rows_to_remove_*.csv']]},
+e17c:{title:'Lambda 11 — Follower Data',type:'Lambda · MONDAY · 398 lines',typeColor:'var(--lambda)',story:'Tracks follower counts per account. LinkedIn API figures are unreliable per region — Lambda 11 applies hardcoded verified overrides for 7 markets.',tech:'Reads Follower_Data_6_FluencyWeekly.json + LinkedIn Excel + Japan LINE Excel. Applies hardcoded overrides for UK/DE/FR/IT/ES/IN/JP (476 rows).',table:[['CADENCE','Monday only'],['INPUT','Follower_Data_6_FluencyWeekly.json + Amazon_LinkedIn_Global_Followers.xlsx + follower_mapping_amazon_line_jp.xlsx'],['OVERRIDES','476 rows across UK/DE/FR/IT/ES/IN/JP — hardcoded verified counts'],['OUTPUT','follower_table in RDS'],['WHY','LinkedIn API returns inconsistent per-region counts']]},
 e18:{title:'5 Filtered Post CSVs',type:'S3',typeColor:'var(--s3)',story:'Every post that was removed and why — but scattered across 5 files from 5 different Lambdas. Finding why a specific post is missing means checking all 5.',tech:'λ4: Rules 1–6 → filtered_posts/lambda_4_*.csv. λ5: Rules 7–8. λ6: Rules 9–10. λ7: Rules 11–21. λ8: Collab dedup decisions. Each with filter_reason column.',table:[]},
 e19:{title:'5 RDS Tables',type:'RDS',typeColor:'var(--rds)',story:'Where the processed data lands. 5 tables with no naming convention, all in the default schema. sprinklr_table is what Tableau reads.',tech:'sprinklr_table (UPSERT on post_id_key, ~156 cols), sprinklr_lookup_check (UPSERT on Lookup Key), import_table (staging, replaced each run), blacklist_table (append R20 rows), is_branded_true_table (append R19 rows). Also directly modified by λ8 (DELETE is_manual=1) and λ9 (DELETE Platform=LINE).',table:[]},
 e20:{title:'Tableau — Monday Only',type:'Output',typeColor:'var(--rds)',story:'Analysts open Tableau to see how Amazon\'s social media is performing — but the story is always at least a day old, and up to 6 days old for posts published Tuesday through Sunday.',tech:'Reads from sprinklr_table in prod-fluency-sprinklr-db-eu2. Updated Monday only after full λ3b→4→8/9→5→6→7 chain completes.',table:[]},
 }},
 
 
-h1:{title:'λ10 — Dedup Monitor (Human-in-Loop Trigger)',type:'Lambda · runs after Monday push',typeColor:'var(--lambda)',story:'After Lambda 7 finishes pushing data to Tableau, Lambda 10 acts as a detective. It asks: of all the posts that arrived today, are any actually the same post appearing under different URLs? It never deletes anything. It surfaces candidates for a human to review and decide.',tech:'SQL-based dedup monitor using permalink_registry JOIN. Pre-step: resolves any new posts missing from permalink_registry (regex for non-FB, Apify in batches of 20 for Facebook). Main query: INNER JOIN sprinklr_table with permalink_registry on (permalink, account, delivery), PARTITION BY (stable_post_id, Benchmark Type), RANK by Total Impressions DESC then Date DESC then post_id DESC. ONLY surfaces groups that touch today MAX(Dateoflastedit) batch (is_manual_tracker=0, Organic+Boosted only). impression_rank=1 = KEEP, impression_rank>1 = candidate for removal.',table:[['RUNS AFTER','Lambda 7 completes the Monday push'],['STEP 1','Resolve new posts into permalink_registry: regex for IG/Twitter/TikTok/YouTube/Threads/LinkedIn, Apify batches of 20 for Facebook'],['STEP 2','INNER JOIN sprinklr_table × permalink_registry on (permalink, account, delivery)'],['PARTITION BY','stable_post_id + Benchmark Type — finds all URL variants of the same post'],['RANK BY','Total Impressions DESC → Date DESC → post_id DESC (highest impressions row = KEEP)'],['SCOPE','Only groups touching today batch (MAX Dateoflastedit) · Organic+Boosted only · is_manual_tracker=0'],['OUTPUT','duplicate_pairs_YYYY-MM-DD.csv (all rows in flagged groups) + rows_to_remove_YYYY-MM-DD.csv (impression_rank > 1)'],['S3 PATH','s3://wikitablescrapexample/amazon_sprinklr_pull/dedup_monitor/'],['NEVER DELETES','Detection only — no auto-delete ever. Human makes the final call.']]},
-h2:{title:'duplicate_pairs_*.csv — Full Picture',type:'S3 · dedup_monitor/',typeColor:'var(--s3)',story:'Every post group where Lambda 10 found duplicates, with both the row to keep and the rows to remove shown side by side. The operator reads this to understand why Lambda 10 thinks these are the same post, and whether it is right.',tech:'Columns: RowID, Permalink, Account, Delivery, Platform Granular, Benchmark Type, Date, Total Impressions, post_preview (first 200 chars), Dateoflastedit, is_manual_tracker, stable_post_id, dupe_count, impression_rank, is_to_remove. Sorted by stable_post_id + Benchmark Type + impression_rank. Groups shown together so operator sees the full context: which row is kept (rank=1) and which are flagged (rank>1).',table:[['KEY COLUMNS','stable_post_id · impression_rank · is_to_remove · dupe_count'],['RANK = 1','Row to KEEP — highest impressions for this stable_post_id + Benchmark Type group'],['RANK > 1','Rows to REMOVE — lower impressions, older date, or lower post_id'],['OPERATOR READS','This file to verify Lambda 10 identified genuine duplicates, not false positives'],['COMMON FALSE POSITIVES','Same post in two delivery types · same post in two regions · platform classifier mismatch']]},
-h3:{title:'rows_to_remove_*.csv — The Hit List',type:'S3 · dedup_monitor/',typeColor:'var(--s3)',story:'A subset of duplicate_pairs: only the rows with impression_rank > 1. This is what the operator actually executes against the database — but only after reviewing the pairs file and confirming these are genuine duplicates.',tech:'Same schema as duplicate_pairs but filtered to is_to_remove = 1 rows only. The RowID column maps directly to the RDS sprinklr_table row for the DELETE statement. Used as the basis for the manual DELETE SQL the operator runs in RDS Query Editor.',table:[['USE CASE','Operator downloads this · checks a sample · runs DELETE WHERE RowID IN (...)'],['RowID','Direct primary key reference for DELETE — no ambiguity'],['SAFETY','Always cross-check a sample from rows_to_remove against duplicate_pairs before deleting']]},
-h4:{title:'SNS → SES + Slack Alert',type:'Infrastructure · post-dedup notification',typeColor:'var(--infra)',story:'When Lambda 10 finishes its dedup detection, it fires an SNS message summarising what it found. Prabhat, David, and Asad get an email and a Slack message telling them how many duplicate groups were found, how many rows are flagged for removal, and where the CSV files are.',tech:'SNS topic → 2 subscriptions: (1) SES email to prabhat, david, asad. (2) HTTPS Slack webhook. Message includes: duplicate_groups count, rows_to_remove count, rows_to_keep count, S3 paths for both CSVs, platform breakdown table, elapsed time. Subject: [Sprinklr CORE] ✓ Custom Updates — N DB changes applied.',table:[['RECIPIENTS','prabhat · david · asad'],['CHANNELS','SES email + Slack #amazon-core-alerts'],['CONTENT','Dupe group count · rows to remove · platform breakdown · S3 CSV paths'],['TIMING','Fires when Lambda 10 completes — typically ~15–30 min after Monday pipeline finishes']]},
-h5:{title:'Operator Review — Human Decision',type:'Human step · RDS Query Editor',typeColor:'var(--infra)',story:'This is where the human comes in. The operator (Prabhat or Asad) opens the two CSV files, reads the duplicate_pairs file to understand the groups, and makes a judgment call: is Lambda 10 right that these are genuine duplicates, or is it a false positive that should be left alone?',tech:'Operator checklist before any DELETE:
-(1) Download duplicate_pairs_*.csv from S3 — read the grouped rows. Do the stable_post_ids look correct? Same post, different URL forms?
-(2) Spot-check: open 2–3 permalinks in the browser. Confirm they show the same post content.
-(3) Check dupe_count — groups of 2 are most common (e.g. /p/ vs /reel/). Large groups (5+) warrant extra scrutiny.
-(4) Check is_manual_tracker — should always be 0 in output. If any manual rows appear, flag before deleting.
-(5) Download rows_to_remove_*.csv — this is what will be deleted. Verify RowIDs look sane.
-(6) Check platform breakdown in Slack/email — Instagram URL-form dupes are expected, LinkedIn dupes are unusual and worth investigating.
-(7) APPROVE: if satisfied, proceed to DELETE step.
-(8) SKIP: if uncertain, leave the rows. They can be reviewed next Monday with fresher context.',table:[['DECISION MAKER','Prabhat or Asad'],['INPUTS','duplicate_pairs_*.csv (context) + rows_to_remove_*.csv (action list) + Slack/email summary'],['GOOD DUPE SIGNS','Same post text preview · same Account · same Date · different Permalink form (/p/ vs /reel/)'],['FALSE POSITIVE SIGNS','Different post dates · different accounts · different regions · dupe_count unusually high'],['ESCALATE IF','Any is_manual_tracker = 1 rows appear · dupe_count > 10 for one group · LinkedIn/Facebook dupes without clear URL-form explanation'],['OUTPUT','Approved hit list of RowIDs to DELETE from sprinklr_table']]},
-h6:{title:'Manual DELETE — Executing the Review Decision',type:'Human action · RDS Query Editor',typeColor:'var(--rds)',story:'If the operator approves, they run the DELETE in RDS Query Editor. The rows are gone from Tableau on next load. This is the final step — no undo, no staging, no dry run. The backup from Lambda 8 is the safety net if something goes wrong.',tech:'Operator runs in RDS Query Editor (prod-fluency-sprinklr-db-eu2):
 
-SELECT COUNT(*) FROM sprinklr_table WHERE "RowID" IN (...);  -- verify count first
-
-DELETE FROM sprinklr_table WHERE "RowID" IN (
-    -- paste RowIDs from rows_to_remove_*.csv
-);
-
-DELETE FROM sprinklr_lookup_check WHERE "RowID" IN (
-    -- same RowIDs
-);
-
-Always SELECT COUNT first to confirm the number matches rows_to_remove count before executing DELETE.',table:[['TOOL','AWS RDS Query Editor (console) or psql in-VPC'],['PRE-DELETE','SELECT COUNT(*) WHERE RowID IN (...) — must match rows_to_remove count'],['DELETE 1','DELETE FROM sprinklr_table WHERE RowID IN (...)'],['DELETE 2','DELETE FROM sprinklr_lookup_check WHERE RowID IN (...)'],['SAFETY NET','Lambda 8 backup_complete_table() ran before the pipeline — full RDS snapshot exists from earlier in the same Monday run'],['TABLEAU','Reflects the deletion on next load — no cache clear needed'],['FREQUENCY','Most Mondays: 0–5 groups. Occasional spikes after Sprinklr URL format changes (e.g. /p/ → /reel/ migration).']]},
 'new':{rows:[
 {label:'INFRASTRUCTURE',nodes:[
 {id:'n1',type:'infra',icon:'🗓️',title:'EventBridge',sub:'Daily 7AM · $0',badge:'SCHED'},
@@ -1626,12 +1608,618 @@ el.innerHTML = h;
 }
 
 // ════════════════════════════════════════════
+// EXISTING FLOW DIAGRAM
+// ════════════════════════════════════════════
+function renderExistingFlow(){
+const el=document.getElementById('flow-svg-wrap');if(!el)return;
+const W=1060,H=1800;
+let s=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="font-family:'DM Sans',sans-serif;min-width:800px">`;
+s+=`<rect width="${W}" height="${H}" fill="#0a0c10"/>`;
+
+const LC='#f59e42',S3C='#4f8ff7',RDSC='#38c9a0',GSC='#7c6cf0',IC='#e879f9',FC='#06b6d4';
+const BW=200,BH=52,LX=40,MX=320,RX=650,RXW=170;
+
+function box(x,y,w,h,col,title,sub,badge,id,mon){
+  const bc=mon?'rgba(245,158,66,.3)':'rgba(79,143,247,.08)';
+  const bs=mon?'rgba(245,158,66,.6)':col+'99';
+  s+=`<g style="cursor:pointer" onclick="showExistDetail('${id}')">`;
+  s+=`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" fill="${bc}" stroke="${bs}" stroke-width="1.3"/>`;
+  s+=`<rect x="${x+w-48}" y="${y}" width="48" height="18" rx="6" fill="${col}22"/>`;
+  s+=`<text x="${x+w-24}" y="${y+12}" text-anchor="middle" fill="${col}" font-size="7.5" font-weight="700" font-family="'JetBrains Mono'" style="pointer-events:none">${badge}</text>`;
+  s+=`<text x="${x+10}" y="${y+22}" fill="${col}" font-size="9.5" font-weight="700" style="pointer-events:none">${title}</text>`;
+  s+=`<text x="${x+10}" y="${y+36}" fill="#9ba1b0" font-size="8" font-family="'JetBrains Mono'" style="pointer-events:none">${sub}</text>`;
+  s+=`</g>`;
+}
+function arr(x1,y1,x2,y2,col,dash){
+  s+=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${col||'#4f8ff7'}" stroke-opacity=".55" stroke-width="1.8" ${dash?'stroke-dasharray="6,4"':''}/>`;
+  const ang=Math.atan2(y2-y1,x2-x1);
+  s+=`<polygon points="${x2-6*Math.cos(ang-0.4)},${y2-6*Math.sin(ang-0.4)} ${x2-6*Math.cos(ang+0.4)},${y2-6*Math.sin(ang+0.4)} ${x2},${y2}" fill="${col||'#4f8ff7'}" fill-opacity=".7"/>`;
+}
+function lbl(x,y,txt,col){
+  s+=`<text x="${x}" y="${y}" fill="${col||'#636a7e'}" font-size="8.5" font-weight="700" letter-spacing="1.8" font-family="'Sora',sans-serif">${txt}</text>`;
+}
+function store(x,y,w,h,col,title,sub){
+  s+=`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="4" fill="${col}08" stroke="${col}" stroke-opacity=".4" stroke-width="1"/>`;
+  s+=`<text x="${x+8}" y="${y+15}" fill="${col}" font-size="8.5" font-weight="600" font-family="'JetBrains Mono'" style="pointer-events:none">${title}</text>`;
+  if(sub)s+=`<text x="${x+8}" y="${y+27}" fill="#636a7e" font-size="7.5" font-family="'JetBrains Mono'" style="pointer-events:none">${sub}</text>`;
+}
+
+// ── SECTION LABELS ──
+lbl(LX,24,'DATA SOURCES',S3C);
+lbl(LX,200,'DAILY CHAIN (every weekday)','#636a7e');
+lbl(LX,610,'MONDAY CHAIN (adds paid + collab/LINE data)','#f59e42');
+lbl(RX,610,'DATA STORES',RDSC);
+
+// ── SOURCES ──
+box(LX,30,BW,BH,S3C,'Sprinklr S3','23 files · amazon-global-gsmc-sprinklr','SRC','e1',false);
+box(LX+220,30,BW,BH,GSC,'Collab+LINE Trackers','Google Sheets · Monday only','SHEETS','e2',true);
+box(LX+440,30,BW,BH,S3C,'Paid Data','Paid_Data_9_FluencyWeekly.json · Mon','PAID','e3',true);
+box(LX+660,30,160,BH,IC,'S3 Event Trigger Chain','done.txt relay · no orchestration','INFRA','e4',false);
+
+// ── DAILY CHAIN ──
+// λ1
+box(LX,210,BW,BH,LC,'λ1 — Validate','23 files · column check · SES on fail','λ1','e7',false);
+arr(LX+BW/2,30+BH,LX+BW/2,210,S3C);
+
+// λ2a/2b parallel
+box(LX,290,BW,44,LC,'λ2a — Copy','weekly+paid+follower · sleep(240)','λ2a','e8',false);
+box(LX+220,290,BW,44,LC,'λ2b — Copy+Validate','tag cols checked · sleep(240)','λ2b','e8',false);
+arr(LX+BW/2,210+BH,LX+BW/2,290,LC);
+arr(LX+BW/2,210+BH,LX+220+BW/2,290,LC,true);
+
+// λ2c + λ2d (parallel, below 2a/2b)
+box(LX,360,BW,44,LC,'λ2c — Post ID Lookup','permalink→post_id map · is_current','λ2c','e9',false);
+box(LX+220,360,BW,44,LC,'λ2d — Tag Mapping','latest_tag_mapping/ publisher','λ2d','e9d',false);
+arr(LX+BW/2,290+44,LX+BW/2,360,LC);
+arr(LX+220+BW/2,290+44,LX+220+BW/2,360,LC);
+
+// λ3 thin trigger → Fargate
+box(LX,432,BW+BW+30,44,LC,'λ3 — Fargate Trigger (thin)','extracts pulldate · launches task-old-lambda-3 ECS','λ3','e10',false);
+arr(LX+BW/2,360+44,LX+(BW*2+30)/2,432,LC);
+arr(LX+220+BW/2,360+44,LX+(BW*2+30)/2,432,LC);
+
+// Fargate box
+s+=`<rect x="${LX+430}" y="432" width="190" height="44" rx="5" fill="${FC}0a" stroke="${FC}" stroke-opacity=".5" stroke-dasharray="5,3"/>`;
+s+=`<text x="${LX+440}" y="450" fill="${FC}" font-size="9" font-weight="700" style="pointer-events:none">🐳 Fargate Task</text>`;
+s+=`<text x="${LX+440}" y="464" fill="#9ba1b0" font-size="7.5" font-family="'JetBrains Mono'" style="pointer-events:none">task-old-lambda-3 · no mem limit</text>`;
+arr(LX+(BW*2+30),454,LX+430,454,FC);
+
+// master_table.csv S3
+store(RX,425,RXW,36,S3C,'master_table.csv','S3 · daily append');
+arr(LX+430+190,454,RX,443,S3C,true);
+
+// MONDAY SEPARATOR
+s+=`<line x1="${LX}" y1="598" x2="${W-20}" y2="598" stroke="#f59e42" stroke-opacity=".15" stroke-width="1" stroke-dasharray="8,5"/>`;
+s+=`<text x="${LX}" y="596" fill="#f59e42" font-size="8" font-weight="600" font-family="'Sora',sans-serif">↓ MONDAY ONLY below this line</text>`;
+
+// λ3b permalink update
+box(LX,610,BW,BH,LC,'λ3b — Permalink','stale URL fix · mapped_data_*.csv','λ3b','e11',true);
+arr(LX+(BW*2+30)/2,432+44,LX+(BW*2+30)/2,560,LC);
+arr(LX+(BW*2+30)/2,560,LX+BW/2,610,LC);
+
+// weeklybackup → monday trigger
+store(LX+240,540,180,32,S3C,'weeklybackup/*.csv','Monday trigger');
+arr(LX+430+190,454,LX+240+180/2,540,S3C,true);
+arr(LX+240+180/2,572,LX+BW/2,610,LC,true);
+
+// λ8 + λ9 parallel (collab + LINE)
+box(LX,700,BW,BH,LC,'λ8 — Collab Tracker','DELETE is_manual=1 · 7 country sheets','λ8','e13',true);
+box(LX+220,700,BW,BH,LC,'λ9 — LINE Japan','DELETE Platform=LINE · SUM by URL','λ9','e14',true);
+arr(LX+BW/2,610+BH,LX+BW/2,700,LC);
+arr(LX+BW/2,610+BH,LX+220+BW/2,700,LC,true);
+
+// outputs
+store(LX+460,700,RXW,36,GSC,'processed_data.csv','S3 · collab output');
+store(LX+460,745,RXW,36,GSC,'processed_line_data.csv','S3 · LINE output');
+arr(LX+BW,720,LX+460,718,GSC,true);
+arr(LX+220,720,LX+460,763,GSC,true);
+
+// λ4 filter
+box(LX,795,BW,BH,LC,'λ4 — Filter Rules 1–6','country/platform map · impression rules','λ4','e12',true);
+arr(LX+BW/2,700+BH,LX+BW/2,795,LC);
+arr(LX+220+BW/2,700+BH,LX+BW/2,795,LC);
+store(RX,800,RXW,36,S3C,'for_tagging/*.csv','→ triggers λ5');
+
+// λ5 tags
+box(LX,885,BW,BH,LC,'λ5 — Tags + R7–8','reads collab+LINE CSVs · tag merge','λ5','e15',true);
+arr(LX+BW/2,795+BH,LX+BW/2,885,LC);
+arr(RX,818,RX+RXW,818,LC,true);
+arr(RX+RXW/2,836,RX+RXW/2,900,LC,true);
+
+// race condition warning
+s+=`<rect x="${LX+210}" y="888" width="160" height="32" rx="4" fill="#ef444408" stroke="#ef4444" stroke-opacity=".3"/>`;
+s+=`<text x="${LX+220}" y="901" fill="#ef4444" font-size="7.5" font-weight="600" style="pointer-events:none">⚠ Race condition</text>`;
+s+=`<text x="${LX+220}" y="913" fill="#9ba1b0" font-size="7" font-family="'JetBrains Mono'" style="pointer-events:none">λ8/9 NOT in S3 chain</text>`;
+arr(LX+460+RXW/2,781,LX+220+80,920,LC,true);
+
+store(RX,890,RXW,36,S3C,'finalmaster/*.csv','→ triggers λ6');
+
+// λ6 benchmarks
+box(LX,975,BW,BH,LC,'λ6 — Benchmarks + R9–10','country+platform+quarter match · 2 rows/post','λ6','e16',true);
+arr(LX+BW/2,885+BH,LX+BW/2,975,LC);
+store(RX,980,RXW,36,S3C,'tableau_layer/*.csv','→ triggers λ7');
+
+// λ7 push
+box(LX,1065,BW+20,BH,LC,'λ7 — Push + Rules 11–21','translate · sentiment · UPSERT sprinklr_table','λ7','e17',true);
+arr(LX+(BW+20)/2,975+BH,LX+(BW+20)/2,1065,LC);
+
+// λ10 + λ11 (parallel, supporting)
+box(LX+240,1065,BW,44,LC,'λ10 — Permalink Registry','stable_post_id · 3-strategy resolve','λ10','e17b',true);
+box(LX+240,1118,BW,44,LC,'λ11 — Follower Data','LI overrides 476 rows · follower_table','λ11','e17c',true);
+arr(LX+BW+20,1087,LX+240,1087,LC,true);
+arr(LX+BW+20,1087,LX+240,1140,LC,true);
+
+// RDS outputs
+store(RX,1068,RXW,32,RDSC,'sprinklr_table','UPSERT · ~156 cols');
+store(RX,1108,RXW,28,RDSC,'sprinklr_lookup_check','UPSERT');
+store(RX,1143,RXW,28,RDSC,'import_table','staging');
+store(RX,1178,RXW,28,RDSC,'blacklist_table','append R20');
+store(RX,1213,RXW,28,RDSC,'is_branded_true_table','append R19');
+store(RX,1248,RXW,28,RDSC,'follower_table','λ11 writes');
+arr(LX+BW+20,1087,RX,1084,RDSC,true);
+
+// S3 outputs
+store(LX,1190,180,28,S3C,'check/finalsql_*.csv','full snapshot');
+store(LX+195,1190,180,28,S3C,'filtered_posts/*.csv','5 filter files');
+store(LX,1225,180,28,S3C,'dupes_reports/*.txt','SES dedup alert');
+arr(LX+(BW+20)/2,1065+BH,LX+90,1190,S3C,true);
+
+// SES+CloudWatch
+s+=`<rect x="${LX+430}" y="1068" width="170" height="44" rx="4" fill="${IC}08" stroke="${IC}" stroke-opacity=".3"/>`;
+s+=`<text x="${LX+440}" y="1085" fill="${IC}" font-size="8.5" font-weight="600" style="pointer-events:none">SES + CloudWatch</text>`;
+s+=`<text x="${LX+440}" y="1100" fill="#9ba1b0" font-size="7.5" font-family="'JetBrains Mono'" style="pointer-events:none">dedup violations · errors</text>`;
+arr(LX+BW+20,1087,LX+430,1090,IC,true);
+
+// Tableau
+s+=`<rect x="${LX+250}" y="1290" width="${BW+40}" height="52" rx="8" fill="#22c55e0c" stroke="#22c55e" stroke-opacity=".5" stroke-width="2"/>`;
+s+=`<text x="${LX+250+(BW+40)/2}" y="1312" text-anchor="middle" fill="#22c55e" font-size="12" font-weight="700" font-family="'Sora',sans-serif" style="pointer-events:none">📈 Tableau</text>`;
+s+=`<text x="${LX+250+(BW+40)/2}" y="1330" text-anchor="middle" fill="#9ba1b0" font-size="8" font-family="'JetBrains Mono'" style="pointer-events:none">sprinklr_table · MONDAY ONLY</text>`;
+arr(RX+RXW/2,1068+32,LX+250+(BW+40)/2,1290,'#22c55e');
+
+// LEGEND
+const lx=LX,ly=1380;
+s+=`<text x="${lx}" y="${ly}" fill="#636a7e" font-size="8" font-weight="700" letter-spacing="1.5" font-family="'Sora',sans-serif">LEGEND</text>`;
+const legend=[
+  {c:LC,t:'Lambda function'},
+  {c:S3C,t:'S3 store / trigger'},
+  {c:RDSC,t:'RDS table'},
+  {c:GSC,t:'Google Sheet'},
+  {c:FC,t:'Fargate task'},
+  {c:IC,t:'Infra / alerts'},
+];
+legend.forEach((l,i)=>{
+  const lbx=lx+(i%3)*200, lby=ly+16+Math.floor(i/3)*18;
+  s+=`<rect x="${lbx}" y="${lby-9}" width="10" height="10" rx="2" fill="${l.c}33" stroke="${l.c}" stroke-opacity=".6"/>`;
+  s+=`<text x="${lbx+14}" y="${lby}" fill="#9ba1b0" font-size="8">${l.t}</text>`;
+});
+s+=`<line x1="${lx+600}" y1="${ly+5}" x2="${lx+640}" y2="${ly+5}" stroke="#636a7e" stroke-opacity=".6" stroke-width="1.5" stroke-dasharray="6,4"/>`;
+s+=`<text x="${lx+644}" y="${ly+9}" fill="#9ba1b0" font-size="8">Monday only</text>`;
+
+s+=`</svg>`;
+el.innerHTML=s;
+
+// detail panel
+window.showExistDetail=function(id){
+  const data=PIPELINE_DATA.existing.details;
+  const d=data[id];
+  if(!d){document.getElementById('exist-det').innerHTML='';return;}
+  const col=d.typeColor||'var(--lambda)';
+  let h=`<div style="background:var(--bg2);border:1px solid ${col}30;border-radius:12px;overflow:hidden;animation:fadeIn .2s;margin-top:1.2rem">`;
+  h+=`<div style="padding:1rem 1.2rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.7rem">`;
+  h+=`<span style="font-size:1.2rem">⚡</span><div><div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:${col};font-weight:700">${d.type}</div><h3 style="font-size:1.05rem;font-weight:700;font-family:'Sora',sans-serif">${d.title}</h3></div>`;
+  h+=`<button onclick="document.getElementById('exist-det').innerHTML=''" style="margin-left:auto;background:0;border:0;color:var(--text3);cursor:pointer;font-size:1.1rem;padding:4px 8px;border-radius:4px">✕</button></div>`;
+  h+=`<div style="padding:1rem 1.2rem;display:grid;gap:.8rem">`;
+  h+=`<div style="border-left:3px solid var(--accent4);padding-left:.8rem"><div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:var(--accent4);font-weight:700;margin-bottom:.3rem">Plain English</div><p style="color:var(--text);font-size:.9rem;line-height:1.6">${d.story}</p></div>`;
+  h+=`<div style="border-left:3px solid var(--fargate);padding-left:.8rem"><div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:var(--fargate);font-weight:700;margin-bottom:.3rem">Technical Detail</div><p style="color:var(--text2);font-size:.88rem;line-height:1.55;font-family:'JetBrains Mono'">${d.tech||'See Existing Pipeline tab for full detail.'}</p></div>`;
+  if(d.table&&d.table.length){
+    h+=`<table class="dt"><thead><tr><th>Key</th><th>Value</th></tr></thead><tbody>`;
+    d.table.forEach(r=>{h+=`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`;});
+    h+=`</tbody></table>`;
+  }
+  h+=`</div></div>`;
+  document.getElementById('exist-det').innerHTML=h;
+  document.getElementById('exist-det').scrollIntoView({behavior:'smooth',block:'nearest'});
+};
+}
+
+// ════════════════════════════════════════════
+// HUMAN-IN-THE-LOOP
+// ════════════════════════════════════════════
+function renderHITL(){
+const el=document.getElementById('hitl-content');
+if(!el)return;
+
+const AMB='#FF9900',BLU='#3b82f6',GRN='#22c55e',RED='#ef4444',PUR='#6366f1',TEA='#14b8a6',DIM='#8b949e',BRD='#30363d',BG2='#161b22',BG3='#1f2937';
+
+function card(title,color,body){return`<div style="background:${BG2};border:1px solid ${color}30;border-radius:12px;overflow:hidden;margin-bottom:1.2rem"><div style="padding:.8rem 1.2rem;border-bottom:1px solid ${BRD};display:flex;align-items:center;gap:.6rem"><div style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0"></div><span style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${color};font-family:'Sora',sans-serif">${title}</span></div><div style="padding:1rem 1.2rem">${body}</div></div>`;}
+function step(n,title,color,body){return`<div style="display:grid;grid-template-columns:32px 1fr;gap:.8rem;margin-bottom:1.2rem"><div style="width:32px;height:32px;border-radius:50%;background:${color}15;border:2px solid ${color}60;display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:800;color:${color};font-family:'JetBrains Mono',monospace;flex-shrink:0">${n}</div><div><div style="font-size:.9rem;font-weight:700;color:#e6edf3;margin-bottom:.3rem;font-family:'Sora',sans-serif">${title}</div><div style="font-size:.85rem;color:${DIM};line-height:1.6">${body}</div></div></div>`;}
+function mono(s){return`<code style="font-family:'JetBrains Mono',monospace;font-size:.8rem;color:${AMB};background:#FF990012;padding:.1rem .35rem;border-radius:4px;border:1px solid #FF990025">${s}</code>`;}
+function tag(s,c){return`<span style="display:inline-block;padding:.1rem .5rem;border-radius:4px;font-size:.7rem;font-weight:700;background:${c}15;color:${c};border:1px solid ${c}30;font-family:'Sora',sans-serif;margin:.1rem .1rem 0 0">${s}</span>`;}
+function kv(k,v,kc){return`<div style="display:grid;grid-template-columns:180px 1fr;gap:.3rem .6rem;padding:.4rem 0;border-bottom:1px solid ${BRD}20"><div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:${kc||DIM};font-family:'Sora',sans-serif;padding-top:.1rem">${k}</div><div style="font-size:.83rem;color:#e6edf3;line-height:1.5;font-family:'JetBrains Mono'">${v}</div></div>`;}
+function sql(s){return`<div style="background:#0d1117;border:1px solid ${BRD};border-radius:8px;padding:1rem;font-family:'JetBrains Mono',monospace;font-size:.78rem;color:#8b949e;line-height:1.9;overflow-x:auto;margin:.6rem 0">${s}</div>`;}
+function warn(s){return`<div style="padding:.7rem .9rem;background:#ef444408;border:1px solid #ef444430;border-radius:8px;font-size:.83rem;color:${DIM};margin:.6rem 0;line-height:1.5">${s}</div>`;}
+function info(s){return`<div style="padding:.7rem .9rem;background:#FF990008;border:1px solid #FF990025;border-radius:8px;font-size:.83rem;color:${DIM};margin:.6rem 0;line-height:1.5">${s}</div>`;}
+
+let h='';
+
+// ── 0. What Lambda 10 Is ─────────────────────────────────
+h+=card('What Lambda 10 Does — Two Jobs In One',AMB,`
+<p style="color:${DIM};line-height:1.6;font-size:.9rem;margin-bottom:.8rem">Lambda 10 runs every Monday after the main pipeline completes. It does <strong style="color:#e6edf3">two separate things</strong> in sequence — custom data corrections first, then duplicate detection. Both write audit trails. Neither blocks the other if it errors.</p>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-bottom:.8rem">
+  <div style="background:${BG3};border-radius:8px;padding:.8rem;border-left:3px solid ${AMB}">
+    <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${AMB};margin-bottom:.4rem;font-family:'Sora',sans-serif">Part 1 — Custom Data Updates</div>
+    <div style="font-size:.83rem;color:${DIM};line-height:1.5">Four correction streams run in order: Google Sheet ad-hoc fixes → MBS quarterly impression bulk update → LinkedIn impression replacement → X Quote post deletions. Each writes a before/after audit log to S3.</div>
+  </div>
+  <div style="background:${BG3};border-radius:8px;padding:.8rem;border-left:3px solid ${BLU}">
+    <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${BLU};margin-bottom:.4rem;font-family:'Sora',sans-serif">Part 2 — Dedup Monitor</div>
+    <div style="font-size:.83rem;color:${DIM};line-height:1.5">After corrections, runs the registry-backed duplicate detection SQL. Surfaces candidates to S3 as CSVs. Never deletes. Human reviews and runs approved DELETEs manually.</div>
+  </div>
+</div>
+<div style="display:flex;gap:.4rem;flex-wrap:wrap">${tag('Monday only',AMB)}${tag('Always audited',GRN)}${tag('Non-fatal errors',DIM)}${tag('Both tables updated',BLU)}${tag('Before/after snapshots',TEA)}</div>`);
+
+// ── 1. Execution Order ────────────────────────────────────
+h+=card('Execution Order Inside lambda_handler',BLU,`
+${step(1,'resolve_newline_columns()',TEA,`Reads ${mono('sprinklr_table')} column names that contain literal newline characters (a known Sprinklr export quirk). Builds a mapping dict used by all UPDATE statements below — so ${mono('Engagement Rate')} with a newline in its name gets the right column reference.`)}
+${step(2,'process_sheet_updates()',AMB,`Reads the Google Sheet correction requests. Rows where "Updated Date" is blank are pending. Updates both ${mono('sprinklr_table')} and ${mono('sprinklr_lookup_check')}. If the changed column is impression-related, auto-recalculates derived rates.`)}
+${step(3,'process_mbs_updates_bulk()',AMB,`Quarterly MBS impression bulk update from S3 CSV. Uses a temp table JOIN to match on permalink + old impression value. Updates 6 derived fields. Before/after snapshot captured.`)}
+${step(4,'process_linkedin_impressions_bulk()',AMB,`LinkedIn impression replacement from David's export CSV. Permalink-only match (unlike MBS). Does NOT touch Total Reach. UTF-8 BOM stripped from header.`)}
+${step(5,'process_x_quote_deletions()',RED,`Hard DELETE of X Quote repost URLs from both tables. Only operation in Lambda 10 that deletes rows. Before snapshot captured before DELETE runs.`)}
+${step(6,'save_audit_log()',GRN,`All audit entries from steps 2–5 merged and written to ${mono('custom_updates_audit_log/YYYY-MM-DD_HH-MM-SS.json')} in S3. Contains before/after row snapshots for every change.`)}
+${step(7,'run_dedup_monitor()',BLU,`Registry-backed duplicate detection. Last step — runs only after all corrections are applied. Non-fatal: if this step errors, the lambda still returns 200 and SNS fires.`)}
+${step(8,'send_sns()',PUR,`Publishes success/failure message to ${mono('sprinklr-custom-updates-alerts')} SNS topic → email (prabhat, david, asad) + Slack. Includes counts for every stream and dedup results.`)}`);
+
+// ── 2. Stream A: Google Sheet ─────────────────────────────
+h+=card('Stream A — Google Sheet Ad-hoc Corrections',AMB,`
+<p style="color:${DIM};line-height:1.6;font-size:.88rem;margin-bottom:.8rem">
+  Anyone on the team can request a metric correction by adding a row to the shared Google Sheet. Lambda 10 reads it every Monday and processes all rows where <strong style="color:#e6edf3">Updated Date is blank</strong> (pending). Once processed, the date is stamped (manually or by convention — the script itself doesn't write back to the sheet).
+</p>
+${kv('Source',`Google Sheet ID 18W6Z1src75v4x6deGB9KChnth7095P49BtvWwEFyVbI (GID=0)`,AMB)}
+${kv('Trigger condition',`Row has no value in "Updated Date" column`,AMB)}
+${kv('Required columns',`Permalink · Column Name · New Value`,AMB)}
+${kv('Match key',`TRIM("Permalink") exact match`,AMB)}
+${kv('Tables updated',`sprinklr_table AND sprinklr_lookup_check (both, in one transaction)`,AMB)}
+<div style="margin:.8rem 0">
+  <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${AMB};margin-bottom:.4rem;font-family:'Sora',sans-serif">Auto-recalculation trigger columns</div>
+  <div style="font-size:.83rem;color:${DIM};line-height:1.5;margin-bottom:.6rem">If the corrected column is any of the following, Lambda 10 immediately recalculates the derived rate columns in the same transaction:</div>
+  <div style="display:flex;gap:.3rem;flex-wrap:wrap;margin-bottom:.8rem">
+    ${['Total Impressions','Paid Impressions','Organic Impressions','Organic Reach','Paid Reach','Engagements','Likes','Comments'].map(c=>tag(c,AMB)).join('')}
+  </div>
+  ${sql(`<span style="color:#6366f1">UPDATE</span> sprinklr_table<br>
+<span style="color:#6366f1">SET</span> "Organic Impressions" = COALESCE("Total Impressions", 0) - COALESCE("Paid Impressions", 0),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"Total Reach" = COALESCE("Organic Reach", 0) + COALESCE("Paid Reach", 0),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"Engagement Rate" = CASE WHEN "Total Impressions" > 0 AND "Engagements" IS NOT NULL<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;THEN "Engagements"::numeric / "Total Impressions" ELSE "Engagement Rate" END,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"Likes per Impression" = CASE WHEN "Total Impressions" > 0 AND "Likes" > 0<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;THEN "Likes"::numeric / "Total Impressions" ELSE NULL END,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"Comments per Impression" = CASE WHEN "Total Impressions" > 0 AND "Comments" > 0<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;THEN "Comments"::numeric / "Total Impressions" ELSE NULL END<br>
+<span style="color:#6366f1">WHERE</span> TRIM("Permalink") = :permalink`)}
+  <div style="font-size:.8rem;color:${DIM}">Column names like "Engagement Rate" that contain literal newlines in the DB are resolved via ${mono('resolve_newline_columns()')} before any UPDATE runs.</div>
+</div>`);
+
+// ── 3. Stream B: MBS ──────────────────────────────────────
+h+=card('Stream B — MBS Quarterly Bulk Impression Update',AMB,`
+<p style="color:${DIM};line-height:1.6;font-size:.88rem;margin-bottom:.8rem">
+  Every quarter, Amazon's MBS (Media Buying System) releases verified impression figures that differ from what Sprinklr reported at pull time. Lambda 10 bulk-updates these in 6 steps using a temp table pattern for performance — not row-by-row.
+</p>
+${kv('Source CSV',`s3://wikitablescrapexample/amazon_sprinklr_pull/custom_updates/mbs_update_data.csv`,AMB)}
+${kv('Required columns',`Permalink · Old Impressions · Organic Impressions (= new value)`,AMB)}
+${kv('Match key',`TRIM(Permalink) = permalink AND Total Impressions = old_imp (double-check safety)`,AMB)}
+${kv('Tables updated',`sprinklr_table AND sprinklr_lookup_check`,AMB)}
+${kv('Dedup within CSV',`drop_duplicates(subset=permalink, keep=last) before upload`,AMB)}
+<div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${AMB};margin-bottom:.4rem;margin-top:.8rem;font-family:'Sora',sans-serif">6-Step Temp Table Pattern</div>
+${step('1','Create temp table',BLU,`${mono('DROP TABLE IF EXISTS mbs_updates_temp')} → ${mono('CREATE TEMP TABLE mbs_updates_temp (permalink TEXT PRIMARY KEY, old_imp BIGINT, new_imp BIGINT)')}`)  }
+${step('2','Upload MBS CSV to temp table',BLU,`${mono('DataFrame.to_sql(mbs_updates_temp, ...)')} — deduped on permalink, chunks of 500`)}
+${step('3','Capture BEFORE snapshot',TEA,`${mono('INNER JOIN mbs_updates_temp')} on permalink + old_imp — saves current values of all impression + rate columns for both tables to audit log`)}
+${step('4','Bulk UPDATE main table',GRN,`Single SQL UPDATE: sets Total Impressions, recalculates Organic Impressions, Total Reach, ER, LPI, CPI. Matches on permalink AND old impression value (safety net against stale data).`)}
+${step('5','Bulk UPDATE lookup table',GRN,`Same UPDATE on sprinklr_lookup_check`)}
+${step('6','Capture AFTER snapshot + audit',TEA,`Re-reads updated rows, writes full before/after to audit log JSON on S3`)}
+${info(`<strong style="color:${AMB}">Old impression match:</strong> Unlike the LinkedIn update, MBS matches on <em>both</em> permalink AND the old impression value. This prevents accidentally overwriting rows that have already been corrected in a previous MBS run.`)}`);
+
+// ── 4. Stream C: LinkedIn ─────────────────────────────────
+h+=card('Stream C — LinkedIn Impressions Replacement',TEA,`
+<p style="color:${DIM};line-height:1.6;font-size:.88rem;margin-bottom:.8rem">
+  LinkedIn impression data from the API is unreliable for certain post types. David exports verified figures from LinkedIn Campaign Manager, and Lambda 10 replaces the DB values. This stream is deliberately different from MBS — it matches on permalink only (not old value), and does not touch Total Reach.
+</p>
+${kv('Source CSV',`s3://wikitablescrapexample/amazon_sprinklr_pull/custom_updates/linkedIn_impressions_replacement.csv`,TEA)}
+${kv('Encoding note',`UTF-8 BOM stripped (utf-8-sig) — LinkedIn exports have BOM on header row`,TEA)}
+${kv('Required columns',`Permalink · Organic Impressions (old, reference only) · URN · New Impressions`,TEA)}
+${kv('Match key',`TRIM(Permalink) only — old impression value NOT used (LI export values ≠ DB values)`,TEA)}
+${kv('Tables updated',`sprinklr_table AND sprinklr_lookup_check`,TEA)}
+${kv('NOT touched',`Total Reach, Organic Reach, Paid Reach, Engagements, Likes, Comments, Paid Impressions`,TEA)}
+${kv('IS updated',`Total Impressions · Organic Impressions · Engagement Rate · Likes per Impression · Comments per Impression`,TEA)}
+${kv('Same 6-step pattern',`Temp table linkedin_imp_temp · BEFORE snapshot · bulk UPDATE × 2 · AFTER snapshot · audit log`,TEA)}
+${warn(`<strong style="color:${RED}">Why permalink-only match?</strong> The LinkedIn export's "Organic Impressions" column represents LinkedIn's own metric, which does not equal what Sprinklr stored as "Total Impressions" in the DB. A double-match (permalink + old value) would skip every row. Safe because DB deduplication means one Average + one Median row per permalink — no false matches.`)}`);
+
+// ── 5. Stream D: X Quote Deletions ───────────────────────
+h+=card('Stream D — X Quote Post Deletions',RED,`
+<p style="color:${DIM};line-height:1.6;font-size:.88rem;margin-bottom:.8rem">
+  X (Twitter) quote-retweets pull through from Sprinklr as posts in their own right, but they're not original Amazon content and shouldn't appear in Tableau. Lambda 10 hard-deletes them from both tables. This is the <strong style="color:#e6edf3">only operation in Lambda 10 that issues DELETEs</strong>.
+</p>
+${kv('Source CSV',`s3://wikitablescrapexample/amazon_sprinklr_pull/custom_updates/remove_x_quote_posts.csv`,RED)}
+${kv('Input','Column of Post URLs to delete — deduplicated before processing',RED)}
+${kv('Match key','TRIM("Permalink") = post_url',RED)}
+${kv('Tables affected','sprinklr_table AND sprinklr_lookup_check — both DELETEd in one transaction',RED)}
+${kv('not_found tracking','URLs in the CSV that had no matching row in the main table are counted separately',RED)}
+<div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${RED};margin-bottom:.4rem;margin-top:.8rem;font-family:'Sora',sans-serif">5-Step Deletion Pattern</div>
+${step('1','Create temp table',BLU,`${mono('CREATE TEMP TABLE x_quote_delete_temp (post_url TEXT PRIMARY KEY)')}`)}
+${step('2','Upload URLs to temp table',BLU,`${mono('DataFrame.to_sql(...)')} — deduped URLs in chunks of 500`)}
+${step('3','Capture BEFORE snapshot',TEA,`${mono('SELECT t.* FROM sprinklr_table t INNER JOIN x_quote_delete_temp u ON TRIM(t."Permalink") = u.post_url')} — full row snapshot saved to audit log`)}
+${step('4','DELETE from main table',RED,`${mono('DELETE FROM sprinklr_table USING x_quote_delete_temp WHERE TRIM("Permalink") = post_url')}`)}
+${step('5','DELETE from lookup table',RED,`Same DELETE on sprinklr_lookup_check`)}
+${warn(`<strong style="color:${RED}">Note:</strong> X Quote deletions are permanent and immediate. Unlike the dedup monitor, there is no human approval step — whoever adds the URL to the CSV is making the call. The before-snapshot in the audit log is the only recovery path.`)}`);
+
+// ── 6. Audit Log ─────────────────────────────────────────
+h+=card('Audit Log — Full Before/After For Every Change',GRN,`
+<p style="color:${DIM};line-height:1.6;font-size:.88rem;margin-bottom:.8rem">
+  Every change across all four streams is merged into a single audit log and written to S3 after all updates complete. The log contains the complete before and after row snapshots for every affected permalink, in both tables.
+</p>
+${kv('Location',`s3://wikitablescrapexample/custom_updates_audit_log/YYYY-MM-DD_HH-MM-SS_audit.json`,GRN)}
+${kv('Format','JSON lines — one entry per correction row, nested before/after arrays',GRN)}
+${kv('Fields per entry','source (Sheet/MBS/LinkedIn/XQuote) · timestamp_utc · permalink · column_name · new_value · sprinklr_table_rows · sprinklr_lookup_check_rows · before_sprinklr_table · after_sprinklr_table · before_sprinklr_lookup_check · after_sprinklr_lookup_check',GRN)}
+${kv('X Quote entries','before_sprinklr_table contains full deleted row · after is empty (row gone)',GRN)}
+${kv('Recovery','If a correction needs reverting, the before-snapshot contains the exact values to restore',GRN)}`);
+
+// ── 7. Dedup Monitor ─────────────────────────────────────
+h+=card('Part 2 — Dedup Monitor (runs last)',BLU,`
+<p style="color:${DIM};line-height:1.6;font-size:.88rem;margin-bottom:.8rem">
+  After all corrections are applied, Lambda 10 runs the duplicate detection pass. It runs last so the dedup results reflect the cleaned data, not pre-correction figures. It is explicitly non-fatal — if it errors, the lambda still returns 200 and SNS fires with the corrections summary.
+</p>
+
+<div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${BLU};margin-bottom:.6rem;font-family:'Sora',sans-serif">Pre-step: Resolve new rows missing from permalink_registry</div>
+<div style="font-size:.83rem;color:${DIM};line-height:1.5;margin-bottom:.8rem">
+  Before the dedup SQL runs, Lambda 10 identifies today's rows (by MAX Dateoflastedit) that are not yet in ${mono('permalink_registry')}. These go through three-strategy resolution:
+</div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;margin-bottom:.8rem">
+  <div style="background:${BG3};border-radius:8px;padding:.7rem">
+    <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${PUR};margin-bottom:.3rem;font-family:'Sora',sans-serif">Strategy 1 — Exact</div>
+    <div style="font-size:.8rem;color:${DIM}">Normalised URL match (strip scheme/www/query/slash, lowercase)</div>
+  </div>
+  <div style="background:${BG3};border-radius:8px;padding:.7rem">
+    <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${PUR};margin-bottom:.3rem;font-family:'Sora',sans-serif">Strategy 2 — Regex</div>
+    <div style="font-size:.8rem;color:${DIM}">Per-platform canonical ID — IG shortcode (${mono('_extract_instagram_id')}), Twitter status ID, TikTok video ID, YouTube v=, Threads /post/, LinkedIn URN, Facebook fbid/story_fbid/reel/pfbid (${mono('_fb_fallback')})</div>
+  </div>
+  <div style="background:${BG3};border-radius:8px;padding:.7rem">
+    <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${PUR};margin-bottom:.3rem;font-family:'Sora',sans-serif">Strategy 3 — Apify</div>
+    <div style="font-size:.8rem;color:${DIM}">Facebook page-name URLs (${mono('_resolve_fb_batch')}) — batches of 20, actor ${mono('apify~facebook-url-to-id')}, token in code. Skipped if URL already in registry.</div>
+  </div>
+</div>
+<div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${BLU};margin-bottom:.6rem;font-family:'Sora',sans-serif">The Detection SQL</div>
+${sql(`<span style="color:#6366f1">WITH</span> all_dupes <span style="color:#6366f1">AS</span> (<br>
+&nbsp;&nbsp;<span style="color:#6366f1">SELECT</span> s."RowID", s."Permalink", s."Account", s."Delivery", s."Benchmark Type",<br>
+&nbsp;&nbsp;&nbsp;&nbsp;s."Date", s."Total Impressions", s."Dateoflastedit", s.is_manual_tracker,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;LEFT(COALESCE(s."Post",''),200) AS post_preview, r.stable_post_id,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:${GRN}">COUNT(*) OVER</span> (<span style="color:#6366f1">PARTITION BY</span> r.stable_post_id, s."Benchmark Type") <span style="color:#6366f1">AS</span> dupe_count,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:${GRN}">RANK() OVER</span> (<span style="color:#6366f1">PARTITION BY</span> r.stable_post_id, s."Benchmark Type"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#6366f1">ORDER BY</span> s."Total Impressions" <span style="color:#6366f1">DESC NULLS LAST</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s."Date" <span style="color:#6366f1">DESC NULLS LAST</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CAST(SPLIT_PART(CAST(s.post_id <span style="color:#6366f1">AS</span> TEXT),'.', 1) <span style="color:#6366f1">AS</span> BIGINT) <span style="color:#6366f1">DESC</span>) <span style="color:#6366f1">AS</span> impression_rank<br>
+&nbsp;&nbsp;<span style="color:#6366f1">FROM</span> sprinklr_table s<br>
+&nbsp;&nbsp;<span style="color:${AMB}">INNER JOIN</span> permalink_registry r<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#6366f1">ON</span> TRIM(s."Permalink") = r.permalink<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#6366f1">AND</span> TRIM(s."Account") = r.account<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#6366f1">AND</span> TRIM(s."Delivery") = r.delivery<br>
+&nbsp;&nbsp;<span style="color:#6366f1">WHERE</span> s.is_manual_tracker = 0 <span style="color:#6366f1">AND</span> s."Delivery" <span style="color:#6366f1">IN</span> ('Organic','Boosted')<br>
+),<br>
+today_stable_ids <span style="color:#6366f1">AS</span> (<br>
+&nbsp;&nbsp;<span style="color:#ff6b6b">-- Only groups touching today's batch — avoids re-surfacing known historical dupes</span><br>
+&nbsp;&nbsp;<span style="color:#6366f1">SELECT DISTINCT</span> r2.stable_post_id<br>
+&nbsp;&nbsp;<span style="color:#6366f1">FROM</span> sprinklr_table s2<br>
+&nbsp;&nbsp;<span style="color:#6366f1">INNER JOIN</span> permalink_registry r2 <span style="color:#6366f1">ON</span> TRIM(s2."Permalink")=r2.permalink<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#6366f1">AND</span> TRIM(s2."Account")=r2.account <span style="color:#6366f1">AND</span> TRIM(s2."Delivery")=r2.delivery<br>
+&nbsp;&nbsp;<span style="color:#6366f1">WHERE</span> DATE(s2."Dateoflastedit"::timestamp) = (<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#6366f1">SELECT</span> DATE(MAX("Dateoflastedit"::timestamp))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#6366f1">FROM</span> sprinklr_table <span style="color:#6366f1">WHERE</span> is_manual_tracker = 0)<br>
+&nbsp;&nbsp;<span style="color:#6366f1">AND</span> s2.is_manual_tracker = 0<br>
+)<br>
+<span style="color:#6366f1">SELECT</span> d.*, <span style="color:#6366f1">CASE WHEN</span> d.impression_rank = 1 <span style="color:#6366f1">THEN</span> 0 <span style="color:#6366f1">ELSE</span> 1 <span style="color:#6366f1">END AS</span> is_to_remove<br>
+<span style="color:#6366f1">FROM</span> all_dupes d<br>
+<span style="color:#6366f1">WHERE</span> d.dupe_count > 1 <span style="color:#6366f1">AND</span> d.stable_post_id <span style="color:#6366f1">IN</span> (<span style="color:#6366f1">SELECT</span> stable_post_id <span style="color:#6366f1">FROM</span> today_stable_ids)<br>
+<span style="color:#6366f1">ORDER BY</span> d.stable_post_id, d."Benchmark Type", d.impression_rank`)}
+
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.6rem;margin-top:.6rem">
+  <div style="background:${BG3};border-radius:8px;padding:.7rem">
+    <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${GRN};margin-bottom:.3rem;font-family:'Sora',sans-serif">Keep rule</div>
+    <div style="font-size:.8rem;color:${DIM}">${mono('impression_rank = 1')} → ${mono('is_to_remove = 0')}. Highest Total Impressions wins. Tie-break: Date DESC, then post_id DESC (${mono('assign_to_remove()')} function).</div>
+  </div>
+  <div style="background:${BG3};border-radius:8px;padding:.7rem">
+    <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${BLU};margin-bottom:.3rem;font-family:'Sora',sans-serif">Scope exclusions</div>
+    <div style="font-size:.8rem;color:${DIM}">is_manual_tracker ≠ 0 excluded (no Collab/LINE). Paid Only excluded (Delivery IN Organic/Boosted only). Groups with no today-batch row excluded.</div>
+  </div>
+  <div style="background:${BG3};border-radius:8px;padding:.7rem">
+    <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${AMB};margin-bottom:.3rem;font-family:'Sora',sans-serif">S3 outputs</div>
+    <div style="font-size:.8rem;color:${DIM}">${mono('dedup_monitor/duplicate_pairs_DATE.csv')} — all rows in dupe groups. ${mono('dedup_monitor/rows_to_remove_DATE.csv')} — proposed removals only (${mono('is_to_remove = 1')}).</div>
+  </div>
+</div>`);
+
+// ── 8. Human Review Workflow ──────────────────────────────
+h+=card('Human-in-the-Loop Review Workflow',AMB,`
+${step(1,'SNS notification fires',PUR,`Lambda 10 publishes to ${mono('sprinklr-custom-updates-alerts')} SNS → email to prabhat/david/asad + Slack. Message includes total DB changes from all 4 streams, dedup group count, rows flagged for removal, and S3 paths.`)}
+${step(2,'Operator downloads rows_to_remove CSV',BLU,`${mono('s3://wikitablescrapexample/amazon_sprinklr_pull/dedup_monitor/rows_to_remove_YYYY-MM-DD.csv')}. Columns: RowID, Permalink, Account, Delivery, Benchmark Type, Date, Total Impressions, post_preview, stable_post_id, dupe_count, impression_rank, is_to_remove.`)}
+${step(3,'Review proposed removals',AMB,`Check: do these permalinks actually refer to the same real post? Is the "keep" row correct (highest impressions = most complete data)? Cross-reference post_preview to verify. Flag any rows that should NOT be deleted.`)}
+${step(4,'Execute approved DELETEs',RED,`Run against sprinklr_table using approved RowIDs. Typically via RDS Query Editor or Prabhat's SQL client:<br><br>${sql(`<span style="color:#6366f1">DELETE FROM</span> sprinklr_table<br><span style="color:#6366f1">WHERE</span> "RowID" <span style="color:#6366f1">IN</span> (...approved RowIDs...)<br><span style="color:#6366f1">AND</span> is_manual_tracker = 0; <span style="color:#ff6b6b">-- safety guard</span>`)}`)}
+${step(5,'Verify in Tableau',GRN,`Confirm affected accounts/platforms show correct post counts. Since Lambda 10 runs Monday alongside the pipeline, review typically happens Monday afternoon or Tuesday morning.`)}`);
+
+// ── 9. HILC distinction ───────────────────────────────────
+h+=card('HILC Posts — Always Human Review, Never Auto-propose',RED,`
+<p style="color:${DIM};line-height:1.6;font-size:.88rem;margin-bottom:.8rem">
+  <strong style="color:#e6edf3">HILC (Human-Initiated Legacy Check)</strong> refers to posts where the same post text appears on different ${mono('post_id')} values — Sprinklr-generated duplicates that can't be resolved by URL matching alone, because they have genuinely different post_ids. Lambda 10 surfaces these for awareness, but always sets ${mono('is_to_remove = 0')}.
+</p>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem">
+  <div style="background:${BG3};border-radius:8px;padding:.8rem;border-left:3px solid ${BLU}">
+    <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${BLU};margin-bottom:.4rem;font-family:'Sora',sans-serif">Registry duplicates — auto-propose</div>
+    <div style="font-size:.83rem;color:${DIM};line-height:1.5">Same ${mono('stable_post_id')}, different URL form (e.g. /p/ vs /reel/). Lambda 10 proposes which to remove based on impressions rank. Operator verifies and executes.</div>
+  </div>
+  <div style="background:${BG3};border-radius:8px;padding:.8rem;border-left:3px solid ${AMB}">
+    <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${AMB};margin-bottom:.4rem;font-family:'Sora',sans-serif">HILC posts — human-only</div>
+    <div style="font-size:.83rem;color:${DIM};line-height:1.5">Same post text, genuinely different ${mono('post_id')} values. ${mono('is_to_remove = 0')} always. Operator must read the post content and make the call on which RowID represents the real post.</div>
+  </div>
+</div>`);
+
+// ── 10. What Lambda 10 never does ────────────────────────
+h+=`<div style="background:#ef444408;border:1px solid #ef444430;border-radius:12px;padding:1rem 1.2rem;margin-bottom:1.2rem">
+<div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${RED};margin-bottom:.8rem;font-family:'Sora',sans-serif">What Lambda 10 deliberately never does</div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem">
+  <div style="background:#0d1117;border-radius:6px;padding:.7rem;border-top:2px solid ${RED}40"><strong style="color:#e6edf3;display:block;margin-bottom:.3rem">No dedup auto-delete</strong><div style="font-size:.82rem;color:${DIM};line-height:1.5">The dedup monitor never issues a DELETE. It produces CSVs. A human runs the DELETE. The only automatic DELETEs in Lambda 10 are X Quote posts — which is a different, human-managed input list.</div></div>
+  <div style="background:#0d1117;border-radius:6px;padding:.7rem;border-top:2px solid ${RED}40"><strong style="color:#e6edf3;display:block;margin-bottom:.3rem">No collab/LINE in dedup</strong><div style="font-size:.82rem;color:${DIM};line-height:1.5">${mono('is_manual_tracker != 0')} rows are excluded from the dedup SQL. Collab and LINE data is managed by Lambda 8 and Lambda 9 with their own DELETE + re-insert logic.</div></div>
+  <div style="background:#0d1117;border-radius:6px;padding:.7rem;border-top:2px solid ${RED}40"><strong style="color:#e6edf3;display:block;margin-bottom:.3rem">Dedup is non-fatal</strong><div style="font-size:.82rem;color:${DIM};line-height:1.5">The dedup monitor is wrapped in try/except inside ${mono('run_dedup_monitor()')}. If it errors for any reason, the corrections (Streams A–D) are unaffected, lambda returns 200, and SNS fires with the corrections summary.</div></div>
+</div>
+</div>`;
+
+el.innerHTML=h;
+}
+
+function step(n, title, color, body){
+  return `<div style="display:grid;grid-template-columns:32px 1fr;gap:.8rem;margin-bottom:1.2rem">
+  <div style="width:32px;height:32px;border-radius:50%;background:${color}15;border:2px solid ${color}60;display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:800;color:${color};font-family:'JetBrains Mono',monospace;flex-shrink:0">${n}</div>
+  <div>
+    <div style="font-size:.9rem;font-weight:700;color:#e6edf3;margin-bottom:.3rem;font-family:'Sora',sans-serif">${title}</div>
+    <div style="font-size:.85rem;color:${DIM};line-height:1.6">${body}</div>
+  </div>
+</div>`;
+}
+
+function mono(s){return `<code style="font-family:'JetBrains Mono',monospace;font-size:.8rem;color:${AMB};background:#FF990012;padding:.1rem .35rem;border-radius:4px;border:1px solid #FF990025">${s}</code>`;}
+function tag(s,c){return `<span style="display:inline-block;padding:.1rem .5rem;border-radius:4px;font-size:.7rem;font-weight:700;background:${c}15;color:${c};border:1px solid ${c}30;font-family:'Sora',sans-serif;margin:.1rem">${s}</span>`;}
+
+let h = '';
+
+// ── Overview ──────────────────────────────────────────────
+h += card('Why Human Review?', AMB, `
+<p style="color:${DIM};line-height:1.6;font-size:.9rem;margin-bottom:.8rem">
+  Sprinklr generates duplicate rows in predictable ways — the same Instagram post arriving as both ${mono('/p/ABC')} and ${mono('/reel/ABC')}, Facebook posts with two different URL forms, re-pulled posts with different IDs. Lambda 10 detects these automatically using the <strong style="color:#e6edf3">permalink_registry</strong> — a table that maps every URL variant to a single ${mono('stable_post_id')}. But it never acts on them. A human approves every deletion, because Tableau data integrity cannot be recovered from a bad auto-delete.
+</p>
+<div style="display:flex;gap:.5rem;flex-wrap:wrap">
+  ${tag('Monday only', AMB)}${tag('Never auto-deletes', RED)}${tag('Operator reviews first', GRN)}${tag('Registry-backed', BLU)}${tag('Non-fatal if it fails', DIM)}
+</div>`);
+
+// ── The Detection Query ────────────────────────────────────
+h += card('The Detection Query — How Duplicates Are Found', BLU, `
+<p style="color:${DIM};line-height:1.6;font-size:.88rem;margin-bottom:1rem">
+  Lambda 10 runs one primary SQL query against <strong style="color:#e6edf3">sprinklr_table + permalink_registry</strong>. The logic mirrors what the old manual HILC check did — but runs automatically every Monday after the pipeline completes.
+</p>
+
+<div style="background:#0d1117;border:1px solid ${BRD};border-radius:8px;padding:1rem;font-family:'JetBrains Mono',monospace;font-size:.78rem;color:#8b949e;line-height:1.8;overflow-x:auto;margin-bottom:1rem">
+<span style="color:#6366f1">WITH</span> all_dupes <span style="color:#6366f1">AS</span> (<br>
+&nbsp;&nbsp;<span style="color:#6366f1">SELECT</span> s."RowID", s."Permalink", s."Account", s."Delivery",<br>
+&nbsp;&nbsp;&nbsp;&nbsp;s."Benchmark Type", s."Date", s."Total Impressions",<br>
+&nbsp;&nbsp;&nbsp;&nbsp;r.stable_post_id,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:${GRN}">COUNT(*) OVER</span> (<span style="color:#6366f1">PARTITION BY</span> r.stable_post_id, s."Benchmark Type") <span style="color:#6366f1">AS</span> dupe_count,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:${GRN}">RANK() OVER</span> (<span style="color:#6366f1">PARTITION BY</span> r.stable_post_id, s."Benchmark Type"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#6366f1">ORDER BY</span> s."Total Impressions" <span style="color:#6366f1">DESC</span>, s."Date" <span style="color:#6366f1">DESC</span>, post_id <span style="color:#6366f1">DESC</span>) <span style="color:#6366f1">AS</span> impression_rank<br>
+&nbsp;&nbsp;<span style="color:#6366f1">FROM</span> sprinklr_table s<br>
+&nbsp;&nbsp;<span style="color:${AMB}">INNER JOIN</span> permalink_registry r<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#6366f1">ON</span> TRIM(s."Permalink") = r.permalink<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#6366f1">AND</span> TRIM(s."Account") = r.account<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#6366f1">AND</span> TRIM(s."Delivery") = r.delivery<br>
+&nbsp;&nbsp;<span style="color:#6366f1">WHERE</span> s.is_manual_tracker = 0 <span style="color:#6366f1">AND</span> s."Delivery" <span style="color:#6366f1">IN</span> ('Organic', 'Boosted')<br>
+)<br>
+<span style="color:#6366f1">SELECT</span> ... <span style="color:#6366f1">FROM</span> all_dupes d<br>
+<span style="color:#6366f1">WHERE</span> d.dupe_count > 1<br>
+&nbsp;&nbsp;<span style="color:#6366f1">AND</span> d.stable_post_id <span style="color:#6366f1">IN</span> (<span style="color:#6366f1">SELECT</span> stable_post_id <span style="color:#6366f1">FROM</span> today_stable_ids)<br>
+<span style="color:${RED}">-- Only surfaces groups touching today's batch (Dateoflastedit = MAX)</span><br>
+<span style="color:${RED}">-- This avoids re-surfacing known historical duplicates every run</span>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem">
+  <div style="background:${BG3};border-radius:8px;padding:.8rem">
+    <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${GRN};margin-bottom:.4rem;font-family:'Sora',sans-serif">Keep rule</div>
+    <div style="font-size:.83rem;color:${DIM};line-height:1.5">Within each ${mono('(stable_post_id, Benchmark Type)')} group, the row with the <strong style="color:#e6edf3">highest Total Impressions</strong> is kept (${mono('impression_rank = 1')}). Ties broken by Date DESC, then post_id DESC.</div>
+  </div>
+  <div style="background:${BG3};border-radius:8px;padding:.8rem">
+    <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${RED};margin-bottom:.4rem;font-family:'Sora',sans-serif">Today's batch only</div>
+    <div style="font-size:.83rem;color:${DIM};line-height:1.5">${mono('today_stable_ids')} CTE filters to groups where at least one row has ${mono('Dateoflastedit = MAX')}. Known historical duplicates are not re-surfaced every run.</div>
+  </div>
+</div>`);
+
+// ── Pre-step: registry resolution ─────────────────────────
+h += card('Pre-step: Resolve Missing Permalinks Into Registry', '#6366f1', `
+<p style="color:${DIM};line-height:1.6;font-size:.88rem;margin-bottom:.8rem">
+  Before the dedup query runs, Lambda 10 checks whether today's new rows already have entries in ${mono('permalink_registry')}. Any that don't go through three-strategy resolution to get a ${mono('stable_post_id')} assigned.
+</p>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem">
+  <div style="background:${BG3};border-radius:8px;padding:.7rem">
+    <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#6366f1;margin-bottom:.3rem;font-family:'Sora',sans-serif">Strategy 1</div>
+    <div style="font-size:.8rem;color:${DIM}">Exact normalised URL match (strip scheme/www/query/slash, lowercase)</div>
+  </div>
+  <div style="background:${BG3};border-radius:8px;padding:.7rem">
+    <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#6366f1;margin-bottom:.3rem;font-family:'Sora',sans-serif">Strategy 2</div>
+    <div style="font-size:.8rem;color:${DIM}">Per-platform regex — IG shortcode, Twitter status ID, TikTok video ID, YouTube v=, Threads /post/, LinkedIn URN, Facebook fbid/reel/pfbid</div>
+  </div>
+  <div style="background:${BG3};border-radius:8px;padding:.7rem">
+    <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#6366f1;margin-bottom:.3rem;font-family:'Sora',sans-serif">Strategy 3</div>
+    <div style="font-size:.8rem;color:${DIM}">Apify actor ${mono('apify~facebook-url-to-id')} for unresolvable Facebook page-name URLs — batches of 20</div>
+  </div>
+</div>`);
+
+// ── S3 Outputs ─────────────────────────────────────────────
+h += card('What Lambda 10 Produces', GRN, `
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem">
+  <div style="background:${BG3};border-radius:8px;padding:.8rem">
+    <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${BLU};margin-bottom:.4rem;font-family:'Sora',sans-serif">📄 duplicate_pairs_YYYY-MM-DD.csv</div>
+    <div style="font-size:.83rem;color:${DIM};line-height:1.5">All rows in duplicate groups. Columns: RowID, Permalink, Account, Delivery, Benchmark Type, Date, Total Impressions, stable_post_id, dupe_count, impression_rank, ${mono('is_to_remove')} (0=keep, 1=remove). Saved to ${mono('amazon_sprinklr_pull/dedup_monitor/')}</div>
+  </div>
+  <div style="background:${BG3};border-radius:8px;padding:.8rem">
+    <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${RED};margin-bottom:.4rem;font-family:'Sora',sans-serif">📄 rows_to_remove_YYYY-MM-DD.csv</div>
+    <div style="font-size:.83rem;color:${DIM};line-height:1.5">Filtered view — only rows where ${mono('is_to_remove = 1')}. This is what the operator reviews. Also saved to ${mono('dedup_monitor/')}. These rows are NOT deleted yet — this file is just the proposed list.</div>
+  </div>
+</div>
+<div style="margin-top:.8rem;padding:.7rem .9rem;background:#22c55e08;border:1px solid #22c55e20;border-radius:8px;font-size:.83rem;color:${DIM};line-height:1.5">
+  <strong style="color:${GRN}">Non-fatal design:</strong> if the dedup monitor errors for any reason, Lambda 10 catches the exception and continues — the custom data updates (MBS, LinkedIn, corrections) are not affected. The dedup step is always the last thing Lambda 10 does.
+</div>`);
+
+// ── Human Review Steps ─────────────────────────────────────
+h += card('The Human-in-the-Loop Review Process', AMB, `
+${step(1, 'SNS notification fires after Lambda 10 completes', BLU,
+  `The SNS topic sends to both SES (email: prabhat, david, asad) and Slack. The message includes total duplicate groups found, rows flagged for removal, and the S3 path to review.`)}
+${step(2, 'Operator downloads rows_to_remove CSV from S3', AMB,
+  `${mono('amazon_sprinklr_pull/dedup_monitor/rows_to_remove_YYYY-MM-DD.csv')} — open in Excel or query directly. Each row shows the Permalink, Account, Delivery, Benchmark Type, and why it was flagged (lower impressions than the keep row, same stable_post_id).`)}
+${step(3, 'Operator reviews the proposed removals', AMB,
+  `Check: do the two permalinks actually refer to the same real post? Is the "keep" row correct (highest impressions = most complete data)? Are there any HILC-type posts (same post text, different post_id) that need human judgment? Mark any rows that should NOT be deleted.`)}
+${step(4, 'Operator executes the approved DELETEs', GRN,
+  `Run the DELETE against sprinklr_table using the RowIDs from the approved subset of rows_to_remove. Typically done via RDS Query Editor or Prabhat's SQL client. DELETE FROM sprinklr_table WHERE "RowID" IN (...approved RowIDs...) AND is_manual_tracker = 0.`)}
+${step(5, 'Verify Tableau reflects the clean data', GRN,
+  `After the DELETE, confirm the affected accounts/platforms show correct post counts in Tableau. Since Lambda 10 runs Monday alongside the pipeline, this review typically happens Monday afternoon or Tuesday.`)}
+`);
+
+// ── HILC distinction ───────────────────────────────────────
+h += card('HILC Posts — Always Human Review Only', RED, `
+<p style="color:${DIM};line-height:1.6;font-size:.88rem;margin-bottom:.8rem">
+  <strong style="color:#e6edf3">HILC (Human-Initiated Legacy Check)</strong> is a special category within the dedup results. These are posts where the same text appears on different ${mono('post_id')} values — Sprinklr-generated duplicates rather than URL-form duplicates. Lambda 10 flags them but marks ${mono('is_to_remove = 0')} (never auto-remove), because the right row to keep requires reading the post content and understanding the context.
+</p>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem">
+  <div style="background:${BG3};border-radius:8px;padding:.8rem">
+    <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${RED};margin-bottom:.4rem;font-family:'Sora',sans-serif">Registry duplicates (auto-propose)</div>
+    <div style="font-size:.83rem;color:${DIM};line-height:1.5">Same ${mono('stable_post_id')}, different URL form. Lambda 10 proposes which to remove (lower impressions). Operator verifies and executes.</div>
+  </div>
+  <div style="background:${BG3};border-radius:8px;padding:.8rem">
+    <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${AMB};margin-bottom:.4rem;font-family:'Sora',sans-serif">HILC posts (human-only)</div>
+    <div style="font-size:.83rem;color:${DIM};line-height:1.5">Same post text, different ${mono('post_id')}. Lambda 10 surfaces these for awareness only. ${mono('is_to_remove = 0')} — operator must make the call on which row represents the real post.</div>
+  </div>
+</div>`);
+
+// ── What Lambda 10 does NOT do ─────────────────────────────
+h += `<div style="background:#ef444408;border:1px solid #ef444430;border-radius:12px;padding:1rem 1.2rem;margin-bottom:1rem">
+<div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${RED};margin-bottom:.6rem;font-family:'Sora',sans-serif">What Lambda 10 deliberately does NOT do</div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem">
+  <div style="background:#0d1117;border-radius:6px;padding:.6rem .8rem;font-size:.83rem;color:${DIM};line-height:1.5"><strong style="color:#e6edf3">No auto-delete.</strong> Lambda 10 never issues a DELETE against sprinklr_table. It produces CSVs. A human runs the DELETE.</div>
+  <div style="background:#0d1117;border-radius:6px;padding:.6rem .8rem;font-size:.83rem;color:${DIM};line-height:1.5"><strong style="color:#e6edf3">No collab/LINE rows.</strong> ${mono('is_manual_tracker != 0')} rows are excluded from the query. Collab and LINE data is managed by λ8/λ9 separately.</div>
+  <div style="background:#0d1117;border-radius:6px;padding:.6rem .8rem;font-size:.83rem;color:${DIM};line-height:1.5"><strong style="color:#e6edf3">No blocking the pipeline.</strong> Dedup runs as the last step inside Lambda 10. If it fails for any reason, the custom data updates still apply — it is explicitly non-fatal.</div>
+</div>
+</div>`;
+
+el.innerHTML = h;
+}
+
+// ════════════════════════════════════════════
 // INIT
 // ════════════════════════════════════════════
 ['existing','new'].forEach(renderFlow);
 renderERD();
 renderArchDiagram();
 renderAnalystView();
+renderExistingFlow();
+renderHITL();
 renderExistingFlow();
 renderHITL();
 document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
