@@ -109,7 +109,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 <button class="tab" data-v="new"><span class="tab-new">NEW</span>Architecture — Fargate</button>
 <button class="tab" data-v="diagram"><span class="tab-new">NEW</span>Flow Diagram</button>
 <button class="tab" data-v="erd"><span class="tab-new">NEW</span>Database ERD</button>
-<button class="tab" data-v="dashboards"><span class="tn">⬡</span>Dashboards</button>
+<button class="tab" data-v="old-dash"><span class="tab-old">OLD</span>Dashboards</button>
+<button class="tab" data-v="new-dash"><span class="tab-new">NEW</span>Dashboards</button>
 <button class="tab" data-v="analyst"><span class="tn">→</span>Analyst View</button>
 <button class="tab" data-v="hitl"><span class="tn">⟳</span>Human-in-Loop</button>
 </div>
@@ -153,31 +154,52 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 </div>
 
 
-<div class="vw" id="vw-dashboards">
-<div class="vi"><h2>Live Dashboards</h2><p>Two S3-hosted dashboards for monitoring the Amazon CORE pipeline. Both require login (shared team credentials).</p></div>
-<div style="max-width:900px;margin:0 auto"><div style="display:inline-flex;align-items:center;gap:.5rem;margin-bottom:1rem"><span style="padding:.15rem .55rem;border-radius:4px;font-size:.7rem;font-weight:800;background:rgba(255,153,0,.15);color:#FF9900;border:1px solid rgba(255,153,0,.4);font-family:'Sora',sans-serif">OLD</span><span style="font-size:.88rem;color:var(--text2)">V1 Lambda Pipeline — live monitoring dashboards</span></div></div><div style="max-width:900px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;padding-bottom:3rem">
+<div class="vw" id="vw-old-dash">
+<div class="vi"><h2>OLD Pipeline — Dashboards</h2>
+<p>Two live S3-hosted dashboards monitoring the V1 Lambda pipeline. Login required.</p>
+</div>
+<div style="max-width:900px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;padding-bottom:3rem">
   <div style="background:var(--bg2);border:1px solid rgba(255,153,0,.3);border-radius:12px;overflow:hidden">
     <div style="padding:1rem 1.2rem;background:rgba(255,153,0,.07);border-bottom:1px solid rgba(255,153,0,.2)">
-      <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#FF9900;font-family:'Sora',sans-serif;margin-bottom:.3rem">V1 Pipeline</div>
+      <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#FF9900;font-family:'Sora',sans-serif;margin-bottom:.3rem">V1 · Filtered Posts</div>
       <div style="font-size:1.1rem;font-weight:700;color:#e6edf3;font-family:'Sora',sans-serif">Filtered Posts Dashboard</div>
     </div>
     <div style="padding:1rem 1.2rem">
-      <p style="font-size:.88rem;color:var(--text2);line-height:1.6;margin-bottom:.8rem">Every post removed by Lambdas 4-7 with its filter reason. Search by account, platform, or rule number. Understand why a specific post is missing from Tableau.</p>
-      <div style="font-size:.75rem;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:1rem;word-break:break-all;line-height:1.6">http://amazon-core-filtered-posts-dashboard<br>.s3-website.eu-west-2.amazonaws.com/index.html</div>
+      <p style="font-size:.88rem;color:var(--text2);line-height:1.6;margin-bottom:.8rem">Every post removed by Lambdas 4–7 with its filter reason. Search by account, platform, or rule. Answers: why is this post missing from Tableau?</p>
+      <div style="font-size:.75rem;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:1rem;word-break:break-all;line-height:1.7">amazon-core-filtered-posts-dashboard<br>.s3-website.eu-west-2.amazonaws.com</div>
       <a href="http://amazon-core-filtered-posts-dashboard.s3-website.eu-west-2.amazonaws.com/index.html" target="_blank" style="display:inline-flex;align-items:center;gap:.4rem;padding:.45rem 1rem;background:#FF9900;color:#000;border-radius:6px;font-size:.85rem;font-weight:700;text-decoration:none;font-family:'Sora',sans-serif">Open Dashboard →</a>
     </div>
   </div>
   <div style="background:var(--bg2);border:1px solid rgba(34,197,94,.3);border-radius:12px;overflow:hidden">
     <div style="padding:1rem 1.2rem;background:rgba(34,197,94,.07);border-bottom:1px solid rgba(34,197,94,.2)">
-      <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#22c55e;font-family:'Sora',sans-serif;margin-bottom:.3rem">V1 Pipeline</div>
+      <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#22c55e;font-family:'Sora',sans-serif;margin-bottom:.3rem">V1 · Quality &amp; Monitoring</div>
       <div style="font-size:1.1rem;font-weight:700;color:#e6edf3;font-family:'Sora',sans-serif">V1 Quality Dashboard</div>
     </div>
     <div style="padding:1rem 1.2rem">
-      <p style="font-size:.88rem;color:var(--text2);line-height:1.6;margin-bottom:.8rem">Week-on-Week trends, Post Story tracking, Pipeline Health Check, and an Old DB vs V2 comparison tab. The main quality monitoring tool for the live pipeline.</p>
-      <div style="font-size:.75rem;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:1rem;word-break:break-all;line-height:1.6">http://amazon-core-v1-quality-dashboard<br>.s3-website.eu-west-2.amazonaws.com/index.html</div>
+      <p style="font-size:.88rem;color:var(--text2);line-height:1.6;margin-bottom:.8rem">Week-on-Week trends, Post Story tracking, Pipeline Health Check, and Old DB vs V2 comparison tab. Main monitoring tool for the live V1 pipeline.</p>
+      <div style="font-size:.75rem;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:1rem;word-break:break-all;line-height:1.7">amazon-core-v1-quality-dashboard<br>.s3-website.eu-west-2.amazonaws.com</div>
       <a href="http://amazon-core-v1-quality-dashboard.s3-website.eu-west-2.amazonaws.com/index.html" target="_blank" style="display:inline-flex;align-items:center;gap:.4rem;padding:.45rem 1rem;background:#22c55e;color:#000;border-radius:6px;font-size:.85rem;font-weight:700;text-decoration:none;font-family:'Sora',sans-serif">Open Dashboard →</a>
     </div>
   </div>
+</div>
+</div>
+<div class="vw" id="vw-new-dash">
+<div class="vi"><h2>NEW Architecture — Dashboards</h2>
+<p>V2 monitoring lives in the qa.* schema in Aurora PostgreSQL — query directly. S3 dashboard planned for Phase 7.</p>
+</div>
+<div style="max-width:900px;margin:0 auto;padding-bottom:3rem">
+  <div style="background:var(--bg2);border:1px solid rgba(6,182,212,.3);border-radius:12px;padding:1.2rem;margin-bottom:1rem">
+    <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#06b6d4;font-family:'Sora',sans-serif;margin-bottom:.6rem">QA Schema — Queryable Postgres Tables (no CSV hunting)</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem">
+      <div style="background:var(--bg3);border-radius:8px;padding:.7rem"><div style="font-size:.7rem;font-weight:700;color:#06b6d4;font-family:'Sora',sans-serif;margin-bottom:.3rem">qa.pipeline_runs</div><div style="font-size:.8rem;color:var(--text2)">Every run — status, step reached, row counts, elapsed time</div></div>
+      <div style="background:var(--bg3);border-radius:8px;padding:.7rem"><div style="font-size:.7rem;font-weight:700;color:#06b6d4;font-family:'Sora',sans-serif;margin-bottom:.3rem">qa.filtered_posts</div><div style="font-size:.8rem;color:var(--text2)">All 21 filter rules in one table — replaces 5 CSVs</div></div>
+      <div style="background:var(--bg3);border-radius:8px;padding:.7rem"><div style="font-size:.7rem;font-weight:700;color:#06b6d4;font-family:'Sora',sans-serif;margin-bottom:.3rem">qa.duplicate_candidates</div><div style="font-size:.8rem;color:var(--text2)">T9 dedup — pending/approved/rejected/resolved lifecycle</div></div>
+      <div style="background:var(--bg3);border-radius:8px;padding:.7rem"><div style="font-size:.7rem;font-weight:700;color:#06b6d4;font-family:'Sora',sans-serif;margin-bottom:.3rem">qa.duplicate_checks</div><div style="font-size:.8rem;color:var(--text2)">Legacy dedup query results per run</div></div>
+      <div style="background:var(--bg3);border-radius:8px;padding:.7rem"><div style="font-size:.7rem;font-weight:700;color:#06b6d4;font-family:'Sora',sans-serif;margin-bottom:.3rem">qa.data_quality_issues</div><div style="font-size:.8rem;color:var(--text2)">Schema drift — missing files, unexpected column changes</div></div>
+      <div style="background:var(--bg3);border-radius:8px;padding:.7rem"><div style="font-size:.7rem;font-weight:700;color:#06b6d4;font-family:'Sora',sans-serif;margin-bottom:.3rem">qa.collab_priority_decisions</div><div style="font-size:.8rem;color:var(--text2)">T3 collab priority rule audit per run</div></div>
+    </div>
+  </div>
+  <div style="background:var(--bg2);border:1px solid rgba(245,158,66,.2);border-radius:12px;padding:1rem 1.2rem;font-size:.83rem;color:var(--text2);line-height:1.6">V2 S3 monitoring dashboard is planned for Phase 7. For now query qa.* tables directly via RDS Query Editor or check the V1 Quality Dashboard comparison tab.</div>
 </div>
 </div>
 <div class="vw" id="vw-analyst">
@@ -189,6 +211,16 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 // ════════════════════════════════════════════
 // DATA — uses story (layman) + tech (technical)
 // ════════════════════════════════════════════
+
+// Story splitter — first ~2 sentences are the narrative analogy (Story),
+// the rest is the Plain English explanation
+function _splitStory(s){
+  if(!s) return {story:'',plain:''};
+  var b=s.indexOf('. ',150);
+  if(b<0||b>420) b=Math.min(s.length,350);
+  return {story:s.slice(0,b+1).trim(), plain:s.slice(b+1).trim()};
+}
+
 const D={
 existing:{rows:[
 {label:'DATA SOURCES',nodes:[
@@ -375,7 +407,7 @@ function sd(k,id,el){
 const c=document.getElementById('det-'+k);const i=D[k]?.details?.[id];if(!i)return;
 document.getElementById('flow-'+k).querySelectorAll('.nd').forEach(n=>n.classList.remove('act'));el.classList.add('act');
 let h='';
-if(i.story)h+=`<div class="ds ds-story"><h4>📖 Plain English</h4><p style="line-height:1.7;font-size:.92rem">${i.story}</p></div>`;
+if(i.story){var _sp=_splitStory(i.story);h+=`<div class="ds ds-story"><h4>📖 Story</h4><p style="line-height:1.7;font-size:.93rem;font-style:italic;color:var(--text)">${_sp.story}</p></div>`;if(_sp.plain)h+=`<div class="ds" style="border-left:3px solid #22c55e;padding-left:.8rem"><h4 style="font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:#22c55e;font-weight:700;margin-bottom:.3rem;font-family:'Sora',sans-serif">💬 Plain English</h4><p style="line-height:1.7;font-size:.9rem;color:var(--text2)">${_sp.plain}</p></div>`;}
 if(i.tech)h+=`<div class="ds ds-tech"><h4>🔧 Technical Detail</h4><p style="line-height:1.7;font-size:.9rem;font-family:'JetBrains Mono',monospace">${i.tech}</p></div>`;
 if(i.why)h+=`<div class="ds ds-why"><h4>💡 Why This Exists</h4><p>${i.why}</p></div>`;
 if(i.table?.length)h+=`<div class="ds"><h4>Reads / Writes</h4><table class="dt">${i.table.map(([a,b])=>`<tr><td>${a}</td><td>${b}</td></tr>`).join('')}</table></div>`;
@@ -538,7 +570,7 @@ function showArchDetail(key){
 const i=AD[key];if(!i)return;
 const c=document.getElementById('det-diagram');
 let h='';
-if(i.story)h+=`<div class="ds ds-story"><h4>📖 Plain English</h4><p style="line-height:1.7;font-size:.92rem">${i.story}</p></div>`;
+if(i.story){var _sp=_splitStory(i.story);h+=`<div class="ds ds-story"><h4>📖 Story</h4><p style="line-height:1.7;font-size:.93rem;font-style:italic;color:var(--text)">${_sp.story}</p></div>`;if(_sp.plain)h+=`<div class="ds" style="border-left:3px solid #22c55e;padding-left:.8rem"><h4 style="font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:#22c55e;font-weight:700;margin-bottom:.3rem;font-family:'Sora',sans-serif">💬 Plain English</h4><p style="line-height:1.7;font-size:.9rem;color:var(--text2)">${_sp.plain}</p></div>`;}
 if(i.tech)h+=`<div class="ds ds-tech"><h4>🔧 Technical Detail</h4><p style="line-height:1.7;font-size:.9rem;font-family:'JetBrains Mono',monospace">${i.tech}</p></div>`;
 if(i.why)h+=`<div class="ds ds-why"><h4>💡 Why This Exists</h4><p>${i.why}</p></div>`;
 c.innerHTML=`<div class="dp"><div class="dh"><div><h3>${i.title}</h3></div><button class="dc" onclick="this.closest('.dp').remove()">✕</button></div><div class="db">${h}</div></div>`;
@@ -1246,7 +1278,7 @@ window.showExistDetail=function(id){
   h+=`<span style="font-size:1.2rem">⚡</span><div><div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:${col};font-weight:700">${d.type}</div><h3 style="font-size:1.05rem;font-weight:700;font-family:'Sora',sans-serif">${d.title}</h3></div>`;
   h+=`<button onclick="document.getElementById('exist-det').innerHTML=''" style="margin-left:auto;background:0;border:0;color:var(--text3);cursor:pointer;font-size:1.1rem;padding:4px 8px;border-radius:4px">✕</button></div>`;
   h+=`<div style="padding:1rem 1.2rem;display:grid;gap:.8rem">`;
-  h+=`<div style="border-left:3px solid var(--accent4);padding-left:.8rem"><div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:var(--accent4);font-weight:700;margin-bottom:.3rem">Plain English</div><p style="color:var(--text);font-size:.9rem;line-height:1.6">${d.story}</p></div>`;
+  (function(){var _sp=_splitStory(d.story);h+=`<div style="border-left:3px solid var(--accent4);padding-left:.8rem"><div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:var(--accent4);font-weight:700;margin-bottom:.3rem;font-family:'Sora',sans-serif">📖 Story</div><p style="color:var(--text);font-size:.9rem;line-height:1.7;font-style:italic">${_sp.story}</p></div>`;if(_sp.plain)h+=`<div style="border-left:3px solid #22c55e;padding-left:.8rem"><div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:#22c55e;font-weight:700;margin-bottom:.3rem;font-family:'Sora',sans-serif">💬 Plain English</div><p style="color:var(--text2);font-size:.88rem;line-height:1.7">${_sp.plain}</p></div>`;})();
   h+=`<div style="border-left:3px solid var(--fargate);padding-left:.8rem"><div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:var(--fargate);font-weight:700;margin-bottom:.3rem">Technical Detail</div><p style="color:var(--text2);font-size:.88rem;line-height:1.55;font-family:'JetBrains Mono'">${d.tech||'See Existing Pipeline tab for full detail.'}</p></div>`;
   if(d.table&&d.table.length){
     h+=`<table class="dt"><thead><tr><th>Key</th><th>Value</th></tr></thead><tbody>`;
