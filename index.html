@@ -23,10 +23,37 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .bdg span{width:5px;height:5px;border-radius:50%;background:#FF9900;animation:p 2s infinite}
 @keyframes p{0%,100%{opacity:1}50%{opacity:.3}}
 
-.tabs{display:flex;gap:2px;padding:.7rem 3rem 0;background:var(--bg);position:sticky;top:0;z-index:100}
-.tab{padding:.75rem 1.4rem;font-size:.9rem;font-weight:600;color:var(--text3);cursor:pointer;border:none;background:0;border-bottom:2px solid transparent;transition:.2s;font-family:'Sora',sans-serif}
+.tabs{
+  display:flex;
+  gap:0;
+  padding:.5rem 1rem 0;
+  background:var(--bg);
+  position:sticky;
+  top:0;
+  z-index:100;
+  overflow-x:auto;
+  scrollbar-width:none;
+  -ms-overflow-style:none;
+  border-bottom:1px solid var(--border);
+}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{
+  padding:.6rem 1rem;
+  font-size:.82rem;
+  font-weight:600;
+  color:var(--text3);
+  cursor:pointer;
+  border:none;
+  background:0;
+  border-bottom:2px solid transparent;
+  transition:.2s;
+  font-family:'Sora',sans-serif;
+  white-space:nowrap;
+  flex-shrink:0;
+  border-radius:6px 6px 0 0;
+}
 .tab:hover{color:var(--text2);background:var(--bg2)}
-.tab.active{color:#FF9900;border-bottom-color:#FF9900;background:var(--bg2)}
+.tab.active{color:#FF9900;border-bottom-color:#FF9900;background:rgba(255,153,0,.06)}
 .tab .tn{font-family:'JetBrains Mono';font-size:.65rem;margin-right:.3rem;opacity:.5}
 .tab.active .tn{color:#FF9900;opacity:.8}
 
@@ -87,11 +114,16 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .svg-wrap svg .erd-node{cursor:pointer}
 .svg-wrap svg .erd-node:hover rect{stroke-opacity:.8!important;filter:brightness(1.3)}
 
-@media(max-width:768px){.hero,.tabs,.vw{padding-left:1rem;padding-right:1rem}.hero h1{font-size:1.6rem}.nd{min-width:100px;padding:.5rem .7rem}.tab{padding:.55rem .7rem;font-size:.8rem}}
+@media(max-width:768px){.hero,.vw{padding-left:1rem;padding-right:1rem}.hero h1{font-size:1.6rem}.nd{min-width:100px;padding:.5rem .7rem}}
 .tab-old{display:inline-block;padding:.1rem .4rem;border-radius:4px;font-size:.6rem;font-weight:800;background:rgba(255,153,0,.15);color:#FF9900;border:1px solid rgba(255,153,0,.4);margin-right:.4rem;letter-spacing:.05em;font-family:'Sora',sans-serif}
 .tab-new{display:inline-block;padding:.1rem .4rem;border-radius:4px;font-size:.6rem;font-weight:800;background:rgba(34,197,94,.12);color:#22c55e;border:1px solid rgba(34,197,94,.35);margin-right:.4rem;letter-spacing:.05em;font-family:'Sora',sans-serif}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-</style>
+
+.tab-group-new{
+  margin-left:.6rem;
+  border-left:1px solid var(--border);
+  padding-left:1rem;
+}</style>
 </head>
 <body>
 <div style="height:3px;background:linear-gradient(90deg,#FF9900,#ff6600,#FF9900);background-size:200% 100%;animation:shimmer 3s linear infinite"></div>
@@ -109,7 +141,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 <button class="tab" data-v="old-dash"><span class="tab-old">OLD</span>Dashboards</button>
 <button class="tab" data-v="old-analyst"><span class="tab-old">OLD</span>Analyst View</button>
 <button class="tab" data-v="old-hitl"><span class="tab-old">OLD</span>Human-in-Loop</button>
-<button class="tab" data-v="new"><span class="tab-new">NEW</span>Architecture — Fargate</button>
+<button class="tab tab-group-new" data-v="new"><span class="tab-new">NEW</span>Architecture — Fargate</button>
 <button class="tab" data-v="diagram"><span class="tab-new">NEW</span>Flow Diagram</button>
 <button class="tab" data-v="erd"><span class="tab-new">NEW</span>Database ERD</button>
 <button class="tab" data-v="new-dash"><span class="tab-new">NEW</span>Dashboards</button>
@@ -231,12 +263,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 <div class="vw" id="vw-old-hitl">
 <div class="vi"><h2>OLD Pipeline — Human-in-the-Loop</h2>
 <p>Manual review processes that run alongside the pipeline. Select a view below.</p></div>
-<div style="display:flex;gap:4px;max-width:960px;margin:0 auto 1.5rem;border-bottom:1px solid var(--border);padding:0 .5rem">
-  <button class="htab" id="htab-old" onclick="switchHTab(this,'old')" style="padding:.6rem 1.1rem;font-size:.85rem;font-weight:600;color:#FF9900;cursor:pointer;border:none;background:0;border-bottom:2px solid #FF9900;font-family:'Sora',sans-serif"><span class="tab-old">OLD</span> λ10 Dedup Review</button>
-  <button class="htab" id="htab-new" onclick="switchHTab(this,'new')" style="padding:.6rem 1.1rem;font-size:.85rem;font-weight:600;color:var(--text3);cursor:pointer;border:none;background:0;border-bottom:2px solid transparent;font-family:'Sora',sans-serif"><span class="tab-new">NEW</span> T9 Dedup Review</button>
-</div>
 <div style="max-width:960px;margin:0 auto" id="hitl-old"></div>
-<div style="max-width:960px;margin:0 auto;display:none" id="hitl-new"></div>
 </div>
 <div class="vw" id="vw-new-hitl">
 <div class="vi"><h2>NEW Pipeline — Human-in-the-Loop</h2>
