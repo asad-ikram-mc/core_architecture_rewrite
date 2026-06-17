@@ -132,7 +132,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 <div class="hero-logo"><svg viewBox="0 0 240 68" xmlns="http://www.w3.org/2000/svg" style="height:44px"><text x="120" y="38" text-anchor="middle" fill="#ffffff" font-family="'Sora',sans-serif" font-size="40" font-weight="700" letter-spacing="-1.5">amazon</text><path d="M62 46c-18 10-42 16-63 16-30 0-57-11-78-30-1.6-1.4-.2-3.4 1.8-2.3 22 13 50 21 78 21 19 0 40-4 59-12 2.9-1.2 5.4 1.9 2.5 4z" fill="#f59e42" transform="translate(82,6) scale(.6)"/><path d="M69 43c-2.2-2.8-14.7-1.3-20.3-.7-1.7.2-2-.6-.4-2.3 9.9-7 26.1-5 28-2.6 1.9 2.4-.5 18.7-9.8 26.5-1.4 1.2-2.8.6-2.2-1 2.1-5.2 6.8-16.9 4.6-19.8z" fill="#f59e42" transform="translate(82,6) scale(.6)"/></svg></div>
 <h1>Amazon CORE — Pipeline Explorer</h1>
 <p>Amazon CORE Social Media ETL · M+C Saatchi Fluency</p>
-<div class="hero-b"><div class="bdg"><span></span>v1: 14 Lambdas · v2: 10 Fargate Tasks · Step Functions · Daily</div><a href="roadmap.html" style="display:inline-flex;align-items:center;gap:.4rem;padding:.3rem .85rem;border-radius:20px;font-size:.78rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;background:rgba(245,158,66,.1);color:#f59e42;border:1px solid rgba(245,158,66,.25);font-family:'Sora',sans-serif;text-decoration:none;transition:.2s">Build Roadmap →</a></div>
+<div class="hero-b">
+<div class="bdg"><span></span>V1: 14 Lambdas · V2: 10 Fargate Tasks · Step Functions · Daily</div>
+<a href="roadmap.html" style="display:inline-flex;align-items:center;gap:.4rem;padding:.3rem .85rem;border-radius:20px;font-size:.78rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;background:rgba(34,197,94,.1);color:#22c55e;border:1px solid rgba(34,197,94,.25);font-family:'Sora',sans-serif;text-decoration:none;transition:.2s"><span style="display:inline-block;padding:.05rem .35rem;border-radius:3px;font-size:.6rem;font-weight:800;background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.35);margin-right:.3rem;letter-spacing:.05em">NEW</span>Build Roadmap →</a>
+</div>
+<div style="display:flex;align-items:center;justify-content:center;gap:1.2rem;margin-top:.6rem;font-size:.8rem;font-family:'Sora',sans-serif">
+  <div style="display:flex;align-items:center;gap:.4rem"><span style="display:inline-block;padding:.1rem .45rem;border-radius:4px;font-size:.62rem;font-weight:800;background:rgba(255,153,0,.15);color:#FF9900;border:1px solid rgba(255,153,0,.4)">OLD</span><span style="color:var(--text3)">= V1 Lambda Pipeline (live in production)</span></div>
+  <span style="color:var(--border)">·</span>
+  <div style="display:flex;align-items:center;gap:.4rem"><span style="display:inline-block;padding:.1rem .45rem;border-radius:4px;font-size:.62rem;font-weight:800;background:rgba(34,197,94,.12);color:#22c55e;border:1px solid rgba(34,197,94,.35)">NEW</span><span style="color:var(--text3)">= V2 Fargate + Step Functions (in development)</span></div>
+</div>
 </div>
 
 <div class="tabs">
@@ -231,30 +239,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 
 <div class="vw" id="vw-old-analyst">
 <div class="vi"><h2>OLD Pipeline — Analyst View</h2>
-<p>What the V1 Lambda pipeline means for the analyst opening Tableau. No pipeline knowledge needed.</p>
+<p>You don't touch a pipeline, a database, or a Lambda. Here's what the V1 architecture means for you as an analyst opening Tableau.</p>
 </div>
-<div style="max-width:900px;margin:0 auto;display:grid;gap:.8rem;padding-bottom:3rem">
-  <div style="background:var(--bg2);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:1rem 1.2rem">
-    <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#ef4444;margin-bottom:.4rem;font-family:'Sora',sans-serif">⚠ Monday Only Updates</div>
-    <p style="font-size:.88rem;color:var(--text2);line-height:1.6">Tableau only refreshes on Mondays. A post published Tuesday through Sunday is <strong style="color:#e6edf3">invisible in Tableau until the following Monday</strong> — up to 6 days of blindness. This is because the Paid Data file (which unlocks the full pipeline) only arrives on Mondays from Sprinklr.</p>
-  </div>
-  <div style="background:var(--bg2);border:1px solid rgba(255,153,0,.25);border-radius:10px;padding:1rem 1.2rem">
-    <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#FF9900;margin-bottom:.4rem;font-family:'Sora',sans-serif">📊 What You See in Tableau</div>
-    <p style="font-size:.88rem;color:var(--text2);line-height:1.6">sprinklr_table powers every Tableau view. Each post appears <strong style="color:#e6edf3">twice</strong> — once for the Median benchmark row, once for the Average benchmark row (created by Lambda 6). Follower data comes from a separate follower_table updated by Lambda 11. Filter reasons are scattered across 5 CSVs in S3 (use the Filtered Posts Dashboard to search).</p>
-  </div>
-  <div style="background:var(--bg2);border:1px solid rgba(59,130,246,.25);border-radius:10px;padding:1rem 1.2rem">
-    <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#3b82f6;margin-bottom:.4rem;font-family:'Sora',sans-serif">✏️ Requesting a Metric Fix</div>
-    <p style="font-size:.88rem;color:var(--text2);line-height:1.6">Add a row to the shared <strong style="color:#e6edf3">Google Sheet</strong> with the Permalink, Column Name, and New Value. Leave Updated Date blank. Lambda 10 picks it up next Monday and applies it to both tables. Auto-recalculates Engagement Rate, LPI, and CPI if you change an impression column.</p>
-  </div>
-  <div style="background:var(--bg2);border:1px solid rgba(20,184,166,.25);border-radius:10px;padding:1rem 1.2rem">
-    <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#14b8a6;margin-bottom:.4rem;font-family:'Sora',sans-serif">🔎 Why Is a Post Missing?</div>
-    <p style="font-size:.88rem;color:var(--text2);line-height:1.6">Open the <strong style="color:#e6edf3">Filtered Posts Dashboard</strong> and search by Permalink. One of 21 filter rules (R1–R21 across Lambdas 4, 5, 6, 7) removed it. Common reasons: Total Impressions &lt;250 (R5a), country not in scope (R7), deleted post (R8), null Country mapping (R9). The dashboard searches all 5 filter CSVs at once.</p>
-  </div>
-  <div style="background:var(--bg2);border:1px solid rgba(99,102,241,.25);border-radius:10px;padding:1rem 1.2rem">
-    <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#6366f1;margin-bottom:.4rem;font-family:'Sora',sans-serif">🗑️ Duplicate Posts in Tableau?</div>
-    <p style="font-size:.88rem;color:var(--text2);line-height:1.6">The dedup detection (Lambda 10 post-Monday) finds URL-form duplicates (e.g. Instagram /p/ABC and /reel/ABC for the same post). The operator downloads rows_to_remove CSV and runs the DELETE in RDS Query Editor. Reflected in Tableau on next load — no pipeline re-run. Report to prabhat or asad if you spot a duplicate.</p>
-  </div>
-</div>
+<div id="old-analyst-content"></div>
 </div>
 <div class="vw" id="vw-new-analyst">
 <div class="vi"><h2>NEW Pipeline — Analyst View</h2><p>You won't touch a pipeline, a database, or a Lambda. Here's what the new architecture means for the person opening Tableau every morning.</p></div>
@@ -657,6 +644,63 @@ c.scrollIntoView({behavior:'smooth',block:'nearest'});
 // ════════════════════════════════════════════
 // ANALYST VIEW
 // ════════════════════════════════════════════
+function renderOldAnalystView(){
+const el=document.getElementById('old-analyst-content');
+if(!el)return;
+const S=[
+{icon:'📅',title:'Tableau Updates Mondays Only',color:'#ef4444',id:'monday',
+ before:'You open Tableau on Wednesday morning. The data still shows Monday. A post that went viral on Tuesday? Completely invisible until next Monday — up to 6 days of blindness.',
+ after:'This is a hard constraint in V1. The Paid Data file that unlocks the full pipeline only arrives from Sprinklr on Mondays. Every other day the pipeline runs partially but only updates master_table.csv, not Tableau. There is no workaround in V1 — V2 removes this constraint entirely.',
+ metric:'Monday only refresh'},
+{icon:'📊',title:'Every Post Appears Twice in Tableau',color:'#FF9900',id:'twice',
+ before:'You filter to a specific post and see two rows with slightly different metric columns. One says Benchmark Type = Median, the other says Average. The numbers are different. Which one is right?',
+ after:'Both are correct — this is intentional. Lambda 6 creates two rows per post: one comparing the post against the Median benchmark for its Country + Platform + Quarter, and one against the Average benchmark. Tableau uses both to show the full comparison picture. Always filter to one Benchmark Type when counting posts.',
+ metric:'2 rows per post'},
+{icon:'✏️',title:'Requesting a Metric Fix',color:'#3b82f6',id:'fix',
+ before:'A post has the wrong impression count in Tableau. You know the real number. How do you get it corrected?',
+ after:'Add a row to the shared Google Sheet with three things: Permalink, Column Name, New Value. Leave Updated Date blank. Lambda 10 will pick it up next Monday and apply it to both database tables. If you change an impression column, it automatically recalculates Engagement Rate, Likes per Impression, and Comments per Impression.',
+ metric:'Fixed next Monday'},
+{icon:'🔍',title:'Why Is a Post Missing From Tableau?',color:'#6366f1',id:'missing',
+ before:'You know a post exists on Instagram. You can see it in Sprinklr. But it is not in Tableau. You have no idea why.',
+ after:'One of 21 filter rules (Rules 1–21 across Lambdas 4, 5, 6, 7) removed it. Open the Filtered Posts Dashboard and search by the post Permalink. The dashboard searches across all five filter log files at once and shows you the exact rule that removed the post and why.',
+ metric:'21 filter rules'},
+{icon:'🗑️',title:'Duplicate Posts in Tableau',color:'#14b8a6',id:'dupes',
+ before:'The same Instagram post appears twice in Tableau with different URLs (/p/ABC and /reel/ABC). The impression counts are different. You don\'t know which one to trust.',
+ after:'This is a URL-form duplicate: Instagram migrated the post\'s URL from /p/ to /reel/. Lambda 10 runs a dedup detection every Monday and flags these. The operator downloads the rows_to_remove CSV, reviews it, and runs a manual DELETE in the database. Reflected in Tableau on next Monday\'s refresh. Report duplicates to Prabhat or Asad — they will be cleaned next Monday.',
+ metric:'Cleaned Mondays'},
+{icon:'👥',title:'Collaborator and LINE Posts',color:'#22c55e',id:'collab',
+ before:'You see posts in Tableau from accounts that are not Amazon\'s own Sprinklr accounts — influencer posts, LINE Japan content. Where do these come from?',
+ after:'Two separate Google Sheets feed into the pipeline. Lambda 8 reads 7 per-country Collaboration Sheets (UK, DE, FR, IT, ES, IN, JP) every Monday, deletes the previous week\'s collab rows, and re-inserts fresh ones. Lambda 9 does the same for LINE Japan data. Both run independently of the main pipeline — a race condition risk means occasionally collab/LINE posts are missing from a Monday\'s data if those lambdas finish late.',
+ metric:'7 collab sheets + LINE'},
+{icon:'📉',title:'Follower Data',color:'#f59e42',id:'followers',
+ before:'The Followers view in Tableau shows different numbers than what you see directly on LinkedIn. LinkedIn\'s own app shows 2.4M followers, Tableau shows something different.',
+ after:'LinkedIn\'s API returns inconsistent follower counts depending on which region or tool makes the API call. Lambda 11 solves this by ignoring the API value entirely for 7 markets (UK, DE, FR, IT, ES, IN, JP) and using hardcoded verified counts that the account teams have personally confirmed. These are updated manually when the teams confirm a significant change.',
+ metric:'Hardcoded verified counts'},
+];
+let h='<div class="ac-grid">';
+S.forEach(function(c){
+  h+='<div class="ac" id="ac-old-'+c.id+'" onclick="flipOldCard(\''+c.id+'\')">';
+  h+='<div class="ac-front"><span class="ac-icon">'+c.icon+'</span>';
+  h+='<h3 style="font-size:1rem;font-weight:700;color:var(--text);font-family:\'Sora\',sans-serif;margin-bottom:.4rem">'+c.title+'</h3>';
+  h+='<span style="display:inline-block;padding:.18rem .55rem;border-radius:20px;font-size:.72rem;font-weight:700;background:'+c.color+'15;color:'+c.color+';border:1px solid '+c.color+'35;font-family:\'Sora\',sans-serif">'+c.metric+'</span>';
+  h+='<p style="font-size:.8rem;color:var(--text3);margin-top:.6rem;font-family:\'Sora\',sans-serif">Click to learn more</p>';
+  h+='</div><div class="ac-back">';
+  h+='<p style="font-size:.8rem;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem;font-family:\'Sora\',sans-serif">Before (V1)</p>';
+  h+='<p style="font-size:.9rem;color:var(--text);line-height:1.6;margin-bottom:.8rem;font-style:italic">'+c.before+'</p>';
+  h+='<div style="width:100%;height:1px;background:'+c.color+'30;margin-bottom:.8rem"></div>';
+  h+='<p style="font-size:.8rem;color:'+c.color+';font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem;font-family:\'Sora\',sans-serif">How V1 Works</p>';
+  h+='<p style="font-size:.9rem;color:var(--text2);line-height:1.6">'+c.after+'</p>';
+  h+='<p style="font-size:.75rem;color:var(--text3);margin-top:.8rem;font-family:\'Sora\',sans-serif">Click to flip back</p>';
+  h+='</div></div>';
+});
+h+='</div>';
+el.innerHTML=h;
+}
+function flipOldCard(id){
+  var el=document.getElementById('ac-old-'+id);
+  if(el)el.classList.toggle('flipped');
+}
+
 function renderAnalystView(){
 const el=document.getElementById('analyst-content')||document.getElementById('new-analyst-content');
 const S=[
@@ -1157,8 +1201,8 @@ function box(x,y,w,h,col,title,sub,badge,id,mon){
   s+=`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" fill="${bc}" stroke="${bs}" stroke-width="1.3"/>`;
   s+=`<rect x="${x+w-48}" y="${y}" width="48" height="18" rx="6" fill="${col}22"/>`;
   s+=`<text x="${x+w-24}" y="${y+12}" text-anchor="middle" fill="${col}" font-size="7.5" font-weight="700" font-family="'JetBrains Mono'" style="pointer-events:none">${badge}</text>`;
-  s+=`<text x="${x+10}" y="${y+22}" fill="${col}" font-size="9.5" font-weight="700" style="pointer-events:none">${title}</text>`;
-  s+=`<text x="${x+10}" y="${y+36}" fill="#9ba1b0" font-size="8" font-family="'JetBrains Mono'" style="pointer-events:none">${sub}</text>`;
+  s+=`<text x="${x+10}" y="${y+24}" fill="#e6edf3" font-size="11.5" font-weight="700" style="pointer-events:none">${title}</text>`;
+  s+=`<text x="${x+10}" y="${y+39}" fill="#c4cad4" font-size="9" font-family="'JetBrains Mono'" style="pointer-events:none">${sub}</text>`;
   s+=`</g>`;
 }
 function arr(x1,y1,x2,y2,col,dash){
@@ -1592,6 +1636,7 @@ function switchHTab(btn,tab){
 renderERD();
 renderArchDiagram();
 renderAnalystView();
+renderOldAnalystView();
 renderExistingFlow();
 renderHITL();
 renderExistingFlow();
