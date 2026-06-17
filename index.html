@@ -3,31 +3,32 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sprinklr Pipeline — Architecture Explorer</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23131A22'/%3E%3Ctext x='32' y='30' text-anchor='middle' fill='%23FFFFFF' font-family='Arial,sans-serif' font-size='22' font-weight='700'%3Eazn%3C/text%3E%3Cpath d='M12 42 Q32 54 52 42' fill='none' stroke='%23FF9900' stroke-width='4' stroke-linecap='round'/%3E%3Cpath d='M48 40 L53 44 L52 38' fill='%23FF9900'/%3E%3C/svg%3E">
+<title>Amazon CORE — Pipeline Explorer</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=Playfair+Display:wght@400;500;600;700&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#0a0c10;--bg2:#12151c;--bg3:#1a1e28;--text:#e2e4ea;--text2:#9ba1b0;--text3:#636a7e;--accent:#4f8ff7;--accent4:#f59e42;--rdl:#3b82f6;--ref:#6366f1;--odl:#14b8a6;--adl:#22c55e;--qa:#ef4444;--lambda:#f59e42;--s3:#4f8ff7;--rds:#38c9a0;--gsheet:#7c6cf0;--infra:#e879f9;--fargate:#06b6d4;--border:#2a2f3e;--R:12px;--r:8px}
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1f2937;--text:#e6edf3;--text2:#8b949e;--text3:#484f58;--accent:#FF9900;--accent4:#FF9900;--rdl:#3b82f6;--ref:#6366f1;--odl:#14b8a6;--adl:#22c55e;--qa:#ef4444;--lambda:#FF9900;--s3:#4f8ff7;--rds:#38c9a0;--gsheet:#7c6cf0;--infra:#e879f9;--fargate:#FF9900;--border:#30363d;--R:12px;--r:8px}
 html{font-size:15px;scroll-behavior:smooth}
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
 
 .hero{padding:3rem 3rem 2.2rem;text-align:center;background:linear-gradient(180deg,var(--bg2),var(--bg));border-bottom:1px solid var(--border);position:relative}
-.hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),var(--accent4),transparent);opacity:.25}
+.hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#FF9900,#ffcc44,transparent);opacity:.35}
 .hero-logo{margin-bottom:1rem}
 .hero-logo svg{height:44px}
-.hero h1{font-family:'Playfair Display',serif;font-size:2.8rem;font-weight:500;background:linear-gradient(135deg,#fff,var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-.02em}
+.hero h1{font-family:'Playfair Display',serif;font-size:2.8rem;font-weight:500;background:linear-gradient(135deg,#FF9900,#ffcc66,#fff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-.02em}
 .hero p{color:var(--text2);font-size:1.05rem;margin-top:.4rem;font-family:'Sora',sans-serif;font-weight:400;letter-spacing:.01em}
 .hero-b{display:flex;gap:.5rem;margin-top:.8rem;justify-content:center;flex-wrap:wrap}
-.bdg{display:inline-flex;align-items:center;gap:.4rem;padding:.3rem .85rem;border-radius:20px;font-size:.78rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;background:rgba(6,182,212,.07);color:var(--fargate);border:1px solid rgba(6,182,212,.18);font-family:'Sora',sans-serif}
-.bdg span{width:5px;height:5px;border-radius:50%;background:#38c9a0;animation:p 2s infinite}
+.bdg{display:inline-flex;align-items:center;gap:.4rem;padding:.3rem .85rem;border-radius:20px;font-size:.78rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;background:rgba(255,153,0,.08);color:#FF9900;border:1px solid rgba(255,153,0,.25);font-family:'Sora',sans-serif}
+.bdg span{width:5px;height:5px;border-radius:50%;background:#FF9900;animation:p 2s infinite}
 @keyframes p{0%,100%{opacity:1}50%{opacity:.3}}
 
 .tabs{display:flex;gap:2px;padding:.7rem 3rem 0;background:var(--bg);position:sticky;top:0;z-index:100}
 .tab{padding:.75rem 1.4rem;font-size:.9rem;font-weight:600;color:var(--text3);cursor:pointer;border:none;background:0;border-bottom:2px solid transparent;transition:.2s;font-family:'Sora',sans-serif}
 .tab:hover{color:var(--text2);background:var(--bg2)}
-.tab.active{color:var(--fargate);border-bottom-color:var(--fargate);background:var(--bg2)}
+.tab.active{color:#FF9900;border-bottom-color:#FF9900;background:var(--bg2)}
 .tab .tn{font-family:'JetBrains Mono';font-size:.65rem;margin-right:.3rem;opacity:.5}
-.tab.active .tn{color:var(--fargate);opacity:.7}
+.tab.active .tn{color:#FF9900;opacity:.8}
 
 .vw{display:none;padding:2rem 3rem 3rem}.vw.active{display:block}
 .vi{max-width:1100px;margin:0 auto 1.5rem;text-align:center}
@@ -70,7 +71,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .db{padding:1rem 1.2rem;display:grid;gap:.8rem}
 .ds h4{font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:.3rem;font-weight:600}
 .ds p{color:var(--text2);line-height:1.55;font-size:.92rem}
-.ds-story{border-left:3px solid var(--accent4);padding-left:.8rem}
+.ds-story{border-left:3px solid #FF9900;padding-left:.8rem}
 .ds-story p{font-size:.9rem;line-height:1.6}
 .ds-tech{border-left:3px solid var(--fargate);padding-left:.8rem}
 .ds-tech p{font-size:.9rem;line-height:1.55}
@@ -91,11 +92,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 </style>
 </head>
 <body>
+<div style="height:3px;background:linear-gradient(90deg,#FF9900,#ff6600,#FF9900);background-size:200% 100%;animation:shimmer 3s linear infinite"></div>
+<style>@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}</style>
 <div class="hero">
-<div class="hero-logo"><svg viewBox="0 0 240 68" xmlns="http://www.w3.org/2000/svg" style="height:44px"><text x="120" y="38" text-anchor="middle" fill="#e2e4ea" font-family="'Sora',sans-serif" font-size="40" font-weight="700" letter-spacing="-1.5">amazon</text><path d="M62 46c-18 10-42 16-63 16-30 0-57-11-78-30-1.6-1.4-.2-3.4 1.8-2.3 22 13 50 21 78 21 19 0 40-4 59-12 2.9-1.2 5.4 1.9 2.5 4z" fill="#f59e42" transform="translate(82,6) scale(.6)"/><path d="M69 43c-2.2-2.8-14.7-1.3-20.3-.7-1.7.2-2-.6-.4-2.3 9.9-7 26.1-5 28-2.6 1.9 2.4-.5 18.7-9.8 26.5-1.4 1.2-2.8.6-2.2-1 2.1-5.2 6.8-16.9 4.6-19.8z" fill="#f59e42" transform="translate(82,6) scale(.6)"/></svg></div>
-<h1>Sprinklr Pipeline — Architecture Explorer</h1>
+<div class="hero-logo"><svg viewBox="0 0 240 68" xmlns="http://www.w3.org/2000/svg" style="height:44px"><text x="120" y="38" text-anchor="middle" fill="#ffffff" font-family="'Sora',sans-serif" font-size="40" font-weight="700" letter-spacing="-1.5">amazon</text><path d="M62 46c-18 10-42 16-63 16-30 0-57-11-78-30-1.6-1.4-.2-3.4 1.8-2.3 22 13 50 21 78 21 19 0 40-4 59-12 2.9-1.2 5.4 1.9 2.5 4z" fill="#f59e42" transform="translate(82,6) scale(.6)"/><path d="M69 43c-2.2-2.8-14.7-1.3-20.3-.7-1.7.2-2-.6-.4-2.3 9.9-7 26.1-5 28-2.6 1.9 2.4-.5 18.7-9.8 26.5-1.4 1.2-2.8.6-2.2-1 2.1-5.2 6.8-16.9 4.6-19.8z" fill="#f59e42" transform="translate(82,6) scale(.6)"/></svg></div>
+<h1>Amazon CORE — Pipeline Explorer</h1>
 <p>Amazon CORE Social Media ETL · M+C Saatchi Fluency</p>
-<div class="hero-b"><div class="bdg"><span></span>10 Fargate · Step Functions · Daily · T9 Q7-Lambda10 Dedup</div><a href="roadmap.html" style="display:inline-flex;align-items:center;gap:.4rem;padding:.3rem .85rem;border-radius:20px;font-size:.78rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;background:rgba(245,158,66,.1);color:#f59e42;border:1px solid rgba(245,158,66,.25);font-family:'Sora',sans-serif;text-decoration:none;transition:.2s">Build Roadmap →</a></div>
+<div class="hero-b"><div class="bdg"><span></span>v1: 14 Lambdas · v2: 10 Fargate Tasks · Step Functions · Daily</div><a href="roadmap.html" style="display:inline-flex;align-items:center;gap:.4rem;padding:.3rem .85rem;border-radius:20px;font-size:.78rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;background:rgba(245,158,66,.1);color:#f59e42;border:1px solid rgba(245,158,66,.25);font-family:'Sora',sans-serif;text-decoration:none;transition:.2s">Build Roadmap →</a></div>
 </div>
 
 <div class="tabs">
