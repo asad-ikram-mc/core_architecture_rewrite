@@ -106,13 +106,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 <div class="tabs">
 <button class="tab active" data-v="existing"><span class="tab-old">OLD</span>Pipeline — Lambdas</button>
 <button class="tab" data-v="flow"><span class="tab-old">OLD</span>Flow Diagram</button>
+<button class="tab" data-v="old-dash"><span class="tab-old">OLD</span>Dashboards</button>
+<button class="tab" data-v="old-analyst"><span class="tab-old">OLD</span>Analyst View</button>
+<button class="tab" data-v="old-hitl"><span class="tab-old">OLD</span>Human-in-Loop</button>
 <button class="tab" data-v="new"><span class="tab-new">NEW</span>Architecture — Fargate</button>
 <button class="tab" data-v="diagram"><span class="tab-new">NEW</span>Flow Diagram</button>
 <button class="tab" data-v="erd"><span class="tab-new">NEW</span>Database ERD</button>
-<button class="tab" data-v="old-dash"><span class="tab-old">OLD</span>Dashboards</button>
 <button class="tab" data-v="new-dash"><span class="tab-new">NEW</span>Dashboards</button>
-<button class="tab" data-v="analyst"><span class="tn">→</span>Analyst View</button>
-<button class="tab" data-v="hitl"><span class="tn">⟳</span>Human-in-Loop</button>
+<button class="tab" data-v="new-analyst"><span class="tab-new">NEW</span>Analyst View</button>
+<button class="tab" data-v="new-hitl"><span class="tab-new">NEW</span>Human-in-Loop</button>
 </div>
 
 <div class="vw active" id="vw-existing">
@@ -142,16 +144,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 
 <div class="vw" id="vw-flow"><div class="vi"><h2>Existing Pipeline — Data Flow</h2><p>How data moves from Sprinklr S3 through 14 Lambdas to Tableau. Every step, trigger, and data store. Click any node for details. Monday-only steps shown with amber border.</p></div><div id="flow-svg-wrap" style="max-width:1100px;margin:0 auto;overflow-x:auto;padding-bottom:2rem"></div><div id="exist-det" style="max-width:1060px;margin:0 auto;padding:0 0 2rem"></div></div>
 
-<div class="vw" id="vw-hitl">
-<div class="vi"><h2>Human-in-the-Loop</h2>
-<p>Manual review processes that run alongside the pipeline. Select a view below.</p></div>
-<div style="display:flex;gap:4px;max-width:960px;margin:0 auto 1.5rem;border-bottom:1px solid var(--border);padding:0 .5rem">
-  <button class="htab" id="htab-old" onclick="switchHTab(this,'old')" style="padding:.6rem 1.1rem;font-size:.85rem;font-weight:600;color:#FF9900;cursor:pointer;border:none;background:0;border-bottom:2px solid #FF9900;font-family:'Sora',sans-serif"><span class="tab-old">OLD</span> λ10 Dedup Review</button>
-  <button class="htab" id="htab-new" onclick="switchHTab(this,'new')" style="padding:.6rem 1.1rem;font-size:.85rem;font-weight:600;color:var(--text3);cursor:pointer;border:none;background:0;border-bottom:2px solid transparent;font-family:'Sora',sans-serif"><span class="tab-new">NEW</span> T9 Dedup Review</button>
-</div>
-<div style="max-width:960px;margin:0 auto" id="hitl-old"></div>
-<div style="max-width:960px;margin:0 auto;display:none" id="hitl-new"></div>
-</div>
+
 
 
 <div class="vw" id="vw-old-dash">
@@ -202,9 +195,54 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   <div style="background:var(--bg2);border:1px solid rgba(245,158,66,.2);border-radius:12px;padding:1rem 1.2rem;font-size:.83rem;color:var(--text2);line-height:1.6">V2 S3 monitoring dashboard is planned for Phase 7. For now query qa.* tables directly via RDS Query Editor or check the V1 Quality Dashboard comparison tab.</div>
 </div>
 </div>
-<div class="vw" id="vw-analyst">
-<div class="vi"><h2>Analyst View — What Changes For You</h2><p>You won't touch a pipeline, a database, or a Lambda. Here's what the new architecture means for the person opening Tableau every morning.</p></div>
+
+
+<div class="vw" id="vw-old-analyst">
+<div class="vi"><h2>OLD Pipeline — Analyst View</h2>
+<p>What the V1 Lambda pipeline means for the analyst opening Tableau. No pipeline knowledge needed.</p>
+</div>
+<div style="max-width:900px;margin:0 auto;display:grid;gap:.8rem;padding-bottom:3rem">
+  <div style="background:var(--bg2);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:1rem 1.2rem">
+    <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#ef4444;margin-bottom:.4rem;font-family:'Sora',sans-serif">⚠ Monday Only Updates</div>
+    <p style="font-size:.88rem;color:var(--text2);line-height:1.6">Tableau only refreshes on Mondays. A post published Tuesday through Sunday is <strong style="color:#e6edf3">invisible in Tableau until the following Monday</strong> — up to 6 days of blindness. This is because the Paid Data file (which unlocks the full pipeline) only arrives on Mondays from Sprinklr.</p>
+  </div>
+  <div style="background:var(--bg2);border:1px solid rgba(255,153,0,.25);border-radius:10px;padding:1rem 1.2rem">
+    <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#FF9900;margin-bottom:.4rem;font-family:'Sora',sans-serif">📊 What You See in Tableau</div>
+    <p style="font-size:.88rem;color:var(--text2);line-height:1.6">sprinklr_table powers every Tableau view. Each post appears <strong style="color:#e6edf3">twice</strong> — once for the Median benchmark row, once for the Average benchmark row (created by Lambda 6). Follower data comes from a separate follower_table updated by Lambda 11. Filter reasons are scattered across 5 CSVs in S3 (use the Filtered Posts Dashboard to search).</p>
+  </div>
+  <div style="background:var(--bg2);border:1px solid rgba(59,130,246,.25);border-radius:10px;padding:1rem 1.2rem">
+    <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#3b82f6;margin-bottom:.4rem;font-family:'Sora',sans-serif">✏️ Requesting a Metric Fix</div>
+    <p style="font-size:.88rem;color:var(--text2);line-height:1.6">Add a row to the shared <strong style="color:#e6edf3">Google Sheet</strong> with the Permalink, Column Name, and New Value. Leave Updated Date blank. Lambda 10 picks it up next Monday and applies it to both tables. Auto-recalculates Engagement Rate, LPI, and CPI if you change an impression column.</p>
+  </div>
+  <div style="background:var(--bg2);border:1px solid rgba(20,184,166,.25);border-radius:10px;padding:1rem 1.2rem">
+    <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#14b8a6;margin-bottom:.4rem;font-family:'Sora',sans-serif">🔎 Why Is a Post Missing?</div>
+    <p style="font-size:.88rem;color:var(--text2);line-height:1.6">Open the <strong style="color:#e6edf3">Filtered Posts Dashboard</strong> and search by Permalink. One of 21 filter rules (R1–R21 across Lambdas 4, 5, 6, 7) removed it. Common reasons: Total Impressions &lt;250 (R5a), country not in scope (R7), deleted post (R8), null Country mapping (R9). The dashboard searches all 5 filter CSVs at once.</p>
+  </div>
+  <div style="background:var(--bg2);border:1px solid rgba(99,102,241,.25);border-radius:10px;padding:1rem 1.2rem">
+    <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#6366f1;margin-bottom:.4rem;font-family:'Sora',sans-serif">🗑️ Duplicate Posts in Tableau?</div>
+    <p style="font-size:.88rem;color:var(--text2);line-height:1.6">The dedup detection (Lambda 10 post-Monday) finds URL-form duplicates (e.g. Instagram /p/ABC and /reel/ABC for the same post). The operator downloads rows_to_remove CSV and runs the DELETE in RDS Query Editor. Reflected in Tableau on next load — no pipeline re-run. Report to prabhat or asad if you spot a duplicate.</p>
+  </div>
+</div>
+</div>
+<div class="vw" id="vw-new-analyst">
+<div class="vi"><h2>NEW Pipeline — Analyst View</h2><p>You won't touch a pipeline, a database, or a Lambda. Here's what the new architecture means for the person opening Tableau every morning.</p></div>
 <div id="analyst-content"></div>
+</div>
+<div class="vw" id="vw-old-hitl">
+<div class="vi"><h2>OLD Pipeline — Human-in-the-Loop</h2>
+<p>Manual review processes that run alongside the pipeline. Select a view below.</p></div>
+<div style="display:flex;gap:4px;max-width:960px;margin:0 auto 1.5rem;border-bottom:1px solid var(--border);padding:0 .5rem">
+  <button class="htab" id="htab-old" onclick="switchHTab(this,'old')" style="padding:.6rem 1.1rem;font-size:.85rem;font-weight:600;color:#FF9900;cursor:pointer;border:none;background:0;border-bottom:2px solid #FF9900;font-family:'Sora',sans-serif"><span class="tab-old">OLD</span> λ10 Dedup Review</button>
+  <button class="htab" id="htab-new" onclick="switchHTab(this,'new')" style="padding:.6rem 1.1rem;font-size:.85rem;font-weight:600;color:var(--text3);cursor:pointer;border:none;background:0;border-bottom:2px solid transparent;font-family:'Sora',sans-serif"><span class="tab-new">NEW</span> T9 Dedup Review</button>
+</div>
+<div style="max-width:960px;margin:0 auto" id="hitl-old"></div>
+<div style="max-width:960px;margin:0 auto;display:none" id="hitl-new"></div>
+</div>
+<div class="vw" id="vw-new-hitl">
+<div class="vi"><h2>NEW Pipeline — Human-in-the-Loop</h2>
+<p>In V2, Task 9 (Fargate) runs seven duplicate detection queries automatically every pipeline run. Human review is done via SQL helper functions — no CSV download needed.</p>
+</div>
+<div style="max-width:960px;margin:0 auto" id="hitl-new-content"></div>
 </div>
 
 <script>
@@ -591,7 +629,7 @@ c.scrollIntoView({behavior:'smooth',block:'nearest'});
 // ANALYST VIEW
 // ════════════════════════════════════════════
 function renderAnalystView(){
-const el=document.getElementById('analyst-content');
+const el=document.getElementById('analyst-content')||document.getElementById('new-analyst-content');
 const S=[
 {icon:'📅',title:'Can Update Tableau Daily — Even Hourly',color:'#22c55e',id:'daily',
  before:'You open Tableau on Wednesday. The data shows Monday. A viral post from Tuesday? Invisible until next Monday. You\'re always 1–6 days behind.',
