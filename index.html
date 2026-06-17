@@ -108,6 +108,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 <button class="tab" data-v="diagram"><span class="tn">04</span>New — Flow Diagram</button>
 <button class="tab" data-v="analyst"><span class="tn">05</span>Analyst View</button>
 <button class="tab" data-v="flow"><span class="tn">06</span>Old — Flow Diagram</button>
+<button class="tab" data-v="hitl"><span class="tn">07</span>Human-in-the-Loop</button>
 </div>
 
 <div class="vw active" id="vw-existing">
@@ -136,6 +137,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 </div>
 
 <div class="vw" id="vw-flow"><div class="vi"><h2>Existing Pipeline — Data Flow</h2><p>How data moves from Sprinklr S3 through 14 Lambdas to Tableau. Every step, trigger, and data store. Click any node for details. Monday-only steps shown with amber border.</p></div><div id="flow-svg-wrap" style="max-width:1100px;margin:0 auto;overflow-x:auto;padding-bottom:2rem"></div><div id="exist-det" style="max-width:1060px;margin:0 auto;padding:0 0 2rem"></div></div>
+
+<div class="vw" id="vw-hitl">
+<div class="vi">
+  <h2>Human-in-the-Loop — Weekly Dedup Review</h2>
+  <p>Every Monday, Lambda 10 runs a registry-backed duplicate detection pass and surfaces candidates for human review. No rows are ever auto-deleted — an operator makes the final call.</p>
+</div>
+<div style="max-width:960px;margin:0 auto" id="hitl-content"></div>
+</div>
 <div class="vw" id="vw-analyst">
 <div class="vi"><h2>Analyst View — What Changes For You</h2><p>You won't touch a pipeline, a database, or a Lambda. Here's what the new architecture means for the person opening Tableau every morning.</p></div>
 <div id="analyst-content"></div>
@@ -1226,6 +1235,168 @@ window.showExistDetail=function(id){
 };
 }
 
+
+// ════════════════════════════════════════════
+// HUMAN-IN-THE-LOOP VIEW
+// ════════════════════════════════════════════
+function renderHITL(){
+const el=document.getElementById('hitl-content');
+if(!el)return;
+
+const AMB='#FF9900', BLU='#3b82f6', GRN='#22c55e', RED='#ef4444', DIM='#8b949e', BRD='#30363d', BG2='#161b22', BG3='#1f2937';
+
+function card(title, color, body){
+  return `<div style="background:${BG2};border:1px solid ${color}30;border-radius:12px;overflow:hidden;margin-bottom:1rem">
+  <div style="padding:.8rem 1.2rem;border-bottom:1px solid ${BRD};display:flex;align-items:center;gap:.6rem">
+    <div style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0"></div>
+    <span style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${color};font-family:'Sora',sans-serif">${title}</span>
+  </div>
+  <div style="padding:1rem 1.2rem">${body}</div>
+</div>`;
+}
+
+function step(n, title, color, body){
+  return `<div style="display:grid;grid-template-columns:32px 1fr;gap:.8rem;margin-bottom:1.2rem">
+  <div style="width:32px;height:32px;border-radius:50%;background:${color}15;border:2px solid ${color}60;display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:800;color:${color};font-family:'JetBrains Mono',monospace;flex-shrink:0">${n}</div>
+  <div>
+    <div style="font-size:.9rem;font-weight:700;color:#e6edf3;margin-bottom:.3rem;font-family:'Sora',sans-serif">${title}</div>
+    <div style="font-size:.85rem;color:${DIM};line-height:1.6">${body}</div>
+  </div>
+</div>`;
+}
+
+function mono(s){return `<code style="font-family:'JetBrains Mono',monospace;font-size:.8rem;color:${AMB};background:#FF990012;padding:.1rem .35rem;border-radius:4px;border:1px solid #FF990025">${s}</code>`;}
+function tag(s,c){return `<span style="display:inline-block;padding:.1rem .5rem;border-radius:4px;font-size:.7rem;font-weight:700;background:${c}15;color:${c};border:1px solid ${c}30;font-family:'Sora',sans-serif;margin:.1rem">${s}</span>`;}
+
+let h = '';
+
+// ── Overview ──────────────────────────────────────────────
+h += card('Why Human Review?', AMB, `
+<p style="color:${DIM};line-height:1.6;font-size:.9rem;margin-bottom:.8rem">
+  Sprinklr generates duplicate rows in predictable ways — the same Instagram post arriving as both ${mono('/p/ABC')} and ${mono('/reel/ABC')}, Facebook posts with two different URL forms, re-pulled posts with different IDs. Lambda 10 detects these automatically using the <strong style="color:#e6edf3">permalink_registry</strong> — a table that maps every URL variant to a single ${mono('stable_post_id')}. But it never acts on them. A human approves every deletion, because Tableau data integrity cannot be recovered from a bad auto-delete.
+</p>
+<div style="display:flex;gap:.5rem;flex-wrap:wrap">
+  ${tag('Monday only', AMB)}${tag('Never auto-deletes', RED)}${tag('Operator reviews first', GRN)}${tag('Registry-backed', BLU)}${tag('Non-fatal if it fails', DIM)}
+</div>`);
+
+// ── The Detection Query ────────────────────────────────────
+h += card('The Detection Query — How Duplicates Are Found', BLU, `
+<p style="color:${DIM};line-height:1.6;font-size:.88rem;margin-bottom:1rem">
+  Lambda 10 runs one primary SQL query against <strong style="color:#e6edf3">sprinklr_table + permalink_registry</strong>. The logic mirrors what the old manual HILC check did — but runs automatically every Monday after the pipeline completes.
+</p>
+
+<div style="background:#0d1117;border:1px solid ${BRD};border-radius:8px;padding:1rem;font-family:'JetBrains Mono',monospace;font-size:.78rem;color:#8b949e;line-height:1.8;overflow-x:auto;margin-bottom:1rem">
+<span style="color:#6366f1">WITH</span> all_dupes <span style="color:#6366f1">AS</span> (<br>
+&nbsp;&nbsp;<span style="color:#6366f1">SELECT</span> s."RowID", s."Permalink", s."Account", s."Delivery",<br>
+&nbsp;&nbsp;&nbsp;&nbsp;s."Benchmark Type", s."Date", s."Total Impressions",<br>
+&nbsp;&nbsp;&nbsp;&nbsp;r.stable_post_id,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:${GRN}">COUNT(*) OVER</span> (<span style="color:#6366f1">PARTITION BY</span> r.stable_post_id, s."Benchmark Type") <span style="color:#6366f1">AS</span> dupe_count,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:${GRN}">RANK() OVER</span> (<span style="color:#6366f1">PARTITION BY</span> r.stable_post_id, s."Benchmark Type"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#6366f1">ORDER BY</span> s."Total Impressions" <span style="color:#6366f1">DESC</span>, s."Date" <span style="color:#6366f1">DESC</span>, post_id <span style="color:#6366f1">DESC</span>) <span style="color:#6366f1">AS</span> impression_rank<br>
+&nbsp;&nbsp;<span style="color:#6366f1">FROM</span> sprinklr_table s<br>
+&nbsp;&nbsp;<span style="color:${AMB}">INNER JOIN</span> permalink_registry r<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#6366f1">ON</span> TRIM(s."Permalink") = r.permalink<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#6366f1">AND</span> TRIM(s."Account") = r.account<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#6366f1">AND</span> TRIM(s."Delivery") = r.delivery<br>
+&nbsp;&nbsp;<span style="color:#6366f1">WHERE</span> s.is_manual_tracker = 0 <span style="color:#6366f1">AND</span> s."Delivery" <span style="color:#6366f1">IN</span> ('Organic', 'Boosted')<br>
+)<br>
+<span style="color:#6366f1">SELECT</span> ... <span style="color:#6366f1">FROM</span> all_dupes d<br>
+<span style="color:#6366f1">WHERE</span> d.dupe_count > 1<br>
+&nbsp;&nbsp;<span style="color:#6366f1">AND</span> d.stable_post_id <span style="color:#6366f1">IN</span> (<span style="color:#6366f1">SELECT</span> stable_post_id <span style="color:#6366f1">FROM</span> today_stable_ids)<br>
+<span style="color:${RED}">-- Only surfaces groups touching today's batch (Dateoflastedit = MAX)</span><br>
+<span style="color:${RED}">-- This avoids re-surfacing known historical duplicates every run</span>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem">
+  <div style="background:${BG3};border-radius:8px;padding:.8rem">
+    <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${GRN};margin-bottom:.4rem;font-family:'Sora',sans-serif">Keep rule</div>
+    <div style="font-size:.83rem;color:${DIM};line-height:1.5">Within each ${mono('(stable_post_id, Benchmark Type)')} group, the row with the <strong style="color:#e6edf3">highest Total Impressions</strong> is kept (${mono('impression_rank = 1')}). Ties broken by Date DESC, then post_id DESC.</div>
+  </div>
+  <div style="background:${BG3};border-radius:8px;padding:.8rem">
+    <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${RED};margin-bottom:.4rem;font-family:'Sora',sans-serif">Today's batch only</div>
+    <div style="font-size:.83rem;color:${DIM};line-height:1.5">${mono('today_stable_ids')} CTE filters to groups where at least one row has ${mono('Dateoflastedit = MAX')}. Known historical duplicates are not re-surfaced every run.</div>
+  </div>
+</div>`);
+
+// ── Pre-step: registry resolution ─────────────────────────
+h += card('Pre-step: Resolve Missing Permalinks Into Registry', '#6366f1', `
+<p style="color:${DIM};line-height:1.6;font-size:.88rem;margin-bottom:.8rem">
+  Before the dedup query runs, Lambda 10 checks whether today's new rows already have entries in ${mono('permalink_registry')}. Any that don't go through three-strategy resolution to get a ${mono('stable_post_id')} assigned.
+</p>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem">
+  <div style="background:${BG3};border-radius:8px;padding:.7rem">
+    <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#6366f1;margin-bottom:.3rem;font-family:'Sora',sans-serif">Strategy 1</div>
+    <div style="font-size:.8rem;color:${DIM}">Exact normalised URL match (strip scheme/www/query/slash, lowercase)</div>
+  </div>
+  <div style="background:${BG3};border-radius:8px;padding:.7rem">
+    <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#6366f1;margin-bottom:.3rem;font-family:'Sora',sans-serif">Strategy 2</div>
+    <div style="font-size:.8rem;color:${DIM}">Per-platform regex — IG shortcode, Twitter status ID, TikTok video ID, YouTube v=, Threads /post/, LinkedIn URN, Facebook fbid/reel/pfbid</div>
+  </div>
+  <div style="background:${BG3};border-radius:8px;padding:.7rem">
+    <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#6366f1;margin-bottom:.3rem;font-family:'Sora',sans-serif">Strategy 3</div>
+    <div style="font-size:.8rem;color:${DIM}">Apify actor ${mono('apify~facebook-url-to-id')} for unresolvable Facebook page-name URLs — batches of 20</div>
+  </div>
+</div>`);
+
+// ── S3 Outputs ─────────────────────────────────────────────
+h += card('What Lambda 10 Produces', GRN, `
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem">
+  <div style="background:${BG3};border-radius:8px;padding:.8rem">
+    <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${BLU};margin-bottom:.4rem;font-family:'Sora',sans-serif">📄 duplicate_pairs_YYYY-MM-DD.csv</div>
+    <div style="font-size:.83rem;color:${DIM};line-height:1.5">All rows in duplicate groups. Columns: RowID, Permalink, Account, Delivery, Benchmark Type, Date, Total Impressions, stable_post_id, dupe_count, impression_rank, ${mono('is_to_remove')} (0=keep, 1=remove). Saved to ${mono('amazon_sprinklr_pull/dedup_monitor/')}</div>
+  </div>
+  <div style="background:${BG3};border-radius:8px;padding:.8rem">
+    <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${RED};margin-bottom:.4rem;font-family:'Sora',sans-serif">📄 rows_to_remove_YYYY-MM-DD.csv</div>
+    <div style="font-size:.83rem;color:${DIM};line-height:1.5">Filtered view — only rows where ${mono('is_to_remove = 1')}. This is what the operator reviews. Also saved to ${mono('dedup_monitor/')}. These rows are NOT deleted yet — this file is just the proposed list.</div>
+  </div>
+</div>
+<div style="margin-top:.8rem;padding:.7rem .9rem;background:#22c55e08;border:1px solid #22c55e20;border-radius:8px;font-size:.83rem;color:${DIM};line-height:1.5">
+  <strong style="color:${GRN}">Non-fatal design:</strong> if the dedup monitor errors for any reason, Lambda 10 catches the exception and continues — the custom data updates (MBS, LinkedIn, corrections) are not affected. The dedup step is always the last thing Lambda 10 does.
+</div>`);
+
+// ── Human Review Steps ─────────────────────────────────────
+h += card('The Human-in-the-Loop Review Process', AMB, `
+${step(1, 'SNS notification fires after Lambda 10 completes', BLU,
+  `The SNS topic sends to both SES (email: prabhat, david, asad) and Slack. The message includes total duplicate groups found, rows flagged for removal, and the S3 path to review.`)}
+${step(2, 'Operator downloads rows_to_remove CSV from S3', AMB,
+  `${mono('amazon_sprinklr_pull/dedup_monitor/rows_to_remove_YYYY-MM-DD.csv')} — open in Excel or query directly. Each row shows the Permalink, Account, Delivery, Benchmark Type, and why it was flagged (lower impressions than the keep row, same stable_post_id).`)}
+${step(3, 'Operator reviews the proposed removals', AMB,
+  `Check: do the two permalinks actually refer to the same real post? Is the "keep" row correct (highest impressions = most complete data)? Are there any HILC-type posts (same post text, different post_id) that need human judgment? Mark any rows that should NOT be deleted.`)}
+${step(4, 'Operator executes the approved DELETEs', GRN,
+  `Run the DELETE against sprinklr_table using the RowIDs from the approved subset of rows_to_remove. Typically done via RDS Query Editor or Prabhat's SQL client. DELETE FROM sprinklr_table WHERE "RowID" IN (...approved RowIDs...) AND is_manual_tracker = 0.`)}
+${step(5, 'Verify Tableau reflects the clean data', GRN,
+  `After the DELETE, confirm the affected accounts/platforms show correct post counts in Tableau. Since Lambda 10 runs Monday alongside the pipeline, this review typically happens Monday afternoon or Tuesday.`)}
+`);
+
+// ── HILC distinction ───────────────────────────────────────
+h += card('HILC Posts — Always Human Review Only', RED, `
+<p style="color:${DIM};line-height:1.6;font-size:.88rem;margin-bottom:.8rem">
+  <strong style="color:#e6edf3">HILC (Human-Initiated Legacy Check)</strong> is a special category within the dedup results. These are posts where the same text appears on different ${mono('post_id')} values — Sprinklr-generated duplicates rather than URL-form duplicates. Lambda 10 flags them but marks ${mono('is_to_remove = 0')} (never auto-remove), because the right row to keep requires reading the post content and understanding the context.
+</p>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem">
+  <div style="background:${BG3};border-radius:8px;padding:.8rem">
+    <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${RED};margin-bottom:.4rem;font-family:'Sora',sans-serif">Registry duplicates (auto-propose)</div>
+    <div style="font-size:.83rem;color:${DIM};line-height:1.5">Same ${mono('stable_post_id')}, different URL form. Lambda 10 proposes which to remove (lower impressions). Operator verifies and executes.</div>
+  </div>
+  <div style="background:${BG3};border-radius:8px;padding:.8rem">
+    <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${AMB};margin-bottom:.4rem;font-family:'Sora',sans-serif">HILC posts (human-only)</div>
+    <div style="font-size:.83rem;color:${DIM};line-height:1.5">Same post text, different ${mono('post_id')}. Lambda 10 surfaces these for awareness only. ${mono('is_to_remove = 0')} — operator must make the call on which row represents the real post.</div>
+  </div>
+</div>`);
+
+// ── What Lambda 10 does NOT do ─────────────────────────────
+h += `<div style="background:#ef444408;border:1px solid #ef444430;border-radius:12px;padding:1rem 1.2rem;margin-bottom:1rem">
+<div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${RED};margin-bottom:.6rem;font-family:'Sora',sans-serif">What Lambda 10 deliberately does NOT do</div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem">
+  <div style="background:#0d1117;border-radius:6px;padding:.6rem .8rem;font-size:.83rem;color:${DIM};line-height:1.5"><strong style="color:#e6edf3">No auto-delete.</strong> Lambda 10 never issues a DELETE against sprinklr_table. It produces CSVs. A human runs the DELETE.</div>
+  <div style="background:#0d1117;border-radius:6px;padding:.6rem .8rem;font-size:.83rem;color:${DIM};line-height:1.5"><strong style="color:#e6edf3">No collab/LINE rows.</strong> ${mono('is_manual_tracker != 0')} rows are excluded from the query. Collab and LINE data is managed by λ8/λ9 separately.</div>
+  <div style="background:#0d1117;border-radius:6px;padding:.6rem .8rem;font-size:.83rem;color:${DIM};line-height:1.5"><strong style="color:#e6edf3">No blocking the pipeline.</strong> Dedup runs as the last step inside Lambda 10. If it fails for any reason, the custom data updates still apply — it is explicitly non-fatal.</div>
+</div>
+</div>`;
+
+el.innerHTML = h;
+}
+
 // ════════════════════════════════════════════
 // INIT
 // ════════════════════════════════════════════
@@ -1234,6 +1405,7 @@ renderERD();
 renderArchDiagram();
 renderAnalystView();
 renderExistingFlow();
+renderHITL();
 document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.vw').forEach(x=>x.classList.remove('active'));
