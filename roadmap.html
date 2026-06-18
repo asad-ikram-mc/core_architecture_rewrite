@@ -203,11 +203,11 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
       <div class="sn">Step 1.1</div><span class="badge b-done">COMPLETE</span>
       <div class="st">GitHub Repo + CI/CD</div>
       <ul class="cl" data-phase="1" data-step="1">
-        <li data-i="0"><span class="cb">✓</span>Create repo on Fluency-M-C-Saatchi org</li>
-        <li data-i="1"><span class="cb">✓</span>README + project structure: fargate_tasks/, database/, infrastructure/</li>
-        <li data-i="2"><span class="cb">✓</span>.github/workflows/deploy.yml — build Dockerfile, push to ECR on merge to main</li>
-        <li data-i="3"><span class="cb">✓</span>GitHub Secrets: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, ECR_REPO_URI</li>
-        <li data-i="4"><span class="cb">✓</span>Branch protection: require PR review for main</li>
+        <li data-i="0" class="done"><span class="cb">✓</span>Create repo on Fluency-M-C-Saatchi org</li>
+        <li data-i="1" class="done"><span class="cb">✓</span>README + project structure: fargate_tasks/, database/, infrastructure/</li>
+        <li data-i="2" class="done"><span class="cb">✓</span>.github/workflows/deploy.yml — build Dockerfile, push to ECR on merge to main</li>
+        <li data-i="3" class="done"><span class="cb">✓</span>GitHub Secrets: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, ECR_REPO_URI</li>
+        <li data-i="4" class="done"><span class="cb">✓</span>Branch protection: require PR review for main</li>
       </ul>
       <div class="pw"><span class="pl">0/5</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
     </div>
@@ -215,11 +215,11 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
       <div class="sn">Step 1.2</div><span class="badge b-done">COMPLETE</span>
       <div class="st">IAM Roles + Security</div>
       <ul class="cl" data-phase="1" data-step="2">
-        <li data-i="0"><span class="cb">✓</span>ECS Task Execution Role: ECR pull + CloudWatch logs</li>
-        <li data-i="1"><span class="cb">✓</span>ECS Task Role: S3 read/write (both buckets)</li>
-        <li data-i="2"><span class="cb">✓</span>ECS Task Role: RDS connect + SNS Publish</li>
-        <li data-i="3"><span class="cb">✓</span>Step Functions Role: ecs:RunTask, iam:PassRole, logs:*</li>
-        <li data-i="4"><span class="cb">✓</span>EventBridge Role: states:StartExecution on state machine</li>
+        <li data-i="0" class="done"><span class="cb">✓</span>ECS Task Execution Role: ECR pull + CloudWatch logs</li>
+        <li data-i="1" class="done"><span class="cb">✓</span>ECS Task Role: S3 read/write (both buckets)</li>
+        <li data-i="2" class="done"><span class="cb">✓</span>ECS Task Role: RDS connect + SNS Publish</li>
+        <li data-i="3" class="done"><span class="cb">✓</span>Step Functions Role: ecs:RunTask, iam:PassRole, logs:*</li>
+        <li data-i="4" class="done"><span class="cb">✓</span>EventBridge Role: states:StartExecution on state machine</li>
       </ul>
       <div class="pw"><span class="pl">0/5</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
     </div>
@@ -227,10 +227,10 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
       <div class="sn">Step 1.3</div><span class="badge b-done">COMPLETE</span>
       <div class="st">VPC + Networking</div>
       <ul class="cl" data-phase="1" data-step="3">
-        <li data-i="0"><span class="cb">✓</span>Identify VPC + subnets (eu-west-2, same as existing Lambda/RDS)</li>
-        <li data-i="1"><span class="cb">✓</span>Security group: sprinklr-etl-v2-tasks</li>
-        <li data-i="2"><span class="cb">✓</span>Update RDS SG: allow 5432 from sprinklr-etl-v2-tasks</li>
-        <li data-i="3"><span class="cb">✓</span>NAT gateway verified (Fargate needs internet for S3, Sheets, SES)</li>
+        <li data-i="0" class="done"><span class="cb">✓</span>Identify VPC + subnets (eu-west-2, same as existing Lambda/RDS)</li>
+        <li data-i="1" class="done"><span class="cb">✓</span>Security group: sprinklr-etl-v2-tasks</li>
+        <li data-i="2" class="done"><span class="cb">✓</span>Update RDS SG: allow 5432 from sprinklr-etl-v2-tasks</li>
+        <li data-i="3" class="done"><span class="cb">✓</span>NAT gateway verified (Fargate needs internet for S3, Sheets, SES)</li>
       </ul>
       <div class="pw"><span class="pl">0/4</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
     </div>
@@ -238,11 +238,11 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
       <div class="sn">Step 1.4</div><span class="badge b-done">COMPLETE</span>
       <div class="st">ECR + ECS Cluster</div>
       <ul class="cl" data-phase="1" data-step="4">
-        <li data-i="0"><span class="cb">✓</span>ECR repo: amazon-sprinklr-etl-v2 (lifecycle: keep 10, expire untagged after 7d)</li>
-        <li data-i="1"><span class="cb">✓</span>ECS Fargate cluster: sprinklr-etl-v2 (ford-lens-scraping-cluster separate)</li>
-        <li data-i="2"><span class="cb">✓</span>Task defs T0–T7: sprinklr-t0 through sprinklr-t7</li>
-        <li data-i="3"><span class="cb">✓</span>Dockerfile: Python 3.12-slim + Open Sans fonts bundled (Slack alert cards)</li>
-        <li data-i="4"><span class="cb">✓</span>All task defs: same ECR image, CloudWatch log group /ecs/amazon-sprinklr-etl-v2</li>
+        <li data-i="0" class="done"><span class="cb">✓</span>ECR repo: amazon-sprinklr-etl-v2 (lifecycle: keep 10, expire untagged after 7d)</li>
+        <li data-i="1" class="done"><span class="cb">✓</span>ECS Fargate cluster: sprinklr-etl-v2 (ford-lens-scraping-cluster separate)</li>
+        <li data-i="2" class="done"><span class="cb">✓</span>Task defs T0–T7: sprinklr-t0 through sprinklr-t7</li>
+        <li data-i="3" class="done"><span class="cb">✓</span>Dockerfile: Python 3.12-slim + Open Sans fonts bundled (Slack alert cards)</li>
+        <li data-i="4" class="done"><span class="cb">✓</span>All task defs: same ECR image, CloudWatch log group /ecs/amazon-sprinklr-etl-v2</li>
       </ul>
       <div class="pw"><span class="pl">0/5</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
     </div>
@@ -250,11 +250,11 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
       <div class="sn">Step 1.5</div><span class="badge b-done">COMPLETE</span>
       <div class="st">Step Functions State Machine</div>
       <ul class="cl" data-phase="1" data-step="5">
-        <li data-i="0"><span class="cb">✓</span>State machine: sprinklr-etl-v2-pipeline (T0→T1→T2→Check-Monday→T3→T4→T5→T6→T7→T8→Success)</li>
-        <li data-i="1"><span class="cb">✓</span>T3 conditional: Choice state skips on non-Monday</li>
-        <li data-i="2"><span class="cb">✓</span>Each step: Catch → Pipeline-Failed → SNS alert</li>
-        <li data-i="3"><span class="cb">✓</span>RUN_TYPE + TRIGGERED_BY passed as env vars to all tasks</li>
-        <li data-i="4"><span class="cb">✓</span>infrastructure/step_functions.json saved (T8 now included)</li>
+        <li data-i="0" class="done"><span class="cb">✓</span>State machine: sprinklr-etl-v2-pipeline (T0→T1→T2→Check-Monday→T3→T4→T5→T6→T7→T8→Success)</li>
+        <li data-i="1" class="done"><span class="cb">✓</span>T3 conditional: Choice state skips on non-Monday</li>
+        <li data-i="2" class="done"><span class="cb">✓</span>Each step: Catch → Pipeline-Failed → SNS alert</li>
+        <li data-i="3" class="done"><span class="cb">✓</span>RUN_TYPE + TRIGGERED_BY passed as env vars to all tasks</li>
+        <li data-i="4" class="done"><span class="cb">✓</span>infrastructure/step_functions.json saved (T8 now included)</li>
       </ul>
       <div class="pw"><span class="pl">0/5</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
     </div>
@@ -262,11 +262,11 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
       <div class="sn">Step 1.6</div><span class="badge b-done">COMPLETE</span>
       <div class="st">RDS Aurora PostgreSQL</div>
       <ul class="cl" data-phase="1" data-step="6">
-        <li data-i="0"><span class="cb">✓</span>Aurora Serverless v2: amazon-sprinklr-etl-v2-db (eu-west-2)</li>
-        <li data-i="1"><span class="cb">✓</span>Schemas: rdl, ref, odl, adl, qa all created</li>
-        <li data-i="2"><span class="cb">✓</span>33 tables across 5 schemas (migrations 001–007 applied)</li>
-        <li data-i="3"><span class="cb">✓</span>Migration files versioned in database/migrations/</li>
-        <li data-i="4"><span class="cb">✓</span>All PKs, UNIQUE constraints, 22 indexes added</li>
+        <li data-i="0" class="done"><span class="cb">✓</span>Aurora Serverless v2: amazon-sprinklr-etl-v2-db (eu-west-2)</li>
+        <li data-i="1" class="done"><span class="cb">✓</span>Schemas: rdl, ref, odl, adl, qa all created</li>
+        <li data-i="2" class="done"><span class="cb">✓</span>33 tables across 5 schemas (migrations 001–007 applied)</li>
+        <li data-i="3" class="done"><span class="cb">✓</span>Migration files versioned in database/migrations/</li>
+        <li data-i="4" class="done"><span class="cb">✓</span>All PKs, UNIQUE constraints, 22 indexes added</li>
       </ul>
       <div class="pw"><span class="pl">0/5</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
     </div>
@@ -274,11 +274,11 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
       <div class="sn">Step 1.7</div><span class="badge b-done">COMPLETE</span>
       <div class="st">SNS + Slack Alerting</div>
       <ul class="cl" data-phase="1" data-step="7">
-        <li data-i="0"><span class="cb">✓</span>SNS topic: amazon-sprinklr-etl-v2-alerts (eu-west-2)</li>
-        <li data-i="1"><span class="cb">✓</span>SES subscribers: asad.ikram, david.lawton, prabhat.mishra</li>
-        <li data-i="2"><span class="cb">✓</span>Slack webhook: Pillow PNG alert cards with step progress + buttons</li>
-        <li data-i="3"><span class="cb">✓</span>Open Sans bundled in Docker image (fixes tiny font on ECS)</li>
-        <li data-i="4"><span class="cb">✓</span>CloudWatch deep-link button on every alert card</li>
+        <li data-i="0" class="done"><span class="cb">✓</span>SNS topic: amazon-sprinklr-etl-v2-alerts (eu-west-2)</li>
+        <li data-i="1" class="done"><span class="cb">✓</span>SES subscribers: asad.ikram, david.lawton, prabhat.mishra</li>
+        <li data-i="2" class="done"><span class="cb">✓</span>Slack webhook: Pillow PNG alert cards with step progress + buttons</li>
+        <li data-i="3" class="done"><span class="cb">✓</span>Open Sans bundled in Docker image (fixes tiny font on ECS)</li>
+        <li data-i="4" class="done"><span class="cb">✓</span>CloudWatch deep-link button on every alert card</li>
       </ul>
       <div class="pw"><span class="pl">0/5</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
     </div>
@@ -293,11 +293,11 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
       <div class="sn">Step 2.1</div><span class="badge b-done">COMPLETE</span>
       <div class="st">T0: Schema Validation</div>
       <ul class="cl" data-phase="2" data-step="1">
-        <li data-i="0"><span class="cb">✓</span>expected_file_structure from Lambda 1 + column mapping JSON</li>
-        <li data-i="1"><span class="cb">✓</span>Validate → rdl.schema_validation_log</li>
-        <li data-i="2"><span class="cb">✓</span>Tag fallback logic: today → latest → backup S3 date</li>
-        <li data-i="3"><span class="cb">✓</span>INSERT qa.pipeline_runs (status=running, step=0, run_id UUID)</li>
-        <li data-i="4"><span class="cb">✓</span>Fixed: apply column mappings before comparison (FK fix)</li>
+        <li data-i="0" class="done"><span class="cb">✓</span>expected_file_structure from Lambda 1 + column mapping JSON</li>
+        <li data-i="1" class="done"><span class="cb">✓</span>Validate → rdl.schema_validation_log</li>
+        <li data-i="2" class="done"><span class="cb">✓</span>Tag fallback logic: today → latest → backup S3 date</li>
+        <li data-i="3" class="done"><span class="cb">✓</span>INSERT qa.pipeline_runs (status=running, step=0, run_id UUID)</li>
+        <li data-i="4" class="done"><span class="cb">✓</span>Fixed: apply column mappings before comparison (FK fix)</li>
       </ul>
       <div class="pw"><span class="pl">0/5</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
     </div>
@@ -305,10 +305,10 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
       <div class="sn">Step 2.2</div><span class="badge b-done">COMPLETE</span>
       <div class="st">T1: S3 Copy + Ingest</div>
       <ul class="cl" data-phase="2" data-step="2">
-        <li data-i="0"><span class="cb">✓</span>Copy logic from Lambda 2a/2b (no 240s sleep)</li>
-        <li data-i="1"><span class="cb">✓</span>post_id lookup from Lambda 2c</li>
-        <li data-i="2"><span class="cb">✓</span>INSERT rdl.sprinklr_raw_posts (JSONB, ON CONFLICT DO NOTHING)</li>
-        <li data-i="3"><span class="cb">✓</span>INSERT rdl.tag_pull_raw + rdl.sprinklr_raw_pulls</li>
+        <li data-i="0" class="done"><span class="cb">✓</span>Copy logic from Lambda 2a/2b (no 240s sleep)</li>
+        <li data-i="1" class="done"><span class="cb">✓</span>post_id lookup from Lambda 2c</li>
+        <li data-i="2" class="done"><span class="cb">✓</span>INSERT rdl.sprinklr_raw_posts (JSONB, ON CONFLICT DO NOTHING)</li>
+        <li data-i="3" class="done"><span class="cb">✓</span>INSERT rdl.tag_pull_raw + rdl.sprinklr_raw_pulls</li>
       </ul>
       <div class="pw"><span class="pl">0/4</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
     </div>
@@ -316,11 +316,11 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
       <div class="sn">Step 2.3</div><span class="badge b-done">COMPLETE</span>
       <div class="st">T2: Merge (Metrics + Attributes)</div>
       <ul class="cl" data-phase="2" data-step="3">
-        <li data-i="0"><span class="cb">✓</span>Extract metrics → odl.post_metrics_daily (spend_usd added)</li>
-        <li data-i="1"><span class="cb">✓</span>Extract attributes → odl.post_attributes SCD Type 2</li>
-        <li data-i="2"><span class="cb">✓</span>New fields: author_name, post_message, to_be_deleted, is_manual_tracker</li>
-        <li data-i="3"><span class="cb">✓</span>account_renames applied on ingest (Amazon IG - Unpacked → Amazon News IG - US)</li>
-        <li data-i="4"><span class="cb">✓</span>Backward compat: still writes master_table.csv to S3</li>
+        <li data-i="0" class="done"><span class="cb">✓</span>Extract metrics → odl.post_metrics_daily (spend_usd added)</li>
+        <li data-i="1" class="done"><span class="cb">✓</span>Extract attributes → odl.post_attributes SCD Type 2</li>
+        <li data-i="2" class="done"><span class="cb">✓</span>New fields: author_name, post_message, to_be_deleted, is_manual_tracker</li>
+        <li data-i="3" class="done"><span class="cb">✓</span>account_renames applied on ingest (Amazon IG - Unpacked → Amazon News IG - US)</li>
+        <li data-i="4" class="done"><span class="cb">✓</span>Backward compat: still writes master_table.csv to S3</li>
       </ul>
       <div class="pw"><span class="pl">0/5</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
     </div>
@@ -328,10 +328,10 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
       <div class="sn">Step 2.4</div><span class="badge b-done">COMPLETE</span>
       <div class="st">Phase 2 Shadow Run</div>
       <ul class="cl" data-phase="2" data-step="4">
-        <li data-i="0"><span class="cb">✓</span>E2E run T0→T2 via Step Functions: 13 min, all green</li>
-        <li data-i="1"><span class="cb">✓</span>Slack alert cards working with step progress bars</li>
-        <li data-i="2"><span class="cb">✓</span>qa.pipeline_runs completing correctly</li>
-        <li data-i="3"><span class="cb">✓</span>UUID cast fix, silent except fix, run_type/triggered_by fix</li>
+        <li data-i="0" class="done"><span class="cb">✓</span>E2E run T0→T2 via Step Functions: 13 min, all green</li>
+        <li data-i="1" class="done"><span class="cb">✓</span>Slack alert cards working with step progress bars</li>
+        <li data-i="2" class="done"><span class="cb">✓</span>qa.pipeline_runs completing correctly</li>
+        <li data-i="3" class="done"><span class="cb">✓</span>UUID cast fix, silent except fix, run_type/triggered_by fix</li>
       </ul>
       <div class="pw"><span class="pl">0/4</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
     </div>
@@ -347,23 +347,23 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
       <div class="st">REF Table Seeding (all 19 tables)</div>
       <div class="sd">All mapping files migrated from S3/Google Sheets to Aurora PostgreSQL. seed_ref_tables_standalone.py runs from VS Code.</div>
       <ul class="cl" data-phase="3" data-step="1">
-        <li data-i="0"><span class="cb">✓</span>ref.country_mapping — 88 rows (account_metadataa.xlsx)</li>
-        <li data-i="1"><span class="cb">✓</span>ref.platform_mapping — 14 rows + platform_category populated</li>
-        <li data-i="2"><span class="cb">✓</span>ref.twitter_account_mapping — 18 rows</li>
-        <li data-i="3"><span class="cb">✓</span>ref.blacklist — 124 rows</li>
-        <li data-i="4"><span class="cb">✓</span>ref.url_corrections — 76 rows</li>
-        <li data-i="5"><span class="cb">✓</span>ref.apac_author_mapping — 93 rows (Rule 18)</li>
-        <li data-i="6"><span class="cb">✓</span>ref.post_message_mapping — 52 rows (PostMessage_tagging.xlsx)</li>
-        <li data-i="7"><span class="cb">✓</span>ref.linkedin_region_lookup — 111 rows</li>
-        <li data-i="8"><span class="cb">✓</span>ref.excluded_countries — 8 rows (AT,BE,NL,PL,SE,TR,SG,CN)</li>
-        <li data-i="9"><span class="cb">✓</span>ref.xcm_post_messages — 8 rows (Lambda 7 values_to_remove)</li>
-        <li data-i="10"><span class="cb">✓</span>ref.post_message_rules — 8 rows (NA/APAC_IN/EMEA valid messages)</li>
-        <li data-i="11"><span class="cb">✓</span>ref.filter_exemptions — 6 rows (R14/R16 account + platform)</li>
-        <li data-i="12"><span class="cb">✓</span>ref.permalink_bypasses, ref.account_renames, ref.silent_account_exclusions</li>
-        <li data-i="13"><span class="cb">✓</span>ref.custom_metric_corrections — 2 pending rows (Google Sheet)</li>
-        <li data-i="14"><span class="cb">✓</span>ref.mbs_updates — 954 rows (mbs_update_data.csv)</li>
-        <li data-i="15"><span class="cb">✓</span>ref.x_quote_deletions — 5 rows (remove_x_quote_posts.csv)</li>
-        <li data-i="16"><span class="cb">✓</span>adl.benchmarks — 1,370 rows (median + mean, organic + paid)</li>
+        <li data-i="0" class="done"><span class="cb">✓</span>ref.country_mapping — 88 rows (account_metadataa.xlsx)</li>
+        <li data-i="1" class="done"><span class="cb">✓</span>ref.platform_mapping — 14 rows + platform_category populated</li>
+        <li data-i="2" class="done"><span class="cb">✓</span>ref.twitter_account_mapping — 18 rows</li>
+        <li data-i="3" class="done"><span class="cb">✓</span>ref.blacklist — 124 rows</li>
+        <li data-i="4" class="done"><span class="cb">✓</span>ref.url_corrections — 76 rows</li>
+        <li data-i="5" class="done"><span class="cb">✓</span>ref.apac_author_mapping — 93 rows (Rule 18)</li>
+        <li data-i="6" class="done"><span class="cb">✓</span>ref.post_message_mapping — 52 rows (PostMessage_tagging.xlsx)</li>
+        <li data-i="7" class="done"><span class="cb">✓</span>ref.linkedin_region_lookup — 111 rows</li>
+        <li data-i="8" class="done"><span class="cb">✓</span>ref.excluded_countries — 8 rows (AT,BE,NL,PL,SE,TR,SG,CN)</li>
+        <li data-i="9" class="done"><span class="cb">✓</span>ref.xcm_post_messages — 8 rows (Lambda 7 values_to_remove)</li>
+        <li data-i="10" class="done"><span class="cb">✓</span>ref.post_message_rules — 8 rows (NA/APAC_IN/EMEA valid messages)</li>
+        <li data-i="11" class="done"><span class="cb">✓</span>ref.filter_exemptions — 6 rows (R14/R16 account + platform)</li>
+        <li data-i="12" class="done"><span class="cb">✓</span>ref.permalink_bypasses, ref.account_renames, ref.silent_account_exclusions</li>
+        <li data-i="13" class="done"><span class="cb">✓</span>ref.custom_metric_corrections — 2 pending rows (Google Sheet)</li>
+        <li data-i="14" class="done"><span class="cb">✓</span>ref.mbs_updates — 954 rows (mbs_update_data.csv)</li>
+        <li data-i="15" class="done"><span class="cb">✓</span>ref.x_quote_deletions — 5 rows (remove_x_quote_posts.csv)</li>
+        <li data-i="16" class="done"><span class="cb">✓</span>adl.benchmarks — 1,370 rows (median + mean, organic + paid)</li>
       </ul>
       <div class="pw"><span class="pl">0/17</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
     </div>
@@ -371,14 +371,14 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
       <div class="sn">Step 3.2</div><span class="badge b-done">COMPLETE</span>
       <div class="st">T3: Collab + LINE (Lambda 8)</div>
       <ul class="cl" data-phase="3" data-step="2">
-        <li data-i="0"><span class="cb">✓</span>extract_post_identifier() replicated in SQL (fbid=, pfbid, /p|reel|tv/, rsplit default)</li>
-        <li data-i="1"><span class="cb">✓</span>Priority 1: Sprinklr Organic/Boosted wins over Collab</li>
-        <li data-i="2"><span class="cb">✓</span>Priority 2: Collab Organic > Collab Boosted (no Sprinklr)</li>
-        <li data-i="3"><span class="cb">✓</span>Priority 3: Collab Boosted (no Organic at all)</li>
-        <li data-i="4"><span class="cb">✓</span>Paid always additive — never dropped</li>
-        <li data-i="5"><span class="cb">✓</span>Pre-filter: Valid Post=TRUE AND Upload to CORE=TRUE</li>
-        <li data-i="6"><span class="cb">✓</span>Decisions logged → qa.collab_priority_decisions</li>
-        <li data-i="7"><span class="cb">✓</span>LINE: is_manual_tracker=2, Delivery=Organic, SUM aggregation</li>
+        <li data-i="0" class="done"><span class="cb">✓</span>extract_post_identifier() replicated in SQL (fbid=, pfbid, /p|reel|tv/, rsplit default)</li>
+        <li data-i="1" class="done"><span class="cb">✓</span>Priority 1: Sprinklr Organic/Boosted wins over Collab</li>
+        <li data-i="2" class="done"><span class="cb">✓</span>Priority 2: Collab Organic > Collab Boosted (no Sprinklr)</li>
+        <li data-i="3" class="done"><span class="cb">✓</span>Priority 3: Collab Boosted (no Organic at all)</li>
+        <li data-i="4" class="done"><span class="cb">✓</span>Paid always additive — never dropped</li>
+        <li data-i="5" class="done"><span class="cb">✓</span>Pre-filter: Valid Post=TRUE AND Upload to CORE=TRUE</li>
+        <li data-i="6" class="done"><span class="cb">✓</span>Decisions logged → qa.collab_priority_decisions</li>
+        <li data-i="7" class="done"><span class="cb">✓</span>LINE: is_manual_tracker=2, Delivery=Organic, SUM aggregation</li>
       </ul>
       <div class="pw"><span class="pl">0/8</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
     </div>
@@ -387,18 +387,18 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
       <div class="st">T4: All 22 Filter Rules (Full Lambda Audit)</div>
       <div class="sd">Full audit of Lambda 4/5/6/7 — 11 rules were wrong or missing. All corrected. PostMessage canonical mapping applied for R14/15/16.</div>
       <ul class="cl" data-phase="3" data-step="3">
-        <li data-i="0"><span class="cb">✓</span>R2: ref.permalink_bypasses bypass support</li>
-        <li data-i="1"><span class="cb">✓</span>R3: Facebook-only file extension filter (was applied to all platforms)</li>
-        <li data-i="2"><span class="cb">✓</span>R5b: 250-499 impressions + &lt;50 engagements for 2026+ posts</li>
-        <li data-i="3"><span class="cb">✓</span>R7: ref.excluded_countries (AT≠MENA — was using wrong mechanism)</li>
-        <li data-i="4"><span class="cb">✓</span>R8: Deleted posts filter (to_be_deleted flag), LINE exempt</li>
-        <li data-i="5"><span class="cb">✓</span>R11: Fixed cutoff 2023-09-04 (was rolling 90d window). WeChat always exempt.</li>
-        <li data-i="6"><span class="cb">✓</span>R13: Exact match 'Amazon News X - EU' (was ILIKE)</li>
-        <li data-i="7"><span class="cb">✓</span>R14/15/16: valid message lists via ref.post_message_rules + canonical mapping + account/platform exemptions</li>
-        <li data-i="8"><span class="cb">✓</span>R18: APAC author exclusions via ref.apac_author_mapping</li>
-        <li data-i="9"><span class="cb">✓</span>R21: XCM Post Messages via ref.xcm_post_messages</li>
-        <li data-i="10"><span class="cb">✓</span>R22: Collab dedup safety net (was missing entirely)</li>
-        <li data-i="11"><span class="cb">✓</span>qa.filter_run_summary + qa.post_journey populated per run</li>
+        <li data-i="0" class="done"><span class="cb">✓</span>R2: ref.permalink_bypasses bypass support</li>
+        <li data-i="1" class="done"><span class="cb">✓</span>R3: Facebook-only file extension filter (was applied to all platforms)</li>
+        <li data-i="2" class="done"><span class="cb">✓</span>R5b: 250-499 impressions + &lt;50 engagements for 2026+ posts</li>
+        <li data-i="3" class="done"><span class="cb">✓</span>R7: ref.excluded_countries (AT≠MENA — was using wrong mechanism)</li>
+        <li data-i="4" class="done"><span class="cb">✓</span>R8: Deleted posts filter (to_be_deleted flag), LINE exempt</li>
+        <li data-i="5" class="done"><span class="cb">✓</span>R11: Fixed cutoff 2023-09-04 (was rolling 90d window). WeChat always exempt.</li>
+        <li data-i="6" class="done"><span class="cb">✓</span>R13: Exact match 'Amazon News X - EU' (was ILIKE)</li>
+        <li data-i="7" class="done"><span class="cb">✓</span>R14/15/16: valid message lists via ref.post_message_rules + canonical mapping + account/platform exemptions</li>
+        <li data-i="8" class="done"><span class="cb">✓</span>R18: APAC author exclusions via ref.apac_author_mapping</li>
+        <li data-i="9" class="done"><span class="cb">✓</span>R21: XCM Post Messages via ref.xcm_post_messages</li>
+        <li data-i="10" class="done"><span class="cb">✓</span>R22: Collab dedup safety net (was missing entirely)</li>
+        <li data-i="11" class="done"><span class="cb">✓</span>qa.filter_run_summary + qa.post_journey populated per run</li>
       </ul>
       <div class="pw"><span class="pl">0/12</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
     </div>
@@ -407,14 +407,14 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
       <div class="st">T5: Full Tag Refresh (Lambda 5)</div>
       <div class="sd">Was 6 columns. Now 25+ columns including Reputational Sub Topic (9 source columns) and Editorial Format logic.</div>
       <ul class="cl" data-phase="3" data-step="4">
-        <li data-i="0"><span class="cb">✓</span>Post Message: raw → ref.post_message_mapping → canonical; empty → 'Global'</li>
-        <li data-i="1"><span class="cb">✓</span>Reputational Sub Topic: 9 RST columns, disambiguation, sorted, joined</li>
-        <li data-i="2"><span class="cb">✓</span>Editorial Format Pillar + Type (pillar-format validation)</li>
-        <li data-i="3"><span class="cb">✓</span>content_source, breaking_news, is_reactive, is_repeatable, entertainment_sub_type</li>
-        <li data-i="4"><span class="cb">✓</span>team, sub_campaign, content_intent, social_events, collab_kind</li>
-        <li data-i="5"><span class="cb">✓</span>LinkedIn region via ref.linkedin_region_lookup</li>
-        <li data-i="6"><span class="cb">✓</span>Manual tracker rows (is_manual_tracker IN 1,2) never overwritten</li>
-        <li data-i="7"><span class="cb">✓</span>Migration 007: 19 new columns on odl.post_attributes</li>
+        <li data-i="0" class="done"><span class="cb">✓</span>Post Message: raw → ref.post_message_mapping → canonical; empty → 'Global'</li>
+        <li data-i="1" class="done"><span class="cb">✓</span>Reputational Sub Topic: 9 RST columns, disambiguation, sorted, joined</li>
+        <li data-i="2" class="done"><span class="cb">✓</span>Editorial Format Pillar + Type (pillar-format validation)</li>
+        <li data-i="3" class="done"><span class="cb">✓</span>content_source, breaking_news, is_reactive, is_repeatable, entertainment_sub_type</li>
+        <li data-i="4" class="done"><span class="cb">✓</span>team, sub_campaign, content_intent, social_events, collab_kind</li>
+        <li data-i="5" class="done"><span class="cb">✓</span>LinkedIn region via ref.linkedin_region_lookup</li>
+        <li data-i="6" class="done"><span class="cb">✓</span>Manual tracker rows (is_manual_tracker IN 1,2) never overwritten</li>
+        <li data-i="7" class="done"><span class="cb">✓</span>Migration 007: 19 new columns on odl.post_attributes</li>
       </ul>
       <div class="pw"><span class="pl">0/8</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
     </div>
@@ -429,15 +429,15 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
       <div class="sn">Step 4.1</div><span class="badge b-done">COMPLETE</span>
       <div class="st">T6: Full 156-Column Build</div>
       <ul class="cl" data-phase="4" data-step="1">
-        <li data-i="0"><span class="cb">✓</span>Matcher = LOWER(country+platform+delivery+quarter), Boosted uses 'all'</li>
-        <li data-i="1"><span class="cb">✓</span>Benchmark Type: Median + Average (CROSS JOIN — each post appears twice)</li>
-        <li data-i="2"><span class="cb">✓</span>Fallback: quarterly sample &lt;10 → annual ('all' suffix)</li>
-        <li data-i="3"><span class="cb">✓</span>ER/LPI/CPI raw + vs Benchmark + BPS columns</li>
-        <li data-i="4"><span class="cb">✓</span>Organic &amp; Boosted, Beats Benchmark, post_id_key, Lookup Key</li>
-        <li data-i="5"><span class="cb">✓</span>Paid date shift (Paid Only → Date = pull_date)</li>
-        <li data-i="6"><span class="cb">✓</span>Amazon LI - Global → Amazon LI - {Country}</li>
-        <li data-i="7"><span class="cb">✓</span>WeChat Video - CN Platform Granular fix</li>
-        <li data-i="8"><span class="cb">✓</span>40+ null-holding paid benchmark columns</li>
+        <li data-i="0" class="done"><span class="cb">✓</span>Matcher = LOWER(country+platform+delivery+quarter), Boosted uses 'all'</li>
+        <li data-i="1" class="done"><span class="cb">✓</span>Benchmark Type: Median + Average (CROSS JOIN — each post appears twice)</li>
+        <li data-i="2" class="done"><span class="cb">✓</span>Fallback: quarterly sample &lt;10 → annual ('all' suffix)</li>
+        <li data-i="3" class="done"><span class="cb">✓</span>ER/LPI/CPI raw + vs Benchmark + BPS columns</li>
+        <li data-i="4" class="done"><span class="cb">✓</span>Organic &amp; Boosted, Beats Benchmark, post_id_key, Lookup Key</li>
+        <li data-i="5" class="done"><span class="cb">✓</span>Paid date shift (Paid Only → Date = pull_date)</li>
+        <li data-i="6" class="done"><span class="cb">✓</span>Amazon LI - Global → Amazon LI - {Country}</li>
+        <li data-i="7" class="done"><span class="cb">✓</span>WeChat Video - CN Platform Granular fix</li>
+        <li data-i="8" class="done"><span class="cb">✓</span>40+ null-holding paid benchmark columns</li>
       </ul>
       <div class="pw"><span class="pl">0/9</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
     </div>
@@ -445,11 +445,11 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
       <div class="sn">Step 4.2</div><span class="badge b-done">COMPLETE</span>
       <div class="st">T7: QA + Observability</div>
       <ul class="cl" data-phase="4" data-step="2">
-        <li data-i="0"><span class="cb">✓</span>4 dedup SQL checks → qa.duplicate_checks</li>
-        <li data-i="1"><span class="cb">✓</span>qa.post_journey: full lifecycle per post per run (published/filtered/deleted)</li>
-        <li data-i="2"><span class="cb">✓</span>qa.filter_run_summary: count per rule per run</li>
-        <li data-i="3"><span class="cb">✓</span>qa.pipeline_runs: completed_at, duration, rows_ingested all populated</li>
-        <li data-i="4"><span class="cb">✓</span>REFRESH MATERIALIZED VIEW adl.daily_aggregates</li>
+        <li data-i="0" class="done"><span class="cb">✓</span>4 dedup SQL checks → qa.duplicate_checks</li>
+        <li data-i="1" class="done"><span class="cb">✓</span>qa.post_journey: full lifecycle per post per run (published/filtered/deleted)</li>
+        <li data-i="2" class="done"><span class="cb">✓</span>qa.filter_run_summary: count per rule per run</li>
+        <li data-i="3" class="done"><span class="cb">✓</span>qa.pipeline_runs: completed_at, duration, rows_ingested all populated</li>
+        <li data-i="4" class="done"><span class="cb">✓</span>REFRESH MATERIALIZED VIEW adl.daily_aggregates</li>
       </ul>
       <div class="pw"><span class="pl">0/5</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
     </div>
@@ -458,12 +458,12 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
       <div class="st">T8: Post-Pipeline Corrections (Lambda 10)</div>
       <div class="sd">Lambda 10 fully replaced. All sources moved from S3/Google Sheets to ref.* tables.</div>
       <ul class="cl" data-phase="4" data-step="3">
-        <li data-i="0"><span class="cb">✓</span>Step 1: Custom metric corrections — ref.custom_metric_corrections (was Google Sheet 18W6Z1…)</li>
-        <li data-i="1"><span class="cb">✓</span>Step 2: MBS bulk impression updates — ref.mbs_updates (was mbs_update_data.csv)</li>
-        <li data-i="2"><span class="cb">✓</span>Step 3: X Quote deletions — ref.x_quote_deletions (was remove_x_quote_posts.csv)</li>
-        <li data-i="3"><span class="cb">✓</span>Auto-recalc of ER/LPI/CPI/Organic Impressions/Total Reach after impressions change</li>
-        <li data-i="4"><span class="cb">✓</span>Every correction logged → qa.t8_corrections_log (before/after)</li>
-        <li data-i="5"><span class="cb">✓</span>Step Functions: T7 → T8 → Pipeline-Success</li>
+        <li data-i="0" class="done"><span class="cb">✓</span>Step 1: Custom metric corrections — ref.custom_metric_corrections (was Google Sheet 18W6Z1…)</li>
+        <li data-i="1" class="done"><span class="cb">✓</span>Step 2: MBS bulk impression updates — ref.mbs_updates (was mbs_update_data.csv)</li>
+        <li data-i="2" class="done"><span class="cb">✓</span>Step 3: X Quote deletions — ref.x_quote_deletions (was remove_x_quote_posts.csv)</li>
+        <li data-i="3" class="done"><span class="cb">✓</span>Auto-recalc of ER/LPI/CPI/Organic Impressions/Total Reach after impressions change</li>
+        <li data-i="4" class="done"><span class="cb">✓</span>Every correction logged → qa.t8_corrections_log (before/after)</li>
+        <li data-i="5" class="done"><span class="cb">✓</span>Step Functions: T7 → T8 → Pipeline-Success</li>
       </ul>
       <div class="pw"><span class="pl">0/6</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
     </div>
@@ -471,11 +471,11 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
       <div class="sn">Step 4.4</div><span class="badge b-done">COMPLETE</span>
       <div class="st">Pipeline E2E Test Run</div>
       <ul class="cl" data-phase="4" data-step="4">
-        <li data-i="0"><span class="cb">✓</span>Full E2E T0→T7 via Step Functions: 13 min, 8/8 steps green</li>
-        <li data-i="1"><span class="cb">✓</span>Slack alert cards: PNG with step progress, coloured buttons, CloudWatch link</li>
-        <li data-i="2"><span class="cb">✓</span>UUID cast fix, SQL :param::TYPE cast fix, duration 0.0 fix</li>
-        <li data-i="3"><span class="cb">✓</span>11 SQL performance optimisations (DISTINCT ON, anti-joins, RETURNING CTEs)</li>
-        <li data-i="4"><span class="cb">✓</span>22 missing indexes added across all tables</li>
+        <li data-i="0" class="done"><span class="cb">✓</span>Full E2E T0→T7 via Step Functions: 13 min, 8/8 steps green</li>
+        <li data-i="1" class="done"><span class="cb">✓</span>Slack alert cards: PNG with step progress, coloured buttons, CloudWatch link</li>
+        <li data-i="2" class="done"><span class="cb">✓</span>UUID cast fix, SQL :param::TYPE cast fix, duration 0.0 fix</li>
+        <li data-i="3" class="done"><span class="cb">✓</span>11 SQL performance optimisations (DISTINCT ON, anti-joins, RETURNING CTEs)</li>
+        <li data-i="4" class="done"><span class="cb">✓</span>22 missing indexes added across all tables</li>
       </ul>
       <div class="pw"><span class="pl">0/5</span><div class="pb"><div class="pf" style="width:0"></div></div></div>
     </div>
@@ -492,13 +492,13 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
       <div class="st">T8 — Post-pipeline Corrections</div>
       <div class="sd">Replaces Lambda 10. Reads from ref.* tables in Aurora (not S3 CSVs/Google Sheets). Auto-recalculates ER/LPI/CPI when impressions change.</div>
       <ul class="cl" data-phase="5" data-step="1">
-        <li data-i="0"><span class="cb">✓</span>Move data sources from S3 CSVs + Google Sheets → ref.* tables in Aurora</li>
-        <li data-i="1"><span class="cb">✓</span>Per-row dynamic column UPDATE (Python — can't be pure SQL)</li>
-        <li data-i="2"><span class="cb">✓</span>Auto-recalculate ER/LPI/CPI/Organic Impressions/Total Reach on triggers</li>
-        <li data-i="3"><span class="cb">✓</span>MBS bulk updates from ref.mbs_updates (SQL)</li>
-        <li data-i="4"><span class="cb">✓</span>X Quote deletions from ref.x_quote_deletions (SQL)</li>
-        <li data-i="5"><span class="cb">✓</span>Audit log to qa.t8_corrections_log</li>
-        <li data-i="6"><span class="cb">✓</span>ECS task definition sprinklr-t8 registered + Step Functions updated</li>
+        <li data-i="0" class="done"><span class="cb">✓</span>Move data sources from S3 CSVs + Google Sheets → ref.* tables in Aurora</li>
+        <li data-i="1" class="done"><span class="cb">✓</span>Per-row dynamic column UPDATE (Python — can't be pure SQL)</li>
+        <li data-i="2" class="done"><span class="cb">✓</span>Auto-recalculate ER/LPI/CPI/Organic Impressions/Total Reach on triggers</li>
+        <li data-i="3" class="done"><span class="cb">✓</span>MBS bulk updates from ref.mbs_updates (SQL)</li>
+        <li data-i="4" class="done"><span class="cb">✓</span>X Quote deletions from ref.x_quote_deletions (SQL)</li>
+        <li data-i="5" class="done"><span class="cb">✓</span>Audit log to qa.t8_corrections_log</li>
+        <li data-i="6" class="done"><span class="cb">✓</span>ECS task definition sprinklr-t8 registered + Step Functions updated</li>
       </ul>
       <div class="pw"><span class="pl">7/7</span><div class="pb"><div class="pf" style="width:100%"></div></div></div>
     </div>
@@ -508,13 +508,13 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
       <div class="st">URL canonicalisation in T1</div>
       <div class="sd">Sprinklr returns same logical post under different URL forms (FB /posts/X vs /photo.php?fbid=X, IG /p/abc vs /reel/abc). T1 normalises both forms before INSERT — kills Q4 + Q5 duplicates at source.</div>
       <ul class="cl" data-phase="5" data-step="2">
-        <li data-i="0"><span class="cb">✓</span>fargate_tasks/shared/url_canonical.py — pure function with 11/11 unit tests</li>
-        <li data-i="1"><span class="cb">✓</span>Facebook /photo.php?fbid=X → /&lt;page&gt;/posts/X</li>
-        <li data-i="2"><span class="cb">✓</span>Facebook /&lt;page&gt;/photos|videos|reel/X → /&lt;page&gt;/posts/X</li>
-        <li data-i="3"><span class="cb">✓</span>Instagram /reel/X → /p/X</li>
-        <li data-i="4"><span class="cb">✓</span>Strip query strings + fragments (set=…, t=…, __cft__=…)</li>
-        <li data-i="5"><span class="cb">✓</span>Preserve original URL in raw_data->>'PERMALINK_ORIGINAL' for traceback</li>
-        <li data-i="6"><span class="cb">✓</span>Wired into T1 ingest loop before rdl.sprinklr_raw_posts INSERT</li>
+        <li data-i="0" class="done"><span class="cb">✓</span>fargate_tasks/shared/url_canonical.py — pure function with 11/11 unit tests</li>
+        <li data-i="1" class="done"><span class="cb">✓</span>Facebook /photo.php?fbid=X → /&lt;page&gt;/posts/X</li>
+        <li data-i="2" class="done"><span class="cb">✓</span>Facebook /&lt;page&gt;/photos|videos|reel/X → /&lt;page&gt;/posts/X</li>
+        <li data-i="3" class="done"><span class="cb">✓</span>Instagram /reel/X → /p/X</li>
+        <li data-i="4" class="done"><span class="cb">✓</span>Strip query strings + fragments (set=…, t=…, __cft__=…)</li>
+        <li data-i="5" class="done"><span class="cb">✓</span>Preserve original URL in raw_data->>'PERMALINK_ORIGINAL' for traceback</li>
+        <li data-i="6" class="done"><span class="cb">✓</span>Wired into T1 ingest loop before rdl.sprinklr_raw_posts INSERT</li>
         <li data-i="7">Add TikTok / LinkedIn / X canonicalisation rules (rules unclear — defer)</li>
       </ul>
       <div class="pw"><span class="pl">7/8</span><div class="pb"><div class="pf" style="width:88%"></div></div></div>
@@ -525,13 +525,13 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
       <div class="st">qa.duplicate_candidates table + helpers</div>
       <div class="sd">Stages flagged duplicates for human review. SQL helper functions provide one-line approval/rejection. Status lifecycle: pending → approved (deleted) | rejected (kept) | resolved (no longer dup).</div>
       <ul class="cl" data-phase="5" data-step="3">
-        <li data-i="0"><span class="cb">✓</span>Migration 009: qa.duplicate_candidates with status lifecycle</li>
-        <li data-i="1"><span class="cb">✓</span>UNIQUE (run_id, source_query, post_id_key) — idempotent re-runs</li>
-        <li data-i="2"><span class="cb">✓</span>CHECK constraints on status + source_query values</li>
-        <li data-i="3"><span class="cb">✓</span>qa.preview_dedup() — show what approve would delete</li>
-        <li data-i="4"><span class="cb">✓</span>qa.approve_dedup() — delete from posts_current + mark approved</li>
-        <li data-i="5"><span class="cb">✓</span>qa.approve_dedup('Q4_FB_FORMAT') — approve only one query group</li>
-        <li data-i="6"><span class="cb">✓</span>qa.reject_dedup(id, note) — mark not-a-dup, keep the row</li>
+        <li data-i="0" class="done"><span class="cb">✓</span>Migration 009: qa.duplicate_candidates with status lifecycle</li>
+        <li data-i="1" class="done"><span class="cb">✓</span>UNIQUE (run_id, source_query, post_id_key) — idempotent re-runs</li>
+        <li data-i="2" class="done"><span class="cb">✓</span>CHECK constraints on status + source_query values</li>
+        <li data-i="3" class="done"><span class="cb">✓</span>qa.preview_dedup() — show what approve would delete</li>
+        <li data-i="4" class="done"><span class="cb">✓</span>qa.approve_dedup() — delete from posts_current + mark approved</li>
+        <li data-i="5" class="done"><span class="cb">✓</span>qa.approve_dedup('Q4_FB_FORMAT') — approve only one query group</li>
+        <li data-i="6" class="done"><span class="cb">✓</span>qa.reject_dedup(id, note) — mark not-a-dup, keep the row</li>
       </ul>
       <div class="pw"><span class="pl">7/7</span><div class="pb"><div class="pf" style="width:100%"></div></div></div>
     </div>
@@ -541,16 +541,16 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
       <div class="st">T9 ★ — Duplicate Detection task</div>
       <div class="sd">Runs the 6 HILC detection queries against adl.posts_current after T8. Stages flagged rows for review. NEVER auto-deletes — operator approves via SQL on Mondays. Q1 always defaults is_to_remove=FALSE (human decides).</div>
       <ul class="cl" data-phase="5" data-step="4">
-        <li data-i="0"><span class="cb">✓</span>Q1 HILC: same Post text, different URLs (human review only)</li>
-        <li data-i="1"><span class="cb">✓</span>Q2 AUTO: null vs non-null post_id (auto-approvable)</li>
-        <li data-i="2"><span class="cb">✓</span>Q3 MANUAL: manual tracker overlap (Rule 22 backstop, should be ~0)</li>
-        <li data-i="3"><span class="cb">✓</span>Q4 FB FORMAT: /posts/ vs /photo.php (canonicalised in T1, should be ~0)</li>
-        <li data-i="4"><span class="cb">✓</span>Q5 IG FORMAT: /p/ vs /reel/ (canonicalised in T1, should be ~0)</li>
-        <li data-i="5"><span class="cb">✓</span>Q6 FLOAT KEY: '.0' suffix bug (fixed earlier, should be 0)</li>
-        <li data-i="6"><span class="cb">✓</span>Slack alert on Mondays with summary by query + SQL commands</li>
-        <li data-i="7"><span class="cb">✓</span>Step Functions: T8 → T9 → Pipeline-Success</li>
-        <li data-i="8"><span class="cb">✓</span>ECS task definition sprinklr-t9 registered</li>
-        <li data-i="9"><span class="cb">✓</span>Alert card extended: 8 → 10 nodes, "10 / 10" steps display</li>
+        <li data-i="0" class="done"><span class="cb">✓</span>Q1 HILC: same Post text, different URLs (human review only)</li>
+        <li data-i="1" class="done"><span class="cb">✓</span>Q2 AUTO: null vs non-null post_id (auto-approvable)</li>
+        <li data-i="2" class="done"><span class="cb">✓</span>Q3 MANUAL: manual tracker overlap (Rule 22 backstop, should be ~0)</li>
+        <li data-i="3" class="done"><span class="cb">✓</span>Q4 FB FORMAT: /posts/ vs /photo.php (canonicalised in T1, should be ~0)</li>
+        <li data-i="4" class="done"><span class="cb">✓</span>Q5 IG FORMAT: /p/ vs /reel/ (canonicalised in T1, should be ~0)</li>
+        <li data-i="5" class="done"><span class="cb">✓</span>Q6 FLOAT KEY: '.0' suffix bug (fixed earlier, should be 0)</li>
+        <li data-i="6" class="done"><span class="cb">✓</span>Slack alert on Mondays with summary by query + SQL commands</li>
+        <li data-i="7" class="done"><span class="cb">✓</span>Step Functions: T8 → T9 → Pipeline-Success</li>
+        <li data-i="8" class="done"><span class="cb">✓</span>ECS task definition sprinklr-t9 registered</li>
+        <li data-i="9" class="done"><span class="cb">✓</span>Alert card extended: 8 → 10 nodes, "10 / 10" steps display</li>
       </ul>
       <div class="pw"><span class="pl">10/10</span><div class="pb"><div class="pf" style="width:100%"></div></div></div>
     </div>
@@ -560,11 +560,11 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
       <div class="st">post_id_key stability</div>
       <div class="sd">post_id from Sprinklr is unstable (duplicates, nulls). Old pipeline used RowID (DB sequence). v2 uses Permalink for organic/boosted (stable per URL). UNIQUE post_id_key constraint enforces atomicity.</div>
       <ul class="cl" data-phase="5" data-step="5">
-        <li data-i="0"><span class="cb">✓</span>Organic/Boosted: post_id_key = permalink + benchmark + 'NONPAID'</li>
-        <li data-i="1"><span class="cb">✓</span>Manual tracker: post_id_key = post_id + benchmark (internal stable IDs)</li>
-        <li data-i="2"><span class="cb">✓</span>Paid: post_id_key = permalink + benchmark + date + post_id + 'PAID'</li>
-        <li data-i="3"><span class="cb">✓</span>Eliminated float key bug ('.0' → integer)</li>
-        <li data-i="4"><span class="cb">✓</span>UNIQUE constraint on adl.posts_current.post_id_key</li>
+        <li data-i="0" class="done"><span class="cb">✓</span>Organic/Boosted: post_id_key = permalink + benchmark + 'NONPAID'</li>
+        <li data-i="1" class="done"><span class="cb">✓</span>Manual tracker: post_id_key = post_id + benchmark (internal stable IDs)</li>
+        <li data-i="2" class="done"><span class="cb">✓</span>Paid: post_id_key = permalink + benchmark + date + post_id + 'PAID'</li>
+        <li data-i="3" class="done"><span class="cb">✓</span>Eliminated float key bug ('.0' → integer)</li>
+        <li data-i="4" class="done"><span class="cb">✓</span>UNIQUE constraint on adl.posts_current.post_id_key</li>
       </ul>
       <div class="pw"><span class="pl">5/5</span><div class="pb"><div class="pf" style="width:100%"></div></div></div>
     </div>
@@ -574,14 +574,14 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
       <div class="st">Schema parity with old pipeline</div>
       <div class="sd">adl.posts_current expanded from 96 → 122 columns to match Lambda 7's full output schema. All tag columns now populated with Lambda 5 'Global' defaults. Filter reason strings standardised.</div>
       <ul class="cl" data-phase="5" data-step="6">
-        <li data-i="0"><span class="cb">✓</span>Fix A: Lambda 5 'Global' defaults applied (Reputational Topic, Team, …)</li>
-        <li data-i="1"><span class="cb">✓</span>Fix B: Filter reason strings match Lambda 7 exactly ('Rule N: …')</li>
-        <li data-i="2"><span class="cb">✓</span>T6 expanded INSERT 96 → 122 columns matching old Lambda 7 schema</li>
-        <li data-i="3"><span class="cb">✓</span>MESSAGE_TYPE = 'Update' (always set, since Rule 1 filters non-Update)</li>
-        <li data-i="4"><span class="cb">✓</span>RowID = post_id_key (legacy column for Tableau compatibility)</li>
-        <li data-i="5"><span class="cb">✓</span>Total Reach, Total Video Views, Video Length populated</li>
-        <li data-i="6"><span class="cb">✓</span>Editorial Pillar, Editorial Type, Reputational Sub Topic populated</li>
-        <li data-i="7"><span class="cb">✓</span>Rule 19 fixed to require is_branded='True' (was over-filtering)</li>
+        <li data-i="0" class="done"><span class="cb">✓</span>Fix A: Lambda 5 'Global' defaults applied (Reputational Topic, Team, …)</li>
+        <li data-i="1" class="done"><span class="cb">✓</span>Fix B: Filter reason strings match Lambda 7 exactly ('Rule N: …')</li>
+        <li data-i="2" class="done"><span class="cb">✓</span>T6 expanded INSERT 96 → 122 columns matching old Lambda 7 schema</li>
+        <li data-i="3" class="done"><span class="cb">✓</span>MESSAGE_TYPE = 'Update' (always set, since Rule 1 filters non-Update)</li>
+        <li data-i="4" class="done"><span class="cb">✓</span>RowID = post_id_key (legacy column for Tableau compatibility)</li>
+        <li data-i="5" class="done"><span class="cb">✓</span>Total Reach, Total Video Views, Video Length populated</li>
+        <li data-i="6" class="done"><span class="cb">✓</span>Editorial Pillar, Editorial Type, Reputational Sub Topic populated</li>
+        <li data-i="7" class="done"><span class="cb">✓</span>Rule 19 fixed to require is_branded='True' (was over-filtering)</li>
       </ul>
       <div class="pw"><span class="pl">8/8</span><div class="pb"><div class="pf" style="width:100%"></div></div></div>
     </div>
@@ -598,10 +598,10 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
       <div class="st">Controlled comparison run — match v2 output to old DB</div>
       <div class="sd">DB wiped clean (ref tables + permalink_registry preserved, 41,095 rows). Re-run pipeline for same pull dates as old DB (last ran 2026-06-07). Compare v2 vs old DB: reptopic distribution, platform row counts, is_reactive fill rate. Only backfill after confirmed match. T5 post_id join confirmed working (numeric POST_ID_VALUE fix); T5 SCD2 same-day conflict under active fix.</div>
       <ul class="cl" data-phase="6" data-step="1">
-        <li data-i="0"><span class="cb">✓</span>First full E2E run SUCCEEDED (T0→T9, 17 min, 2026-06-10)</li>
-        <li data-i="1"><span class="cb">✓</span>Schema contract seeded — Organic_Tags_1 updated to 63 cols (Sprinklr CCR→GCCI rename 2026-06)</li>
-        <li data-i="2"><span class="cb">✓</span>POST_ID_VALUE fix in T1 — tag_pull_raw stores numeric post_ids (was URLs, broke T5 join)</li>
-        <li data-i="3"><span class="cb">✓</span>7 per-country collab trackers wired (L8 parity) + T11 follower task built (L11 parity)</li>
+        <li data-i="0" class="done"><span class="cb">✓</span>First full E2E run SUCCEEDED (T0→T9, 17 min, 2026-06-10)</li>
+        <li data-i="1" class="done"><span class="cb">✓</span>Schema contract seeded — Organic_Tags_1 updated to 63 cols (Sprinklr CCR→GCCI rename 2026-06)</li>
+        <li data-i="2" class="done"><span class="cb">✓</span>POST_ID_VALUE fix in T1 — tag_pull_raw stores numeric post_ids (was URLs, broke T5 join)</li>
+        <li data-i="3" class="done"><span class="cb">✓</span>7 per-country collab trackers wired (L8 parity) + T11 follower task built (L11 parity)</li>
         <li data-i="4">Fix T5 SCD2 same-day valid_from conflict (rows closed with no new current version)</li>
         <li data-i="5">Re-run pipeline for same dates as old DB (2026-06-07 range)</li>
         <li data-i="6">Compare: reptopic, platform counts, is_reactive fill rate vs old sprinklr_table</li>
@@ -615,13 +615,13 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
       <div class="st">First T9-included pipeline run</div>
       <div class="sd">Trigger a manual Step Functions execution to verify the full T0→T9 flow: 10 nodes, 10/10 alert card, qa.duplicate_candidates populated, Monday Slack review alert (test with is_monday:true).</div>
       <ul class="cl" data-phase="6" data-step="2">
-        <li data-i="0"><span class="cb">✓</span>migration 009 deployed (qa.duplicate_candidates + 3 helper functions)</li>
-        <li data-i="1"><span class="cb">✓</span>sprinklr-t9 ECS task definition registered</li>
-        <li data-i="2"><span class="cb">✓</span>Step Functions updated: T8 → T9 → Pipeline-Success</li>
-        <li data-i="3"><span class="cb">✓</span>T1 Apify resolver parallelised (8 workers, ~5x speedup) · commit 868e099</li>
-        <li data-i="4"><span class="cb">✓</span>T9 Q7_LAMBDA10 query added (ports validated Lambda 10 dedup pattern) · commit 6d4d4be</li>
-        <li data-i="5"><span class="cb">✓</span>Migration 021 deployed: registry CHECK widened for apify_recovered + sprinklr_pid_fallback</li>
-        <li data-i="6"><span class="cb">✓</span>ref.permalink_registry reseeded from validated Lambda 10 export · 29,188 rows</li>
+        <li data-i="0" class="done"><span class="cb">✓</span>migration 009 deployed (qa.duplicate_candidates + 3 helper functions)</li>
+        <li data-i="1" class="done"><span class="cb">✓</span>sprinklr-t9 ECS task definition registered</li>
+        <li data-i="2" class="done"><span class="cb">✓</span>Step Functions updated: T8 → T9 → Pipeline-Success</li>
+        <li data-i="3" class="done"><span class="cb">✓</span>T1 Apify resolver parallelised (8 workers, ~5x speedup) · commit 868e099</li>
+        <li data-i="4" class="done"><span class="cb">✓</span>T9 Q7_LAMBDA10 query added (ports validated Lambda 10 dedup pattern) · commit 6d4d4be</li>
+        <li data-i="5" class="done"><span class="cb">✓</span>Migration 021 deployed: registry CHECK widened for apify_recovered + sprinklr_pid_fallback</li>
+        <li data-i="6" class="done"><span class="cb">✓</span>ref.permalink_registry reseeded from validated Lambda 10 export · 29,188 rows</li>
         <li data-i="7">Trigger run with is_monday:true → verify 10/10 alert + Monday review Slack</li>
         <li data-i="8">Inspect qa.duplicate_candidates: Q4/Q5/Q6 should be ~0 (canonicalised); Q7 should match Lambda 10 CSVs</li>
         <li data-i="9">Operator dry-run: SELECT * FROM qa.preview_dedup()</li>
@@ -634,20 +634,26 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
       <div class="st">Legacy Parity Validation</div>
       <div class="sd">Prove adl.posts_current matches the legacy sprinklr_table within tolerance before any parallel run. Driven by scripts/run_qa.sh — a 4-layer V2-vs-legacy diff (sanity, row counts, 18 gap spot-checks, deep diagnostics). All SQL changes are dry-tested end-to-end (transaction + rollback) before deploy via scripts/dry_test_t3.py.</div>
       <ul class="cl" data-phase="6" data-step="6">
-        <li data-i="0"><span class="cb">✓</span>QA harness built — 4 layers, 16-column sampled value-diff, date-bounded comparison</li>
-        <li data-i="1"><span class="cb">✓</span>Paid/organic decoupling, comment sentiment, YouTube VV, multi-region LI, paid Reach/Topic/Benchmark (Gaps 1–8, 18)</li>
-        <li data-i="2"><span class="cb">✓</span>NULL-vs-0 engagement policy reverted to legacy semantics</li>
-        <li data-i="3"><span class="cb">✓</span>Paid data ingestion fixed — Paid_Data_9_FluencyWeekly.json added to DATA_FILES</li>
-        <li data-i="4"><span class="cb">✓</span>Collab priority rules re-applied every run vs new Sprinklr data (T3 Step 4)</li>
-        <li data-i="5"><span class="cb">✓</span>T3 propagates manual-tracker rows to post_attributes + post_metrics_daily (Steps 5/6) — was a write-only sink</li>
-        <li data-i="6"><span class="cb">✓</span>SCD2 close key fixed to (permalink, account, is_manual_tracker); stale bootstrap metrics removed (Step 6a)</li>
-        <li data-i="7"><span class="cb">✓</span>Dry-test-before-deploy discipline established (dry_test_t3.py)</li>
-        <li data-i="8">Resolve Sprinklr-side country leakage (T6 country derivation, mt=0 rows)</li>
-        <li data-i="9">Paid CPC/CTR/CPE — verify on next fresh weekly Paid_Data file</li>
-        <li data-i="10">Layer 2 sampled value-diff &lt; 50% rows differing</li>
-        <li data-i="11">LINE / collab row counts within ~10% of legacy</li>
+        <li data-i="0" class="done"><span class="cb">✓</span>QA harness built — 4 layers, 16-column sampled value-diff, date-bounded comparison</li>
+        <li data-i="1" class="done"><span class="cb">✓</span>Paid/organic decoupling, comment sentiment, YouTube VV, multi-region LI, paid Reach/Topic/Benchmark (Gaps 1–8, 18)</li>
+        <li data-i="2" class="done"><span class="cb">✓</span>NULL-vs-0 engagement policy reverted to legacy semantics</li>
+        <li data-i="3" class="done"><span class="cb">✓</span>Paid data ingestion fixed — Paid_Data_9_FluencyWeekly.json added to DATA_FILES</li>
+        <li data-i="4" class="done"><span class="cb">✓</span>Collab priority rules re-applied every run vs new Sprinklr data (T3 Step 4)</li>
+        <li data-i="5" class="done"><span class="cb">✓</span>T3 propagates manual-tracker rows to post_attributes + post_metrics_daily (Steps 5/6) — was a write-only sink</li>
+        <li data-i="6" class="done"><span class="cb">✓</span>SCD2 close key fixed to (permalink, account, is_manual_tracker); stale bootstrap metrics removed (Step 6a)</li>
+        <li data-i="7" class="done"><span class="cb">✓</span>Dry-test-before-deploy discipline established (dry_test_t3.py)</li>
+        <li data-i="8" class="done"><span class="cb">✓</span>Country LinkedIn → Global fixed (T5 sources geo from tag_type='target' pull; T6 resolves via linkedin_region_lookup; 187-row backfill) — verified live</li>
+        <li data-i="9" class="done"><span class="cb">✓</span>Account-name-in-Country leak fixed (Amazon.it/AmazonNews/etc) — guarded T6 final fallback to reject non-country-code values → Global. Structurally cannot leak. 0 leaks verified</li>
+        <li data-i="10" class="done"><span class="cb">✓</span>Comment Sentiment ingest fixed (T2 repointed to real CSV, 2,262 rows) + Count-* registry fallback in T6</li>
+        <li data-i="11" class="done"><span class="cb">✓</span>24-post Content Source=Global dedup fixed (T5 idempotent one-is_current-per-post_id guard)</li>
+        <li data-i="12" class="done"><span class="cb">✓</span>IG reel Video Views=0 typo fixed (REEL_PLAYS → TOTAL_REEL_PLAYS in T2)</li>
+        <li data-i="13">Reel historical post_metrics_daily backfill (~5,040 rows, recoverable via T2 reprocess)</li>
+        <li data-i="14">Benchmark ON CONFLICT collision (standalone T6 only — GROUP BY vs matcher mismatch)</li>
+        <li data-i="15">Paid CPC/CTR/CPE — verify on next fresh weekly Paid_Data file</li>
+        <li data-i="16">Layer 2 sampled value-diff &lt; 50% rows differing</li>
+        <li data-i="17">LINE / collab row counts within ~10% of legacy</li>
       </ul>
-      <div class="pw"><span class="pl">8/12</span><div class="pb"><div class="pf" style="width:67%"></div></div></div>
+      <div class="pw"><span class="pl">13/18</span><div class="pb"><div class="pf" style="width:72%"></div></div></div>
     </div>
 
     <div class="sc">
@@ -769,7 +775,7 @@ function update(){
     if(i===6&&totals[i].d===totals[i].t)cur=7;
   }
   const st=document.getElementById('status-text');
-  if(cur===0)st.textContent='Phase 0 — Planning';
+  if(cur===0)st.textContent='Phases 1–5 Complete — Phase 6 Cutover in progress (parallel-run)';
   else if(cur===7)st.textContent=`Complete — All ${allT} items done ✓`;
   else st.textContent=`Phase ${cur} — In Progress (${pct}% overall)`;
 }
