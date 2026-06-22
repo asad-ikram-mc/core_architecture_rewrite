@@ -149,6 +149,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 <button class="tab" data-v="old-dash"><span class="tab-old">OLD</span>Dashboards</button>
 <button class="tab" data-v="old-analyst"><span class="tab-old">OLD</span>Analyst View</button>
 <button class="tab" data-v="old-hitl"><span class="tab-old">OLD</span>Human-in-Loop</button>
+<button class="tab" data-v="rules"><span class="tab-old">OLD</span>Filter Rules</button>
 <button class="tab tab-group-new" data-v="new"><span class="tab-new">NEW</span>Architecture — Fargate</button>
 <button class="tab" data-v="diagram"><span class="tab-new">NEW</span>Flow Diagram</button>
 <button class="tab" data-v="erd"><span class="tab-new">NEW</span>Database ERD</button>
@@ -257,6 +258,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 <p>In V2, Task 9 (Fargate) runs seven duplicate detection queries automatically every pipeline run. Human review is done via SQL helper functions — no CSV download needed.</p>
 </div>
 <div style="max-width:960px;margin:0 auto" id="hitl-new-content"></div>
+</div>
+
+<div class="vw" id="vw-rules">
+<div class="vi"><h2>OLD Pipeline — Filter & Transform Rules</h2>
+<p>Every rule the V1 pipeline applies to posts, exactly as written in the Lambda code. Rules 1-22 remove or transform rows; each shows the stage, the precise condition, and the reason string the code logs to the filtered_posts CSVs.</p>
+</div>
+<div id="rules-content"></div>
 </div>
 
 <script>
@@ -644,6 +652,88 @@ c.scrollIntoView({behavior:'smooth',block:'nearest'});
 // ════════════════════════════════════════════
 // ANALYST VIEW
 // ════════════════════════════════════════════
+
+function renderRules(){
+  var el=document.getElementById('rules-content');
+  if(!el)return;
+  // Each rule: [num, title, stage(lambda), severity, condition, reason_string]
+  // stage colors: λ4=#3b82f6, λ5=#8b5cf6, λ6=#f59e0b, λ7=#ef4444
+  var stageColor={'Lambda 4':'#3b82f6','Lambda 5':'#8b5cf6','Lambda 6':'#f59e0b','Lambda 7':'#ef4444'};
+  var R=[
+    ['1','MESSAGE_TYPE not Update/Reply','Lambda 4','filter',"Drops organic rows unless MESSAGE_TYPE is 'Update' or 'Twitter Sent Reply'. Paid data (is_paiddata=1) and rows with no MESSAGE_TYPE/Platform are kept.",'Rule 1: MESSAGE_TYPE not Update/Reply'],
+    ['2','Message has no text','Lambda 4','filter',"Drops rows where Post == 'This message has no text.' — unless the permalink is in the keep_permalinks allow-list (one Instagram Reel exception).",'Rule 2: This message has no text'],
+    ['3','File extensions (Facebook only)','Lambda 4','filter',"Drops Facebook rows whose Post text contains a file-extension string (EXCLUDED_EXTENSIONS list).",'Rule 3: File extensions (Facebook only)'],
+    ['4','Cover photo / phone update','Lambda 4','filter',"Drops auto-generated posts: 'updated their cover photo', 'updated their phone number', 'added a new photo', 'added a new video' (case-insensitive).",'Rule 4: Cover photo/phone update'],
+    ['5a','Under 250 impressions','Lambda 4','filter',"Drops Organic/Boosted posts with Total Impressions < 250 (every year).",'Rule 5: Low impressions (<250, or <500 with <50 engagements for 2026+)'],
+    ['5b','250-499 impr with <50 eng (2026+)','Lambda 4','filter',"Drops Organic/Boosted posts with 250-499 impressions AND <50 engagements, but only for posts published on/after 2026-01-01.",'Rule 5: Low impressions (<250, or <500 with <50 engagements for 2026+)'],
+    ['6','LinkedIn dark posts','Lambda 4','filter',"Drops organic (is_paiddata=0) LinkedIn rows where IS_DARK_POST is True.",'Rule 6: LinkedIn dark posts'],
+    ['7','Country exclusion','Lambda 5','filter',"Drops rows where Country is in [AT, BE, NL, PL, SE, TR, SG, CN]. (Code label lists BE,NL,PL,SE,TR,SG,CN; AT is also in the array.)",'Rule 7: Countries exclusion (BE, NL, PL, SE, TR, SG, CN)'],
+    ['8','Deleted posts (except LINE)','Lambda 5','filter',"Drops rows where to_be_delete == 'This post was deleted' — unless source == 'LINE' (LINE rows are always kept).",'Rule 8: Deleted posts (except LINE)'],
+    ['9','Null or empty Country','Lambda 6','filter',"Drops rows where Country is null or empty. (Their account/platform is first written to unmatch_mapping/ for review.)",'Rule 9: Null or empty Country'],
+    ['10','Zero spend paid posts','Lambda 6','filter',"Drops paid rows where SPENT__USD__IN_USD__SUM == 0.",'Rule 10: Zero spend paid posts'],
+    ['11','On/before 2023-09-04 (except WeChat)','Lambda 7','filter',"Keeps WeChat regardless of date; for all other platforms drops rows with Date <= 2023-09-04.",'Rule 11: Published on or before 2023-09-04 (except WeChat)'],
+    ['12','MENA region posts','Lambda 7','filter',"Drops rows where Region == 'MENA'.",'Rule 12: MENA region posts'],
+    ['13','Amazon News X - EU account','Lambda 7','filter',"Drops rows where Account == 'Amazon News X - EU'.",'Rule 13: Amazon News X - EU account'],
+    ['14','US posts without approved Post Message','Lambda 7','filter',"For non-manual-tracker US rows not in [Amazon IG - Inside, Amazon News IG - US]: drops them unless Post Message is one of the approved Amazon Marketing / GCCI NA values.",'Rule 14: US posts without approved Post Message'],
+    ['15','India posts without approved Post Message','Lambda 7','filter',"For non-manual-tracker rows in the selected India accounts: drops them unless Post Message is an approved GCCI APAC value.",'Rule 15: India posts without approved Post Message'],
+    ['16','Europe organic without EMEA Post Message','Lambda 7','filter',"Applies apply_emea_filter(): drops European organic posts lacking an approved EMEA Post Message.",'Rule 16: Europe organic posts without EMEA Post Message'],
+    ['17','APAC + X + X Sent Reply','Lambda 7','filter',"Drops rows where Region=='APAC' AND Holding Company=='X' AND MESSAGE_TYPE=='X Sent Reply'.",'Rule 17: APAC + X Holding Company + X Sent Reply'],
+    ['18','APAC excluded author mappings','Lambda 7','filter',"Drops non-manual-tracker APAC rows whose author matches the APAC author-exclusion mapping.",'Rule 18: APAC excluded author mappings'],
+    ['19','Branded content, all Global metadata','Lambda 7','filter',"Drops rows where If yes who made it / Content Category Type / Is it XGC / Tier 1 Event / Team are ALL 'Global' AND is_manual_tracker==0. (Appended to is_branded_true_table.)",'Rule 19: Branded content with all Global metadata'],
+    ['20','Blacklisted permalinks','Lambda 7','filter',"Drops rows whose Permalink is in blacklist_table. (Append-only blacklist read every run.)",'Rule 20: Blacklisted permalinks'],
+    ['21','XCM Post Messages removed','Lambda 7','filter',"Drops rows whose Post Message is in the XCM values_to_remove list.",'Rule 21: XCM Post Messages removed'],
+    ['22','Collab Priority dedup','Lambda 7','dedup',"Groups by (account, extracted post id). Mirrors Lambda 8 priority: when a Sprinklr row and a collab (is_manual_tracker=1) row are the same post, the collab duplicate is dropped (Sprinklr survives).",'Rule 22: Collab Priority - Sprinklr survived all rules'],
+  ];
+
+  // group counts by stage
+  var byStage={};
+  R.forEach(function(r){byStage[r[2]]=(byStage[r[2]]||0)+1;});
+
+  var h='';
+  // summary strip
+  h+='<div style="max-width:1100px;margin:0 auto 1.5rem;display:flex;gap:.8rem;flex-wrap:wrap;justify-content:center">';
+  [['Lambda 4','Rules 1-6','#3b82f6'],['Lambda 5','Rules 7-8','#8b5cf6'],['Lambda 6','Rules 9-10','#f59e0b'],['Lambda 7','Rules 11-22','#ef4444']].forEach(function(s){
+    h+='<div style="background:var(--bg2);border:1px solid '+s[2]+'40;border-radius:10px;padding:.7rem 1.1rem;min-width:150px">';
+    h+='<div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:'+s[2]+';font-weight:700;font-family:\'Sora\',sans-serif">'+s[0]+'</div>';
+    h+='<div style="font-size:.95rem;font-weight:700;color:var(--text);margin-top:.2rem">'+s[1]+'</div></div>';
+  });
+  h+='</div>';
+
+  // note
+  h+='<div style="max-width:1100px;margin:0 auto 1.2rem;background:rgba(255,153,0,.06);border:1px solid rgba(255,153,0,.25);border-radius:10px;padding:.8rem 1.1rem;font-size:.82rem;color:var(--text2);line-height:1.6">';
+  h+='<b style="color:#FF9900">How to read these:</b> rules run in numeric order across the pipeline. A row dropped by an earlier rule never reaches a later one. Every dropped row is written (with its rule reason) to <code style="font-family:\'JetBrains Mono\',monospace;color:#FF9900">filtered_posts/lambda_[4567]_*.csv</code> so it can be searched on the Filtered Posts Dashboard.';
+  h+='</div>';
+
+  // table
+  h+='<div style="max-width:1100px;margin:0 auto;background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden">';
+  h+='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:.84rem;min-width:760px">';
+  h+='<thead><tr>';
+  ['#','Rule','Stage','Condition (from code)'].forEach(function(c,i){
+    h+='<th style="text-align:left;padding:.7rem .9rem;background:var(--bg3);color:var(--text3);font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;font-weight:700;border-bottom:1px solid var(--border);font-family:\'Sora\',sans-serif;'+(i===0?'width:48px':'')+'">'+c+'</th>';
+  });
+  h+='</tr></thead><tbody>';
+  R.forEach(function(r){
+    var col=stageColor[r[2]]||'#888';
+    var sevBadge=r[3]==='dedup'
+      ?'<span style="font-size:.6rem;font-weight:700;padding:.1rem .4rem;border-radius:4px;background:rgba(139,124,245,.15);color:#a594ff;border:1px solid rgba(139,124,245,.35);font-family:\'JetBrains Mono\',monospace">DEDUP</span>'
+      :'<span style="font-size:.6rem;font-weight:700;padding:.1rem .4rem;border-radius:4px;background:rgba(239,68,68,.13);color:#ff6b6b;border:1px solid rgba(239,68,68,.3);font-family:\'JetBrains Mono\',monospace">DROP</span>';
+    h+='<tr style="border-bottom:1px solid var(--border)">';
+    h+='<td style="padding:.7rem .9rem;font-family:\'JetBrains Mono\',monospace;font-weight:700;color:'+col+';vertical-align:top">R'+r[0]+'</td>';
+    h+='<td style="padding:.7rem .9rem;vertical-align:top"><div style="font-weight:600;color:var(--text)">'+r[1]+'</div><div style="margin-top:.3rem">'+sevBadge+'</div></td>';
+    h+='<td style="padding:.7rem .9rem;vertical-align:top"><span style="font-family:\'JetBrains Mono\',monospace;font-size:.74rem;color:'+col+';font-weight:600">'+r[2].replace('Lambda ','λ')+'</span></td>';
+    h+='<td style="padding:.7rem .9rem;vertical-align:top;color:var(--text2);line-height:1.55">'+r[4]+'<div style="margin-top:.4rem;font-family:\'JetBrains Mono\',monospace;font-size:.68rem;color:var(--text3)">reason: "'+r[5]+'"</div></td>';
+    h+='</tr>';
+  });
+  h+='</tbody></table></div></div>';
+
+  // footnote on non-filter transforms
+  h+='<div style="max-width:1100px;margin:1.2rem auto 3rem;font-size:.8rem;color:var(--text3);line-height:1.6">';
+  h+='<b style="color:var(--text2)">Not shown above (transform rules, not row-drops):</b> Lambda 6 also does benchmark matching (Country+Platform+Delivery+Quarter, &lt;10-post fallback to annual) and <b>row-doubling</b> (one Median row + one Average row per post). Lambda 7 also translates non-AU/US/UK posts, attaches comment sentiment, and splits LinkedIn Global into per-country rows.';
+  h+='</div>';
+
+  el.innerHTML=h;
+}
+
 function renderOldAnalystView(){
 const el=document.getElementById('old-analyst-content');
 if(!el)return;
@@ -1637,6 +1727,7 @@ renderERD();
 renderArchDiagram();
 renderAnalystView();
 renderOldAnalystView();
+renderRules();
 renderExistingFlow();
 renderHITL();
 renderExistingFlow();
