@@ -246,7 +246,17 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
       <div style="background:var(--bg3);border-radius:8px;padding:.7rem"><div style="font-size:.7rem;font-weight:700;color:#06b6d4;font-family:'Sora',sans-serif;margin-bottom:.3rem">qa.collab_priority_decisions</div><div style="font-size:.8rem;color:var(--text2)">T3 collab priority rule audit per run</div></div>
     </div>
   </div>
-  <div style="background:var(--bg2);border:1px solid rgba(34,197,94,.25);border-radius:12px;padding:1rem 1.2rem;font-size:.83rem;color:var(--text2);line-height:1.6">The V2 Quality Console is live (S3-hosted): Old DB ⇄ V2 parity tab, Pipeline Runs, Funnel, Filtered Posts, Week-on-Week, Upsert Quality, Collab/LINE, QA, Registry Dedup, Schema, Change Tracking, and Post Story tabs. It auto-refreshes on every pipeline run (EventBridge on Step Functions terminal state). You can also query qa.* tables directly via RDS Query Editor.</div>
+  <div style="margin-top:1rem;background:var(--bg2);border:1px solid rgba(6,182,212,.3);border-radius:12px;overflow:hidden">
+    <div style="padding:1rem 1.2rem;background:rgba(6,182,212,.07);border-bottom:1px solid rgba(6,182,212,.2)">
+      <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#06b6d4;font-family:'Sora',sans-serif;margin-bottom:.3rem">V2 · Quality &amp; Monitoring</div>
+      <div style="font-size:1.1rem;font-weight:700;color:#e6edf3;font-family:'Sora',sans-serif">V2 Quality Console</div>
+    </div>
+    <div style="padding:1rem 1.2rem">
+      <p style="font-size:.88rem;color:var(--text2);line-height:1.6;margin-bottom:.8rem">Live S3-hosted console for the V2 Fargate pipeline: Old DB &#8646; V2 parity, Pipeline Runs, Funnel, Filtered Posts, Week-on-Week, Upsert Quality, Collab/LINE, QA, Registry Dedup, Schema, Change Tracking, and Post Story tabs. Auto-refreshes on every pipeline run (EventBridge on Step Functions terminal state). The qa.* tables above are also queryable directly via RDS Query Editor.</p>
+      <div style="font-size:.75rem;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:1rem;word-break:break-all;line-height:1.7">amazon-core-quality-dashboard<br>.s3-website.eu-west-2.amazonaws.com</div>
+      <a href="http://amazon-core-quality-dashboard.s3-website.eu-west-2.amazonaws.com/index.html" target="_blank" style="display:inline-flex;align-items:center;gap:.4rem;padding:.45rem 1rem;background:#06b6d4;color:#000;border-radius:6px;font-size:.85rem;font-weight:700;text-decoration:none;font-family:'Sora',sans-serif">Open Dashboard &#8594;</a>
+    </div>
+  </div>
 </div>
 </div>
 
