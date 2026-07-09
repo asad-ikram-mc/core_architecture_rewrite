@@ -1481,46 +1481,53 @@ box(LX,975,BW,BH,LC,'λ6 — Benchmarks + R9–10','country+platform+quarter mat
 arr(LX+BW/2,885+BH,LX+BW/2,975,LC);
 store(RX,980,RXW,36,S3C,'tableau_layer/*.csv','→ triggers λ7');
 
+// ── λ7 → λ10 → λ11 run in sequence on Monday (λ10 after λ7 push; λ11 last) ──
 // λ7 push
-box(LX,1065,BW+20,BH,LC,'λ7 — Push + Rules 11–21','translate · sentiment · UPSERT sprinklr_table','λ7','e17',true);
-arr(LX+(BW+20)/2,975+BH,LX+(BW+20)/2,1065,LC);
+box(LX,1065,BW,BH,LC,'λ7 — Push + Rules 11–21','translate · sentiment · UPSERT','λ7','e17',true);
+arr(LX+BW/2,975+BH,LX+BW/2,1065,LC);
 
-// λ10 + λ11 (parallel, supporting)
-box(LX+240,1065,BW,44,LC,'λ10 — Permalink Registry','stable_post_id · 3-strategy resolve','λ10','e17b',true);
-box(LX+240,1118,BW,44,LC,'λ11 — Follower Data','LI overrides 476 rows · follower_table','λ11','e17c',true);
-arr(LX+BW+20,1087,LX+240,1087,LC,true);
-arr(LX+BW+20,1087,LX+240,1140,LC,true);
+// λ10 permalink registry — runs after λ7 finishes (sequential, not parallel)
+box(LX,1150,BW,BH,LC,'λ10 — Permalink Registry','stable_post_id · 3-strategy · dedup','λ10','e17b',true);
+arr(LX+BW/2,1065+BH,LX+BW/2,1150,LC);
 
-// RDS outputs
-store(RX,1068,RXW,32,RDSC,'sprinklr_table','UPSERT · ~156 cols');
-store(RX,1108,RXW,28,RDSC,'sprinklr_lookup_check','UPSERT');
-store(RX,1143,RXW,28,RDSC,'import_table','staging');
-store(RX,1178,RXW,28,RDSC,'blacklist_table','append R20');
-store(RX,1213,RXW,28,RDSC,'is_branded_true_table','append R19');
-store(RX,1248,RXW,28,RDSC,'follower_table','λ11 writes');
-arr(LX+BW+20,1087,RX,1084,RDSC,true);
+// λ11 follower data — last Monday step
+box(LX,1235,BW,BH,LC,'λ11 — Follower Data','LI overrides 476 rows · follower_table','λ11','e17c',true);
+arr(LX+BW/2,1150+BH,LX+BW/2,1235,LC);
 
-// S3 outputs
-store(LX,1190,180,28,S3C,'check/finalsql_*.csv','full snapshot');
-store(LX+195,1190,180,28,S3C,'filtered_posts/*.csv','5 filter files');
-store(LX,1225,180,28,S3C,'dupes_reports/*.txt','SES dedup alert');
-arr(LX+(BW+20)/2,1065+BH,LX+90,1190,S3C,true);
+// ── RDS output column (right) ──
+store(RX,1065,RXW,30,RDSC,'sprinklr_table','UPSERT · ~156 cols');
+store(RX,1100,RXW,28,RDSC,'sprinklr_lookup_check','UPSERT');
+store(RX,1133,RXW,28,RDSC,'import_table','staging');
+store(RX,1166,RXW,28,RDSC,'blacklist_table','append R20');
+store(RX,1199,RXW,28,RDSC,'is_branded_true_table','append R19');
+store(RX,1232,RXW,28,RDSC,'follower_table','λ11 writes');
+// λ7 → RDS (main UPSERT)
+arr(LX+BW,1091,RX,1080,RDSC,true);
+// λ11 → follower_table (its specific output)
+arr(LX+BW,1261,RX,1246,RDSC,true);
 
-// SES+CloudWatch
-s+=`<rect x="${LX+430}" y="1068" width="170" height="44" rx="4" fill="${IC}08" stroke="${IC}" stroke-opacity=".3"/>`;
-s+=`<text x="${LX+440}" y="1085" fill="${IC}" font-size="8.5" font-weight="600" style="pointer-events:none">SES + CloudWatch</text>`;
-s+=`<text x="${LX+440}" y="1100" fill="#9ba1b0" font-size="7.5" font-family="'JetBrains Mono'" style="pointer-events:none">dedup violations · errors</text>`;
-arr(LX+BW+20,1087,LX+430,1090,IC,true);
+// ── SES + CloudWatch — parked clear of the arrow field, right side below RDS ──
+s+=`<rect x="${RX}" y="1272" width="${RXW}" height="40" rx="4" fill="${IC}08" stroke="${IC}" stroke-opacity=".3"/>`;
+s+=`<text x="${RX+10}" y="1289" fill="${IC}" font-size="8.5" font-weight="600" style="pointer-events:none">SES + CloudWatch</text>`;
+s+=`<text x="${RX+10}" y="1303" fill="#9ba1b0" font-size="7.5" font-family="'JetBrains Mono'" style="pointer-events:none">dedup violations · errors</text>`;
+arr(LX+BW,1091,RX,1285,IC,true);
 
-// Tableau
+// ── S3 outputs — under the λ column, left ──
+store(LX+230,1150,190,28,S3C,'check/finalsql_*.csv','full snapshot');
+store(LX+230,1185,190,28,S3C,'filtered_posts/*.csv','5 filter files');
+store(LX+230,1220,190,28,S3C,'dupes_reports/*.txt','SES dedup alert');
+arr(LX+BW,1091,LX+230,1164,S3C,true);
+
+// ── Tableau — centered bottom, fed by sprinklr_table ──
 s+=`<g style="cursor:pointer" onclick="showExistDetail('e20')">`;
-s+=`<rect x="${LX+250}" y="1290" width="${BW+40}" height="52" rx="8" fill="#22c55e0c" stroke="#22c55e" stroke-opacity=".5" stroke-width="2"/>`;
-s+=`<text x="${LX+250+(BW+40)/2}" y="1312" text-anchor="middle" fill="#22c55e" font-size="12" font-weight="700" font-family="'Sora',sans-serif" style="pointer-events:none">📈 Tableau</text>`;
-s+=`<text x="${LX+250+(BW+40)/2}" y="1330" text-anchor="middle" fill="#9ba1b0" font-size="8" font-family="'JetBrains Mono'" style="pointer-events:none">sprinklr_table · MONDAY ONLY</text>`;
-arr(RX+RXW/2,1068+32,LX+250+(BW+40)/2,1290,'#22c55e');
+s+=`<rect x="${LX+250}" y="1360" width="${BW+40}" height="52" rx="8" fill="#22c55e0c" stroke="#22c55e" stroke-opacity=".5" stroke-width="2"/>`;
+s+=`<text x="${LX+250+(BW+40)/2}" y="1382" text-anchor="middle" fill="#22c55e" font-size="12" font-weight="700" font-family="'Sora',sans-serif" style="pointer-events:none">📈 Tableau</text>`;
+s+=`<text x="${LX+250+(BW+40)/2}" y="1400" text-anchor="middle" fill="#9ba1b0" font-size="8" font-family="'JetBrains Mono'" style="pointer-events:none">sprinklr_table · MONDAY ONLY</text>`;
+s+=`</g>`;
+arr(RX+RXW/2,1095,LX+250+(BW+40)/2,1360,'#22c55e');
 
 // LEGEND
-const lx=LX,ly=1380;
+const lx=LX,ly=1440;
 s+=`<text x="${lx}" y="${ly}" fill="#636a7e" font-size="8" font-weight="700" letter-spacing="1.5" font-family="'Sora',sans-serif">LEGEND</text>`;
 const legend=[
   {c:LC,t:'Lambda function'},
