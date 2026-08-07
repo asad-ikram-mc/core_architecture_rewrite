@@ -136,7 +136,32 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   margin-left:.6rem;
   border-left:1px solid var(--border);
   padding-left:1rem;
-}</style>
+}
+/* ── Written Documentation tab ───────────────────────────── */
+.doc{max-width:900px;margin:0 auto;padding:0 1.5rem 4rem;font-family:'DM Sans',sans-serif;line-height:1.75;color:var(--text2)}
+.doc h3{font-family:'Sora',sans-serif;font-size:1.32rem;font-weight:700;color:var(--text);margin:2.8rem 0 .9rem;padding-top:.6rem;border-top:1px solid var(--border);scroll-margin-top:1.5rem}
+.doc h3:first-of-type{border-top:none;margin-top:1.2rem}
+.doc p{margin:0 0 1rem}
+.doc b{color:var(--text);font-weight:600}
+.doc i{color:var(--text2)}
+.doc code{font-family:'JetBrains Mono',monospace;font-size:.82em;background:var(--bg3);color:#c9d6e4;padding:.1rem .35rem;border-radius:4px;word-break:break-word}
+.doc ol,.doc ul{margin:0 0 1.1rem 1.3rem}
+.doc li{margin-bottom:.55rem}
+.doc-toc{background:var(--bg2);border:1px solid var(--border);border-radius:var(--R);padding:1.2rem 1.4rem;margin-bottom:2rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:.35rem .9rem}
+.doc-toc b{grid-column:1/-1;font-family:'Sora',sans-serif;color:var(--text);font-size:.78rem;letter-spacing:.09em;text-transform:uppercase;margin-bottom:.35rem}
+.doc-toc a{color:var(--text2);text-decoration:none;font-size:.86rem;padding:.16rem 0;transition:color .15s}
+.doc-toc a:hover{color:var(--accent)}
+.doc-note{background:rgba(79,143,247,.07);border-left:3px solid var(--s3);border-radius:0 var(--r) var(--r) 0;padding:.85rem 1.1rem;margin:1.3rem 0}
+.doc-warn{background:rgba(255,153,0,.07);border-left:3px solid var(--accent);border-radius:0 var(--r) var(--r) 0;padding:.85rem 1.1rem;margin:1.3rem 0}
+.doc-tbl{width:100%;border-collapse:collapse;margin:1.2rem 0 1.6rem;font-size:.87rem;display:block;overflow-x:auto}
+.doc-tbl th{text-align:left;font-family:'Sora',sans-serif;font-size:.72rem;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);padding:.6rem .8rem;border-bottom:1px solid var(--border);white-space:nowrap}
+.doc-tbl td{padding:.65rem .8rem;border-bottom:1px solid rgba(48,54,61,.55);vertical-align:top}
+.doc-tbl tr:hover td{background:rgba(255,153,0,.03)}
+.doc-tbl td:first-child{color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:.82rem;font-weight:600;white-space:nowrap}
+.doc-foot{margin-top:2.5rem;padding-top:1.2rem;border-top:1px solid var(--border);font-size:.83rem;color:var(--text3);font-style:italic}
+.bdg-upd{background:rgba(139,148,158,.09)!important;color:var(--text2)!important;border-color:rgba(139,148,158,.25)!important}
+@media(max-width:700px){.doc{padding:0 1rem 3rem}.doc h3{font-size:1.15rem}}
+</style>
 </head>
 <body>
 <div style="height:3px;background:linear-gradient(90deg,#FF9900,#ff6600,#FF9900);background-size:200% 100%;animation:shimmer 3s linear infinite"></div>
@@ -146,6 +171,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 <h1>Amazon CORE — Pipeline Explorer</h1>
 <p>Amazon CORE Social Media ETL · M+C Saatchi Fluency</p>
 <div class="hero-b">
+<div class="bdg bdg-upd"><span></span>Last updated: 7 August 2026</div>
 <div class="bdg"><span></span>V1: 14 Lambdas · V2: 10 Fargate Tasks · Step Functions · Daily</div>
 <a href="roadmap.html" style="display:inline-flex;align-items:center;gap:.4rem;padding:.3rem .85rem;border-radius:20px;font-size:.78rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;background:rgba(34,197,94,.1);color:#22c55e;border:1px solid rgba(34,197,94,.25);font-family:'Sora',sans-serif;text-decoration:none;transition:.2s"><span style="display:inline-block;padding:.05rem .35rem;border-radius:3px;font-size:.6rem;font-weight:800;background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.35);margin-right:.3rem;letter-spacing:.05em">NEW</span>Build Roadmap →</a>
 </div>
@@ -163,6 +189,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 <button class="tab" data-v="old-analyst"><span class="tab-old">OLD</span>Analyst View</button>
 <button class="tab" data-v="old-hitl"><span class="tab-old">OLD</span>Human-in-Loop</button>
 <button class="tab" data-v="rules"><span class="tab-old">OLD</span>Filter Rules</button>
+<button class="tab" data-v="docs"><span class="tab-old">OLD</span>Written Docs</button>
 <button class="tab tab-group-new" data-v="new"><span class="tab-new">NEW</span>Architecture — Fargate</button>
 <button class="tab" data-v="diagram"><span class="tab-new">NEW</span>Flow Diagram</button>
 <button class="tab" data-v="erd"><span class="tab-new">NEW</span>Database ERD</button>
@@ -281,6 +308,170 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 <p>In V2, Task 9 (Fargate) runs seven duplicate detection queries automatically every pipeline run. Human review is done via SQL helper functions — no CSV download needed.</p>
 </div>
 <div style="max-width:960px;margin:0 auto" id="hitl-new-content"></div>
+</div>
+
+<div class="vw" id="vw-docs">
+<div class="vi"><h2>OLD Pipeline — Written Documentation</h2>
+<p>The V1 Lambda pipeline in full prose — every stage, every input and output, every rule, and every known failure mode. Written from the deployed source code and verified against it line by line. Where the pipeline does something surprising or undocumented, it says so.</p></div>
+
+<div class="doc">
+<div class="doc-toc">
+  <b>Contents</b>
+  <a href="#d-summary">1 · The 30-second summary</a>
+  <a href="#d-infra">2 · Infrastructure &amp; storage</a>
+  <a href="#d-l1">3 · Stage 1 — Validation (λ1)</a>
+  <a href="#d-l2">4 · Stage 2 — The movers (λ2a / λ2b)</a>
+  <a href="#d-l2cd">5 · Stage 2c / 2d — Lookups &amp; tag assembly</a>
+  <a href="#d-l3">6 · Stage 3 — The merge (λ3 + Fargate)</a>
+  <a href="#d-l3b">7 · Stage 3b — Post-ID resolution</a>
+  <a href="#d-l4">8 · Stage 4 — Filtering (λ4)</a>
+  <a href="#d-l5">9 · Stage 5 — Tagging (λ5)</a>
+  <a href="#d-l6">10 · Stage 6 — Benchmarks (λ6)</a>
+  <a href="#d-l7">11 · Stage 7 — Database push (λ7)</a>
+  <a href="#d-side">12 · Side pipelines (λ8 / λ9 / λ10 / λ11)</a>
+  <a href="#d-rules">13 · Complete filter-rule reference</a>
+  <a href="#d-silent">14 · Undocumented drop paths</a>
+  <a href="#d-fail">15 · Known failure modes</a>
+  <a href="#d-ops">16 · Operator cheat-sheet</a>
+</div>
+
+<h3 id="d-summary">1 · The 30-second summary</h3>
+<p>CORE is the daily ETL that takes Amazon's global social media data out of <b>Sprinklr</b>, cleans and tags it, computes benchmarks against historical performance, and pushes it into a <b>PostgreSQL</b> database that Tableau reads. It covers Facebook, Instagram (feed and Stories), X/Twitter, LinkedIn, YouTube, TikTok, Threads and LINE, across Organic / Boosted / Paid delivery, for accounts worldwide.</p>
+<p>Two facts explain most of the pipeline's behaviour:</p>
+<ol>
+<li><b>Each Sprinklr pull is a rolling ~88-day window, not a daily delta.</b> Every pull re-delivers the same posts with refreshed metrics — roughly 20,500 rows a day. A missed day therefore loses <i>metric snapshots</i>, not posts: the next successful pull still contains everything published in the window.</li>
+<li><b>The database only moves on Mondays.</b> Non-Monday runs accumulate into <code>master_table.csv</code> and stop there. Everything from stage 3b onwards is gated behind a Monday check — and that check reads the <i>pulldate</i>, not today's date, so a replay of a Monday behaves like a Monday whenever it is run.</li>
+</ol>
+<p>The pipeline is <b>15 deployed Lambda functions</b> plus one Fargate task. The Lambdas run in <b>eu-north-1</b> (Stockholm); the Fargate cluster and the RDS database are in <b>eu-west-2</b> (London). That split is deliberate, and λ3 pins its ECS client to eu-west-2 accordingly.</p>
+
+<h3 id="d-infra">2 · Infrastructure &amp; storage</h3>
+<p>There are two S3 buckets and one database.</p>
+<p><b><code>amazon-global-gsmc-sprinklr</code> — the raw landing zone.</b> Sprinklr drops files here every morning into dated folders. <code>RAWDATA/Fluency-Monthly/</code> holds the daily organic pull (11 files), <code>RAWDATA/Fluency-Weekly/</code> the weekly paid and follower pull (5 files), <code>RAWDATA/Tag-Pull/</code> the tag pull (4 files) and <code>RAWDATA/Fluency-Tags-Only-Pull/</code> the tags-only pull (3 files) — <b>23 files in total</b>, which is the number λ1 validates. The bucket also holds <code>copy_production_data/RAWDATA/</code>, a pristine mirror taken before any column renaming, and <code>mapping_column_json/COLUMN_MAPPINGS_sprinklr.json</code>.</p>
+<p class="doc-note"><b>The single most-missed operational fact:</b> the column mapping is read <b>from S3</b>, not from the repository. Merging a mapping fix to <code>main</code> changes nothing until the JSON is uploaded to <code>s3://amazon-global-gsmc-sprinklr/mapping_column_json/</code>.</p>
+<p><b><code>wikitablescrapexample</code> — the working and curated layer.</b> Validated files land under <code>amazon_sprinklr_pull/fluency/</code> and <code>amazon_sprinklr_pull/Fluency-Weekly/</code>. The heart of the pipeline is <code>amazon_sprinklr_pull/result/master_table.csv</code>, the accumulator every daily run merges into. Stage outputs sit in <code>weeklybackup/</code>, <code>monthlybackeup/</code> (the typo is real and load-bearing), <code>for_tagging/</code>, <code>finalmaster/</code> and <code>tableau_layer/</code>. Two prefixes live at the <b>bucket root</b>, not under <code>amazon_sprinklr_pull/</code>: <code>filtered_posts/</code> (the audit trail) and <code>check/</code> (the pre-push snapshots).</p>
+<p><b>The database</b> is RDS PostgreSQL <code>sprinklrproddb</code> in eu-west-2. The pipeline writes seven tables, of which <code>sprinklr_table</code> is the one Tableau reads. The others are <code>sprinklr_lookup_check</code>, <code>follower_table</code>, <code>blacklist_table</code>, <code>is_branded_true_table</code>, <code>permalink_registry</code> and <code>comment_sentiment_history</code>.</p>
+
+<h3 id="d-l1">3 · Stage 1 — Validation (λ1 · <code>Data_validation</code>)</h3>
+<p>λ1 is the gate. It runs on a schedule, ignores its event payload entirely, and works only on <b>today's</b> folder — the date comparison is a hard equality, so there is no way to ask it for an older date. (That is what <code>lambda_1b.py</code> exists for: a local-only copy that accepts a <code>target_date</code>. It is deliberately excluded from CI deployment.)</p>
+<p>The sequence is: back up all four raw folders to <code>copy_production_data/</code> first, then validate. Validation compares each file's column set against a hardcoded <code>expected_file_structure</code> dictionary — 23 entries, exact set comparison. If a file validates and the mapping JSON contains renames for it, λ1 rewrites the file <b>in place in the raw bucket</b>, which is why the untouched <code>copy_production_data/</code> mirror matters so much.</p>
+<p>On a clean run λ1 invokes <b>λ2a</b>. If the tag folders are missing or incomplete it invokes <b>λ2b</b> instead. It never invokes both.</p>
+<p class="doc-warn"><b>Why a five-day outage went unnoticed:</b> λ1 returns <code>statusCode 200</code> even when it rejects every file, and reports problems only by <b>SES email</b> — never to Slack. Nothing watching exit codes can tell a rejected day from a good one. A single unrecognised column blocks the entire day, not just the offending file.</p>
+
+<h3 id="d-l2">4 · Stage 2 — The movers (λ2a / λ2b)</h3>
+<p>Both movers copy the four validated folders from the raw bucket into the curated bucket, and both end by writing <code>done.txt</code> sentinel files that trigger the next stage. On Mondays they also copy the follower file to <code>amazon_sprinklr_pull/follower/</code>.</p>
+<p><b>λ2a is the happy path.</b> It copies folders verbatim, preserving the original dated folder name, writes the tag <code>done.txt</code> immediately, writes a timestamped marker under <code>post_id_mapping/trigger_post_id_backup/</code> that fires λ2c, then <b>sleeps for 240 seconds</b> before writing the daily <code>done.txt</code> that starts the merge. That sleep is the pipeline's only sequencing mechanism between the tag stage and the merge.</p>
+<p><b>λ2b is the recovery path.</b> It does the same move but with a three-level fallback for tag folders — today's folder, else the latest folder, else the <code>copy_production_data/</code> backup — and it validates and column-maps the seven tag files itself before writing them to a <code>{today}_processed/</code> folder. It alerts by SES on any exception.</p>
+<p class="doc-warn"><b>Two asymmetries worth knowing.</b> λ2b never writes the <code>trigger_post_id_backup/</code> marker, so <b>the post-ID lookup refresh (λ2c) is silently skipped on every recovery-path day</b>. And λ2b's fallback can serve a <i>stale</i> day's tag data without any warning, because there is no success email at all.</p>
+
+<h3 id="d-l2cd">5 · Stage 2c / 2d — Lookups &amp; tag assembly</h3>
+<p><b>λ2c (<code>get_sprinklr_postid</code>)</b> maintains the durable permalink ↔ post_id mapping. It reads exactly two files — <code>PostIDLookup_15_FluencyMonthly.json</code> and <code>PostIDLookup_15_FluencyWeekly.json</code> — and maintains <code>all_mappings.csv</code> plus two lookup files, <code>lookup_by_postid.csv</code> and <code>lookup_by_permalink.csv</code>, all under <code>amazon_sprinklr_pull/post_id_mapping/</code>. The <code>is_current</code> flag simply marks the most recent permalink seen for a given post_id; permalinks are only ever added, never removed. Note that λ2c does <b>no</b> platform-specific URL parsing — no Instagram shortcode decoding, no Facebook <code>fbid</code> handling. That logic lives in λ10.</p>
+<p><b>λ2d (<code>get_latest_tag_file</code>)</b> assembles the tag files the tagging stage will use. It reads from the <b>curated</b> bucket (the copies λ2a/2b just made, not the raw drop) and produces four artefacts under <code>amazon_sprinklr_pull/latest_tag_mapping/</code>: <code>Organic_Tags_12_TagPull.json</code> (a <i>concatenation</i> of the tags-only and monthly organic files — not a rename), <code>Paid_Tags_15_TagPull.json</code> (a merge of the two paid tag files), <code>Target_Geography_17_TagPull.json</code>, and <code>pull_date.txt</code>. The output numbering deliberately differs from the input numbering.</p>
+<p class="doc-warn"><b>Latent bug:</b> λ2d invokes the downstream <code>prod_push_latest_tag_core</code> function when <code>weekday() in (1, 5)</code>. The comment says "Tuesday or Friday", but in Python weekday 5 is <b>Saturday</b> — Friday is 4. The push therefore runs Tuesday and Saturday.</p>
+
+<h3 id="d-l3">6 · Stage 3 — The merge (λ3 + Fargate)</h3>
+<p>λ3 itself is an 81-line trigger. It extracts the pulldate from the S3 key that woke it and calls <code>ecs.run_task</code>, passing the pulldate as a container environment variable. The real work happens in the Fargate task <code>task-old-lambda-3</code>, which moved off Lambda because the merge exceeded Lambda's 10 GB memory ceiling.</p>
+<p>The task requires all <b>nine</b> organic files to be present for the pulldate or it refuses to run. It loads each into a DataFrame, concatenates them, and — <b>on Mondays only</b> — additionally merges the paid data, joining it to an objective mapping and computing <code>Paid_Reach</code> from per-country reach factors. It then reads the entire existing <code>master_table.csv</code>, concatenates, and de-duplicates across all <b>182</b> non-<code>row_number</code> columns keeping the last occurrence.</p>
+<p>On Mondays it also writes the filtered snapshot <code>amazon_sprinklr_pull/weeklybackup/backupmaster_&lt;date&gt;.csv</code>, applying a retention window of <b>45 days for organic and 2 days for paid</b>. Finally it overwrites <code>master_table.csv</code> in place. Success and failure are posted to Slack <code>#amazon-core-alerts</code> — <b>by the Fargate task, not by λ3</b>, which is fire-and-forget and never learns the outcome.</p>
+<p class="doc-note"><b>Reading the silence:</b> because the task posts Python exceptions to Slack, a run that produces <i>no</i> Slack message at all is almost certainly a kernel OOM kill rather than a code error. That is the signature of the 27 July incident.</p>
+
+<h3 id="d-l3b">7 · Stage 3b — Post-ID resolution</h3>
+<p>Triggered by the Monday <code>backupmaster</code> upload, λ3b reads that snapshot (not <code>master_table.csv</code>), adds a <code>post_id</code> column by looking each permalink up in <code>post_id_mapping/lookup_by_permalink.csv</code>, and rewrites permalinks that have since changed to their current form. It writes <code>amazon_sprinklr_pull/monthlybackeup/mapped_data_&lt;date&gt;.csv</code>, where the date is the <b>maximum Pull Date in the data</b>, not the run date, plus a change report under <code>permalink_changes/</code>. It has no day-of-week gate of its own — it is Monday-only purely because its input only appears on Mondays.</p>
+
+<h3 id="d-l4">8 · Stage 4 — Filtering (λ4 · <code>amazon_sprinklr_paidorganicmainmaster</code>)</h3>
+<p>λ4 turns the merged raw data into one clean row per post. It maps accounts to countries via <code>countrymapping.xlsx</code>, classifies platform via <code>platformmapping.xlsx</code> and <code>twitter_mapping.xlsx</code>, rolls dozens of platform-specific metric columns up into unified metrics (Impressions, Reach, Engagements, Likes, Shares, Comments, Video Views, Completion Rate, Sentiment), classifies each row as Organic / Boosted / Paid, reconciles paid against organic rows for the same post, and applies <b>filter rules 1 through 6</b>.</p>
+<p>Its output is <code>amazon_sprinklr_pull/for_tagging/final_need_to_tagg_{minPullDate}_{maxPullDate}.csv</code> — note the filename carries a date <i>range</i>, not a single date — and its audit trail is <code>filtered_posts/lambda_4_&lt;date&gt;.csv</code>. The column it produces is called <code>Platform</code>; the rename to <code>Platform Granular</code> happens later, in λ7.</p>
+
+<h3 id="d-l5">9 · Stage 5 — Tagging (λ5 · <code>amazon_paid_organic_tagging</code>)</h3>
+<p>λ5 is where the business logic lives. It joins the Sprinklr tag pulls onto the metric rows and builds roughly 28 tag columns. Matching happens in three tiers: first on <b>permalink</b>, then for anything unmatched on <b>post_id</b>, and finally — for Facebook only — by post text and account, confirmed through the <b>Apify</b> URL-to-ID service so that two different URL forms of the same post are only merged when they resolve to the same canonical ID. Anything still unmatched falls back to <code>Global</code>.</p>
+<p>The notable outputs are <b>Post Format</b> (from the client's format tag, normalised through a mapping agreed in July 2026, then overridden per platform — YouTube becomes Video, Instagram Story becomes Instagram Story, paid rows with no format become <code>Dark</code>); <b>Editorial Format Pillar and Type</b>, where Type is pillar-gated and filtered against a whitelist so an unrecognised value is silently dropped rather than carried through; and <b>Reputational Topic and Sub-Topic</b>, where the sub-topic is assembled from <b>nine</b> EU5 columns treated as a set.</p>
+<p>λ5 also blends in the collab tracker (<code>core_manual_tracker/processed_data.csv</code>) and the LINE tracker (<code>core_line_tracker/processed_line_data.csv</code>), applies geography from the targeted-geography tag file, and enforces <b>rules 7 and 8</b>. Output: <code>amazon_sprinklr_pull/finalmaster/cleaned_master_tab_{min}_{max}.csv</code>.</p>
+<p class="doc-warn">The collab tracker read has no local error handling, so if λ8 has not finished writing <code>processed_data.csv</code> the run fails. The LINE read is wrapped in a try/except and simply <b>continues with no LINE data</b> — there is no fallback to last week's file.</p>
+
+<h3 id="d-l6">10 · Stage 6 — Benchmarks (λ6 · <code>amazon_sprinklr_setbenchmark</code>)</h3>
+<p>λ6 scores every post against pre-computed benchmark tables. It does <b>not</b> calculate the benchmarks — the four workbooks in <code>mappingandbenchmark/</code> are maintained outside this pipeline; λ6 only computes each post's variance against them.</p>
+<p>Organic and Boosted rows are matched on a key of <code>Country + Platform + Delivery + Quarter</code>, lowercased. Boosted always uses the annual bucket. For organic, if the matched quarter has fewer than 10 posts the code falls back to the annual benchmark — a fallback computed in memory that is <b>never persisted</b>, which is why it cannot be audited downstream. Paid rows use a separate key built from country and objective.</p>
+<p>Performance metrics produce a proportional variance; rate metrics produce a basis-point difference (10,000 ×). Rules <b>9 and 10</b> apply here. Critically, λ6 emits <b>every row twice</b> — once with <code>Benchmark Type = Median</code> and once with <code>Average</code> — so from this point on the row count is double the post count, and any downstream count must account for it.</p>
+
+<h3 id="d-l7">11 · Stage 7 — Database push (λ7 · <code>tableau_push</code>)</h3>
+<p>λ7 is the terminal stage. It translates post text (skipping AU/US/UK), attaches comment sentiment, applies <b>rules 11 through 22</b>, aligns columns to the live database schema, and upserts.</p>
+<p>The upsert key is <code>post_id_key</code>. For Sprinklr rows it is built from the post_id — falling back to the permalink when no post_id exists — plus the benchmark type and a PAID/NONPAID suffix. For manual and LINE rows it is the RowID plus benchmark type. Because it is an upsert, <b>only the latest state of each post lands in the database, and nothing is ever deleted by λ7</b> — rows that age out of the rolling window remain in <code>sprinklr_table</code> permanently.</p>
+<p>λ7 also writes the pre-push snapshot <code>check/finalsql_&lt;date&gt;.csv</code>, runs four duplicate-detection queries and emails the report if anything is found, and appends removed rows to <code>blacklist_table</code> and <code>is_branded_true_table</code>.</p>
+<p class="doc-note">Rule numbering is <b>not</b> execution order: rule 21 runs first in λ7, before rule 11.</p>
+
+<h3 id="d-side">12 · Side pipelines (λ8 / λ9 / λ10 / λ11)</h3>
+<p><b>λ8 (<code>core_manual_upload_tracker</code>)</b> ingests the hand-keyed collaborator trackers — a legacy combined sheet for pre-2026 posts plus <b>eight</b> per-country sheets (DE, ES, FR, IN, IT, JP, UK, US). It backs up <code>sprinklr_table</code>, deletes every <code>is_manual_tracker = 1</code> row, reads and normalises the sheets, resolves conflicts against Sprinklr rows using a four-level priority ladder, and writes <code>processed_data.csv</code>. It also deletes losing Sprinklr rows from the database by RowID.</p>
+<p class="doc-warn"><b>λ8 deletes before it reads, and it never re-inserts.</b> The collab rows return to the database only when λ5 → λ6 → λ7 next run. A crash between the delete and the write therefore leaves Tableau with no collab data until the following Monday chain completes.</p>
+<p><b>λ9 (<code>line_manual_tracker</code>)</b> handles Japan's LINE data, which is not in Sprinklr at all. It reads two tabs of a Google Sheet, repairs post IDs that the sheet has rendered in scientific notation, aggregates the one-row-per-day source into one row per post, tags everything <code>is_manual_tracker = 2</code>, and writes <code>processed_line_data.csv</code>. Like λ8 it deletes its own rows from the database first and relies on the downstream chain to restore them.</p>
+<p><b>λ10 (<code>sprinklr-custom-updates</code>)</b> applies post-hoc corrections from four sources: a Google Sheet of per-metric fixes (only rows with a blank "Updated Date" are processed), a bulk MBS impressions file, a LinkedIn impressions replacement file, and a list of X quote-posts to delete. Impression changes automatically cascade into the derived rate columns. Everything is written to a full before/after audit log in S3. λ10 also builds and maintains <code>permalink_registry</code> — resolving Instagram shortcodes, LinkedIn URNs, TikTok and YouTube IDs by regex and Facebook URLs through Apify — and runs a <b>report-only</b> duplicate monitor that never deletes.</p>
+<p><b>λ11 (<code>push_follower_database</code>)</b> loads weekly follower counts into <code>follower_table</code>, interpolating gaps and applying a hardcoded set of LinkedIn follower overrides for seven markets. The overrides exist because the weekly run would otherwise overwrite manual corrections every week.</p>
+
+<h3 id="d-rules">13 · Complete filter-rule reference</h3>
+<p>Twenty-two numbered rules run across four stages. Every one writes the removed rows, with a <code>filter_reason</code> column, to <code>filtered_posts/</code> — so "why is this post missing?" is always answerable from S3.</p>
+<table class="doc-tbl">
+<thead><tr><th>#</th><th>Stage</th><th>What it removes</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>λ4</td><td>Organic rows whose <code>MESSAGE_TYPE</code> is not <code>Update</code>, <code>Twitter Sent Reply</code> or <code>X Sent Reply</code>. Paid rows are exempt, and so are TikTok, YouTube, Instagram Story and Threads — those platforms carry no message type at all.</td></tr>
+<tr><td>2</td><td>λ4</td><td>Posts whose text is exactly <code>This message has no text.</code> One Instagram Reel is allow-listed.</td></tr>
+<tr><td>3</td><td>λ4</td><td>Facebook rows whose post text contains <code>.png</code>, <code>.jpg</code>, <code>.mp4</code> or <code>.jpeg</code> — data artefacts rather than posts.</td></tr>
+<tr><td>4</td><td>λ4</td><td>Automatic profile posts: "updated their cover photo.", "updated their phone number.", "added a new photo.", "added a new video."</td></tr>
+<tr><td>5a</td><td>λ4</td><td>Organic and Boosted posts under 250 Total Impressions, in any year.</td></tr>
+<tr><td>5b</td><td>λ4</td><td>Organic and Boosted posts with 250–499 impressions <i>and</i> under 50 engagements, published on or after 2026-01-01.</td></tr>
+<tr><td>6</td><td>λ4</td><td>Organic LinkedIn dark posts (sponsored content never organically visible).</td></tr>
+<tr><td>7</td><td>λ5</td><td>Posts in markets outside CORE scope: <b>AT</b>, BE, NL, PL, SE, TR, SG, CN.</td></tr>
+<tr><td>8</td><td>λ5</td><td>Posts flagged as deleted in Sprinklr — LINE rows exempt.</td></tr>
+<tr><td>9</td><td>λ6</td><td>Rows with a null or empty Country. The offending accounts are exported for review first.</td></tr>
+<tr><td>10</td><td>λ6</td><td>Paid rows with zero spend. (Runs <i>before</i> rule 9 in code.)</td></tr>
+<tr><td>11</td><td>λ7</td><td>Posts published on or before 2023-09-04 — WeChat is exempt at any date.</td></tr>
+<tr><td>12</td><td>λ7</td><td>Everything in the MENA region.</td></tr>
+<tr><td>13</td><td>λ7</td><td>The <code>Amazon News X - EU</code> account.</td></tr>
+<tr><td>14</td><td>λ7</td><td>US posts without an approved Post Message. The accounts <code>Amazon IG - Inside</code> and <code>Amazon News IG - US</code> are carved out, as are all manual-tracker and LINE rows.</td></tr>
+<tr><td>15</td><td>λ7</td><td>India posts (Country = IN) on <code>Amazon IG - IN</code> / <code>Amazon FB - IN</code> without an approved GCCI APAC Post Message. Manual and LINE rows exempt.</td></tr>
+<tr><td>16</td><td>λ7</td><td>European organic posts without an approved EMEA Post Message — with three exemptions: the two carve-out accounts above, the platforms Instagram Story / YouTube / <b>TikTok</b>, and all manual and LINE rows.</td></tr>
+<tr><td>17</td><td>λ7</td><td>APAC replies on X.</td></tr>
+<tr><td>18</td><td>λ7</td><td>Posts whose account + author appears in the exclusion mapping. <b>This is global</b> — only the mapping file is named "apac". Manual and LINE rows exempt.</td></tr>
+<tr><td>19</td><td>λ7</td><td>Branded-content posts (<code>is_branded_content = 1</code>) carrying no real metadata — Reputational Topic, who made it, Content Category Type, Is it XGC?, Tier 1 Event and Team all equal to <code>Global</code>. Sprinklr rows only. Removed rows are archived to <code>is_branded_true_table</code>.</td></tr>
+<tr><td>20</td><td>λ7</td><td>Posts whose permalink appears in <code>blacklist/Blacklist.csv</code> in S3. (The SQL <code>blacklist_table</code> is an audit sink written to, never read.)</td></tr>
+<tr><td>21</td><td>λ7</td><td>Eight XCM / Positive-Engagements campaign values. <b>Executes first</b> in λ7.</td></tr>
+<tr><td>22</td><td>λ7</td><td>Collab duplicates: when a Sprinklr row and a collab row describe the same post, the collab copy is dropped. If no Sprinklr row exists, a collab Organic row beats a collab Boosted one. Paid rows are never dropped.</td></tr>
+</tbody>
+</table>
+
+<h3 id="d-silent">14 · Undocumented drop paths</h3>
+<p>Six places remove rows <b>without</b> writing an audit record. They are not bugs, but they are invisible — if a post is missing and none of the 22 rules explains it, the answer is here.</p>
+<table class="doc-tbl">
+<thead><tr><th>Where</th><th>What it drops</th><th>Why it matters</th></tr></thead>
+<tbody>
+<tr><td>λ4 — 90-day window</td><td>Every row with a Pull Date older than 90 days, before any numbered rule runs.</td><td>Bounds the working set; invisible in <code>filtered_posts/</code>.</td></tr>
+<tr><td>λ4 — zero-impression filter</td><td>Organic rows with zero or missing Total Impressions.</td><td>The drop most often mistaken for Rule 5. These posts would fail Rule 5's 250 threshold anyway, but they never appear in the audit trail.</td></tr>
+<tr><td>λ4 — latest-pull dedup</td><td>All but the most recent row per permalink; also any organic row whose platform is on neither the organic nor the mixed list.</td><td>An account missing from <code>twitter_mapping.xlsx</code> / <code>platformmapping.xlsx</code> gets a null platform and vanishes here permanently.</td></tr>
+<tr><td>λ7 — account exclusion</td><td>The accounts <code>sell on amazon (in - english)</code> and <code>sellersofamazon</code>.</td><td>A hardcoded business exclusion with no rule number.</td></tr>
+<tr><td>λ7 — pre-insert dedup</td><td>Duplicate <code>post_id_key</code> values immediately before the database write.</td><td>Last-writer-wins; no record of what was collapsed.</td></tr>
+<tr><td>λ8 — collab priority dedup</td><td>Collab rows losing to Sprinklr rows, and Sprinklr rows losing to the priority ladder.</td><td>Written to <code>filtered_posts/lambda_8_deduplication_&lt;date&gt;.csv</code>, but unlike rules 1–22 it also <b>deletes rows already loaded into the database</b>.</td></tr>
+</tbody>
+</table>
+
+<h3 id="d-fail">15 · Known failure modes</h3>
+<p><b>Schema mismatch.</b> Sprinklr renames export fields without notice. Because λ1 validates against exact column names, any rename blocks ingestion until the mapping is patched. Seven renames occurred in three weeks during July–August 2026, one of which was reverted five days later. The correct fix is always to <b>add the new name as an alias to the existing canonical name</b> — never to rename downstream — because both spellings then work and a revert costs nothing. The mapping file only ever grows.</p>
+<p><b>Silent failure.</b> Lambdas 5, 6, 8, 9 and 11 catch their exceptions and return <code>statusCode 500</code> in the response body rather than raising. Lambda records those invocations as <b>successes</b>, so CloudWatch error alarms never fire. Alerting overall is uneven: λ1, λ2b, λ7, λ8 and λ9 use SES email; λ10 uses SNS; only the Fargate merge posts to Slack; λ2a, λ2c, λ2d, λ3b, λ4, λ5, λ6 and λ11 have no alerting at all.</p>
+<p><b>Memory.</b> The merge holds the existing table, the new data and the concatenated result in memory simultaneously, then de-duplicates across 182 columns. It has already exceeded a 16 GB container once. Because a kernel OOM produces no Python exception, <b>the symptom is silence on Slack, not an error</b>.</p>
+<p><b>Duplicate accumulation.</b> Re-running a date already present in <code>master_table.csv</code> appends a second copy rather than de-duplicating, because the dedup only collapses byte-identical rows and the column mapping usually changed between the two runs. Always check the row counts per Pull Date before replaying anything, and replay sequentially, oldest first — the merge rewrites the whole file, so overlapping runs race.</p>
+<p><b>Historical debris.</b> Because λ7 only ever upserts, rows created under older pipeline rules stay in <code>sprinklr_table</code> for ever. Data-quality checks that scan the whole table therefore flag conditions the current pipeline can no longer produce, which is why the quality console distinguishes current from historic findings.</p>
+
+<h3 id="d-ops">16 · Operator cheat-sheet</h3>
+<table class="doc-tbl">
+<thead><tr><th>Question</th><th>Where to look</th></tr></thead>
+<tbody>
+<tr><td>Why is this post missing from Tableau?</td><td>Search <code>filtered_posts/</code> by permalink, or use the Filtered Posts Console. If nothing matches, check the six undocumented drop paths in §14.</td></tr>
+<tr><td>Did the pipeline run this week?</td><td>The Pipeline Runs tab of the V1 Quality Console shows each stage's artefact and timing. No <code>finalsql</code> for the Monday means the chain did not complete.</td></tr>
+<tr><td>Did a schema mismatch block ingestion?</td><td>The λ1 validation email, and whether <code>amazon_sprinklr_pull/fluency/</code> has a folder for the date. A healthy day validates 23 files.</td></tr>
+<tr><td>Is a missing day actually lost?</td><td>Usually not. Each pull is a rolling ~88-day window, so a later pull normally still contains the posts — only the daily metric snapshots are gone.</td></tr>
+<tr><td>How do I correct a wrong metric?</td><td>Add a row to the "Core: Custom Metrics Change" sheet with a blank Updated Date. λ10 applies it and writes a full before/after audit entry.</td></tr>
+<tr><td>Where did the collab rows go?</td><td>λ8 deletes them at the start of its run and only the downstream chain restores them. Its pre-delete backup is in <code>backup_sprinklr_table/</code>.</td></tr>
+</tbody>
+</table>
+
+<p class="doc-foot">This documentation is generated from the deployed source of the V1 pipeline and verified against it line by line. Where the code and the older diagrams disagreed, the code won.</p>
+</div>
 </div>
 
 <div class="vw" id="vw-rules">
