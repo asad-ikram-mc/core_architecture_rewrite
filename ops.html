@@ -467,7 +467,7 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
       <div class="panel-hdr">
         <div>
           <div class="panel-title">FILTER <span>RULES</span></div>
-          <div class="panel-sub">All 22 filter rules. Data-driven rules (blacklist, XCM messages, country exclusions) can be changed via ref tables with no code deploy.</div>
+          <div class="panel-sub">All 22 filter rules. Data-driven rules (exclusion list, XCM messages, country exclusions) can be changed via ref tables with no code deploy.</div>
         </div>
         <button class="btn btn-primary" onclick="showAddRule()">+ Add Rule</button>
       </div>
@@ -506,11 +506,12 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 
       <div class="grid2" style="margin-bottom:16px">
         <div class="card">
-          <div class="card-title">Add to Blacklist</div>
+          <div class="card-title">Add to Exclusion List</div>
           <div class="field"><label>Permalink</label><input type="text" id="bl-url" placeholder="https://www.instagram.com/p/..."></div>
           <div class="field"><label>Reason</label><input type="text" id="bl-reason" placeholder="e.g. Duplicate of post xyz / off-topic"></div>
           <button class="btn btn-primary btn-sm" onclick="genBlacklistSQL()">Generate INSERT</button>
           <div id="bl-sql" class="code" style="margin-top:10px;display:none;font-size:.72rem"></div>
+          <div class="panel-sub" style="margin-top:10px">The exclusion list was previously called the blacklist. The table is still named <span class="mono">ref.blacklist</span> until the V2 rename lands.</div>
         </div>
         <div class="card">
           <div class="card-title">Add XCM Post Message</div>
@@ -543,7 +544,7 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
         <table class="tbl">
           <thead><tr><th>Table</th><th>Rows</th><th>Source</th><th>Changed by</th></tr></thead>
           <tbody>
-            <tr><td class="mono">ref.blacklist</td><td class="mono">124</td><td>Blacklist.csv</td><td>INSERT SQL / David</td></tr>
+            <tr><td class="mono">ref.blacklist</td><td class="mono">124</td><td>Blacklist.csv — the exclusion list</td><td>INSERT SQL / David</td></tr>
             <tr><td class="mono">ref.country_mapping</td><td class="mono">88</td><td>account_metadataa.xlsx</td><td>Re-seed script</td></tr>
             <tr><td class="mono">ref.excluded_countries</td><td class="mono">8</td><td>Hardcoded Lambda 5</td><td>INSERT/DELETE SQL</td></tr>
             <tr><td class="mono">ref.xcm_post_messages</td><td class="mono">8</td><td>Hardcoded Lambda 7</td><td>INSERT/DELETE SQL</td></tr>
@@ -756,8 +757,8 @@ const RULES = [
    desc:'Account + author_name combos in ref.apac_author_mapping where status = Exclude.', source:'Lambda 7'},
   {n:19, name:'Branded content all Global metadata', lambda:'L7/T4', type:'sql',
    desc:'Posts where all 4 tag columns = Global (rep_topic, content_category, tier1_event, target_geography).', source:'Lambda 7'},
-  {n:20, name:'Blacklisted permalinks', lambda:'L7/T4', type:'ref',
-   desc:'Exact permalink match in ref.blacklist.', source:'Lambda 7'},
+  {n:20, name:'Exclusion list — blocked permalinks', lambda:'L7/T4', type:'ref',
+   desc:'Exact permalink match against the exclusion list (formerly called the blacklist), held in ref.blacklist.', source:'Lambda 7'},
   {n:21, name:'XCM Post Messages', lambda:'L7/T4', type:'ref',
    desc:'Post Message in ref.xcm_post_messages (8 XCM values including double-space variant).', source:'Lambda 7'},
   {n:22, name:'Collab dedup safety net', lambda:'L7/T4', type:'sql',
@@ -857,7 +858,7 @@ function genBlacklistSQL() {
   const url = document.getElementById('bl-url').value.trim();
   const reason = document.getElementById('bl-reason').value.trim();
   if (!url) { toast('Enter a permalink', 'var(--red)'); return; }
-  const sql = `INSERT INTO ref.blacklist (permalink, reason, added_by)\nVALUES ('${url}', '${reason||'Manual blacklist'}', 'ops-panel')\nON CONFLICT (permalink) DO NOTHING;`;
+  const sql = `INSERT INTO ref.blacklist (permalink, reason, added_by)\nVALUES ('${url}', '${reason||'Manual exclusion'}', 'ops-panel')\nON CONFLICT (permalink) DO NOTHING;`;
   const el = document.getElementById('bl-sql');
   el.textContent = sql; el.style.display = 'block';
   toast('SQL generated — run in RDS Query Editor', 'var(--amber)');
