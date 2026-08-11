@@ -171,6 +171,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .cl-ref{margin-top:.5rem;font-family:'JetBrains Mono',monospace;font-size:.71rem;color:var(--text3)}
 .cl-st{display:inline-block;margin-top:.5rem;font-size:.71rem;padding:.14rem .5rem;border-radius:4px;background:rgba(255,153,0,.1);color:#FF9900;border:1px solid rgba(255,153,0,.3);font-family:'Sora',sans-serif;font-weight:600}
 .cl-empty{padding:2.5rem;text-align:center;color:var(--text3);font-size:.9rem}
+.cl-go{margin-top:.6rem;padding:.32rem .8rem;border-radius:6px;font-size:.76rem;font-weight:600;font-family:'Sora',sans-serif;background:rgba(255,153,0,.08);color:#FF9900;border:1px solid rgba(255,153,0,.3);cursor:pointer;transition:.15s;text-decoration:none;display:inline-block}
+.cl-go:hover{background:rgba(255,153,0,.16);border-color:rgba(255,153,0,.55)}
+/* deep-link landing: clear the sticky nav, then flash so the eye finds it */
+.doc h3,.doc-note[id],#rules-content tr[id]{scroll-margin-top:150px}
+@keyframes clflash{0%{background:rgba(255,153,0,.28)}70%{background:rgba(255,153,0,.18)}100%{background:transparent}}
+.cl-flash{animation:clflash 2.2s ease-out}
 /* ── Written Documentation tab ───────────────────────────── */
 .doc{max-width:900px;margin:0 auto;padding:0 1.5rem 4rem;font-family:'DM Sans',sans-serif;line-height:1.75;color:var(--text2)}
 .doc h3{font-family:'Sora',sans-serif;font-size:1.32rem;font-weight:700;color:var(--text);margin:2.8rem 0 .9rem;padding-top:.6rem;border-top:1px solid var(--border);scroll-margin-top:1.5rem}
@@ -453,7 +459,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 
 <h3 id="d-rules">13 · Complete filter-rule reference</h3>
 <p>Twenty-two numbered rules run across four stages. Every one writes the removed rows, with a <code>filter_reason</code> column, to <code>filtered_posts/</code> — so "why is this post missing?" is always answerable from S3.</p>
-<div class="doc-note"><b>Terminology.</b> We now say <b>exclusion list</b> (formerly called the blacklist) and <b>allow list</b> (formerly whitelist) throughout this documentation and in client-facing material. The underlying technical object names have <i>not</i> changed yet — the file is still <code>blacklist/Blacklist.csv</code>, the V1 audit table is still <code>blacklist_table</code>, and the V2 reference table is still <code>ref.blacklist</code> — so anyone reading code, S3 or SQL sees the same names as before. Renaming the V2 table to <code>ref.exclusion_list</code> is queued as part of the V2 build; the V1 names stay as they are until that pipeline is retired.</div>
+<div class="doc-note" id="d-term"><b>Terminology.</b> We now say <b>exclusion list</b> (formerly called the blacklist) and <b>allow list</b> (formerly whitelist) throughout this documentation and in client-facing material. The underlying technical object names have <i>not</i> changed yet — the file is still <code>blacklist/Blacklist.csv</code>, the V1 audit table is still <code>blacklist_table</code>, and the V2 reference table is still <code>ref.blacklist</code> — so anyone reading code, S3 or SQL sees the same names as before. Renaming the V2 table to <code>ref.exclusion_list</code> is queued as part of the V2 build; the V1 names stay as they are until that pipeline is retired.</div>
 <table class="doc-tbl">
 <thead><tr><th>#</th><th>Stage</th><th>What it removes</th></tr></thead>
 <tbody>
@@ -1046,7 +1052,7 @@ function renderRules(){
     var sevBadge=r[3]==='dedup'
       ?'<span style="font-size:.6rem;font-weight:700;padding:.1rem .4rem;border-radius:4px;background:rgba(139,124,245,.15);color:#a594ff;border:1px solid rgba(139,124,245,.35);font-family:\'JetBrains Mono\',monospace">DEDUP</span>'
       :'<span style="font-size:.6rem;font-weight:700;padding:.1rem .4rem;border-radius:4px;background:rgba(239,68,68,.13);color:#ff6b6b;border:1px solid rgba(239,68,68,.3);font-family:\'JetBrains Mono\',monospace">DROP</span>';
-    h+='<tr style="border-bottom:1px solid var(--border)">';
+    h+='<tr id="rule-'+r[0]+'" style="border-bottom:1px solid var(--border)">';
     h+='<td style="padding:.7rem .9rem;font-family:\'JetBrains Mono\',monospace;font-weight:700;color:'+col+';vertical-align:top">R'+r[0]+'</td>';
     h+='<td style="padding:.7rem .9rem;vertical-align:top"><div style="font-weight:600;color:var(--text)">'+r[1]+'</div><div style="margin-top:.3rem">'+sevBadge+'</div></td>';
     h+='<td style="padding:.7rem .9rem;vertical-align:top"><span style="font-family:\'JetBrains Mono\',monospace;font-size:.74rem;color:'+col+';font-weight:600">'+r[2].replace('Lambda ','λ')+'</span></td>';
@@ -2078,6 +2084,12 @@ renderExistingFlow();
 //   st optional status line for anything still open
 // ════════════════════════════════════════════
 const CHANGELOG=[
+{d:"2026-08-11",t:"14:14",s:"docs",ti:"Change Log entries now jump to the change",
+ who:"Asad",
+ b:"Every entry that has a home in the docs carries a link to it. Clicking switches to the right group, opens the right sub-tab, scrolls the exact section clear of the sticky nav and flashes it, so you land on the paragraph rather than the top of a page. Rule entries go to the rule row itself, stage fixes to that stage in Written Docs, dashboard work to the Dashboards tab, and the two entries about other pages open ops.html and roadmap.html. 30 of the 32 entries are linked; the two about the Change Log itself are not.",
+ go:{g:"cur",v:"rules",a:"rule-20",lbl:"Try it — Rule 20 in Filter Rules"},
+ r:"docs — index.html goTo()"},
+
 {d:"2026-08-11",t:"14:06",s:"docs",ti:"Navigation restructured into Current and Future",
  who:"Asad",
  b:"The tab bar was a single flat row of thirteen tabs with OLD and NEW stickers, which meant scrolling sideways to reach anything in V2. It is now two levels: pick Current, Future or Change Log at the top, and the sub-tabs underneath change to match. Current holds Pipeline, Flow Diagram, Dashboards, Analyst View, Human-in-Loop, Filter Rules and Written Docs; Future holds Architecture, Flow Diagram, Database ERD, Dashboards, Analyst View and Human-in-Loop. Each group remembers the sub-tab you were last on. The OLD and NEW labels are gone — the group you are in says which pipeline you are looking at, and the old legend now reads as the description under each group.",
@@ -2089,158 +2101,214 @@ const CHANGELOG=[
  r:"docs db4af7e"},
 
 {d:"2026-08-11",t:"13:42",s:"docs",ti:"Exclusion list / allow list terminology",
+ go:{g:"cur",v:"docs",a:"d-term",lbl:"Terminology note in Written Docs"},
  who:"Amar Vyas raised it in Slack; David Lawton agreed on keeping the old word in brackets so the client still recognises it",
  b:"All prose across the Pipeline Explorer, Ops Panel and Roadmap now says exclusion list and allow list. The first mention reads exclusion list (formerly called the blacklist). Technical object names were deliberately left alone so the docs still match what is deployed — blacklist/Blacklist.csv in S3, blacklist_table in V1, ref.blacklist in V2 — and a terminology note in Written Docs explains why. Renaming the V2 table to ref.exclusion_list is queued on the roadmap.",
  r:"docs 370ab8a"},
 
 {d:"2026-08-11",t:"13:10",s:"docs",ti:"Rule 20 corrected — blacklist_table is never read",
+ go:{g:"cur",v:"rules",a:"rule-20",lbl:"Rule 20 in Filter Rules"},
  who:"Found while making the terminology edit",
  b:"Three places claimed Lambda 7 reads blacklist_table on every run to apply Rule 20. It does not: lambda_7.py reads blacklist/Blacklist.csv from S3, and only ever appends to blacklist_table. The Written Docs tab was already right; the older diagram tabs contradicted it. All tabs now agree.",
  r:"docs 370ab8a · lambda_7.py:1438,1717"},
 
 {d:"2026-08-10",t:"15:30",s:"incident",ti:"YouTube organic impressions — 23M drop explained",
+ go:{g:"cur",v:"docs",a:"d-l4",lbl:"Stage 4 filtering (λ4) in Written Docs"},
  who:"David Lawton, after the Tableau refresh",
  b:"June YouTube organic fell 43.6M to 1.0M and the headline organic tile fell about 23M. Nothing was lost. YouTube attributed the June campaign views to paid between 27 June and 4 July, but the un-numbered snapshot picker in Lambda 4 (filter_latest_pull_dates) prefers an organic snapshot whenever a post looked organic for more than five days — so four consecutive Monday loads republished the frozen 26 June snapshot. On 10 August the 45-day window rolled past 26 June, the correctly attributed boosted snapshot won, and the figures corrected. Verified against raw Sprinklr pulls, the weekly finalsql snapshots, the live database and the 9 August backup table.",
  r:"youtube_reclassification_evidence.csv · lambda_4.py:653-744",
  st:"Fix not yet applied — proposal is that the latest snapshot's classification always wins, plus a DQ check for large organic-to-boosted flips"},
 
 {d:"2026-08-10",t:"13:02",s:"pipeline",ti:"Schema fix — CCR_SOCIAL_MEDIA__EVENTS renamed",
+ go:{g:"cur",v:"docs",a:"d-l1",lbl:"Stage 1 validation (λ1)"},
  who:"Sprinklr renamed the field; found by Asad during the Monday outage investigation",
  b:"Sprinklr renamed the events column to the opaque id C_68F03C67941C930A586AA5DE. Added as an alias in COLUMN_MAPPINGS_sprinklr.json and to the expected-column lists in lambda_1 and lambda_2b, then uploaded the mapping to S3. Aliases are always added, never swapped, so older files keep validating.",
  r:"PR #129"},
 
 {d:"2026-08-10",t:"12:26",s:"pipeline",ti:"Slack alerts mirrored alongside every email",
+ go:{g:"cur",v:"docs",a:"d-fail",lbl:"Known failure modes"},
  who:"Asad — email alerts were being missed",
  b:"Every alert that previously went out by SES email is now also posted to the Slack channel. Added a small fire-and-forget helper to lambdas 1, 2b, 7, 8, 9 and 10; the webhook is overridable by environment variable and a Slack failure can never break a pipeline run.",
  r:"PR #128 (supersedes #126)"},
 
 {d:"2026-08-10",t:"12:13",s:"pipeline",ti:"Schema fix — IF_GLOBAL renamed",
+ go:{g:"cur",v:"docs",a:"d-l1",lbl:"Stage 1 validation (λ1)"},
  who:"Sprinklr dropped the LINKEDIN_ prefix on 5 August; found by Asad on 10 August",
  b:"Added the renamed IF_GLOBAL field as an alias in three places in the column mapping plus the expected lists in lambda_1 and lambda_2b. Mapping file uploaded to S3 so the deployed lambdas pick it up.",
  r:"PR #127"},
 
 {d:"2026-08-10",t:"11:00",s:"incident",ti:"Monday outage — lambda_2a and 2b had not run since 5 August",
+ go:{g:"cur",v:"docs",a:"d-fail",lbl:"Known failure modes"},
  who:"Asad, on noticing Tableau had not moved",
  b:"Lambda 1 ran every day and sent no failure email, but validation was quietly failing on the two renamed Sprinklr columns, so the done.txt trigger that starts lambda_2a and 2b was never written. Fixed by the two schema PRs above. RAWDATA was restored from S3 object versions before re-running, because lambda_1 rewrites validated files in place and a re-run over already-mapped files fails.",
  r:"PRs #127, #129",
  st:"Root cause of the silence was that a validation failure did not alert — addressed by the Slack change the same day"},
 
 {d:"2026-08-07",t:"19:32",s:"docs",ti:"Written Documentation tab added",
+ go:{g:"cur",v:"docs",a:"d-summary",lbl:"Written Docs"},
  who:"Asad",
  b:"A written, long-form companion to the diagram tabs: 16 sections covering every stage, the complete 22-rule reference, and six drop paths that were not documented anywhere before. A last-updated badge was added to the hero so readers can see how current the page is.",
  r:"docs c5fb9f4"},
 
 {d:"2026-08-05",t:"16:15",s:"pipeline",ti:"lambda_8 no longer uses a local AWS profile in Lambda",
+ go:{g:"cur",v:"docs",a:"d-side",lbl:"Side pipelines (λ8 / λ9 / λ10 / λ11)"},
  who:"Asad — deployed function was failing with ProfileNotFound",
  b:"A local development change had been committed by accident, so the deployed function tried to load a named profile that does not exist in Lambda. It now checks for AWS_LAMBDA_FUNCTION_NAME and only uses a named profile when running locally.",
  r:"lambda_8.py"},
 
 {d:"2026-08-05",t:"15:52",s:"pipeline",ti:"lambda_8 pandas 2.x compatibility",
+ go:{g:"cur",v:"docs",a:"d-side",lbl:"Side pipelines (λ8 / λ9 / λ10 / λ11)"},
  who:"Asad — local run crashed",
  b:"Removed infer_datetime_format from two read_csv calls; the argument was dropped in pandas 2.x and raised a TypeError locally while still working on the older runtime in Lambda.",
  r:"lambda_8.py"},
 
 {d:"2026-08-03",t:"18:07",s:"dashboard",ti:"Data quality rules audited and corrected",
+ go:{g:"cur",v:"old-dash",lbl:"Dashboards"},
  who:"Asad, after a critical review of every rule against the Lambda code",
  b:"24 of the 89 checks were rewritten and one new check added. The main fix was scoping: checks now distinguish current-week rows from historic ones, so long-settled data stops re-flagging every week. Also corrected the YouTube clause in MET-2, the benchmark checks BMK-4 and BMK-5, and the week-on-week check KEY-4.",
  r:"dq_registry.json · dq_runner.py"},
 
 {d:"2026-08-03",t:"17:27",s:"dashboard",ti:"DQ health bar, Excel export, tab layout",
+ go:{g:"cur",v:"old-dash",lbl:"Dashboards"},
  who:"Asad",
  b:"Added a segmented bar showing passed, failed and critical checks at a glance with an overall verdict; an export of every check as an Excel workbook with one tab per section; and spread the navigation tabs across the full width instead of bunching them on the left.",
  r:"dashboard/index.html"},
 
 {d:"2026-08-03",t:"17:10",s:"dashboard",ti:"Flagged rows now show RowID and post_id_key, with CSV download",
+ go:{g:"cur",v:"old-dash",lbl:"Dashboards"},
  who:"Asad, so a flagged row can be found directly in the database",
  b:"Every flagged-row sample carries RowID, post_id_key, Account, Permalink, Date and Benchmark Type, and the sample can be downloaded as CSV.",
  r:"dq_runner.py sample_rows()"},
 
 {d:"2026-08-03",t:"16:54",s:"dashboard",ti:"View flagged rows — drill-down in the Data Quality tab",
+ go:{g:"cur",v:"old-dash",lbl:"Dashboards"},
  who:"Asad, prompted by David Lawton asking how to go about doing further checks",
  b:"Each failing check now has a button that opens the actual rows behind the number, so a question about a metric can be answered from the dashboard instead of a manual database query.",
  r:"dashboard/index.html"},
 
 {d:"2026-08-03",t:"16:06",s:"dashboard",ti:"V1 quality console overhauled",
+ go:{g:"cur",v:"old-dash",lbl:"Dashboards"},
  who:"Asad",
  b:"Rebuilt the console around eight tabs: Tableau-style overview numbers, pipeline runs, funnel, week-on-week, post history, S3 inventory with growth, data quality and health. Added a live progress bar behind the Refresh button showing the current stage, percentage and ETA. Note for future work: the exporter image must be rebuilt after any dashboard change, or the next Refresh reverts the site.",
  r:"export_dashboard_data.py · progress_util.py"},
 
 {d:"2026-08-02",t:"21:10",s:"pipeline",ti:"lambda_1b — replay a past date",
+ go:{g:"cur",v:"docs",a:"d-l1",lbl:"Stage 1 validation (λ1)"},
  who:"Asad, needed while backfilling the schema-mismatch gap",
  b:"A local-only copy of lambda_1 that can re-run validation and mapping for a specific past date, so a missed day can be recovered without touching the deployed daily function.",
  r:"PR #123"},
 
 {d:"2026-08-02",t:"18:26",s:"pipeline",ti:"Schema fixes — six EU5 sub-topics and Entertainment Sub Type",
+ go:{g:"cur",v:"docs",a:"d-l1",lbl:"Stage 1 validation (λ1)"},
  who:"Sprinklr schema changes; fixed by Asad",
  b:"Mapped the remaining six EU5 sub-topic fields and the Entertainment Sub Type id that Sprinklr had renamed.",
  r:"PR #122"},
 
 {d:"2026-08-02",t:"18:09",s:"pipeline",ti:"Schema fixes — Sustainability prefix and primary reputational topic",
+ go:{g:"cur",v:"docs",a:"d-l1",lbl:"Stage 1 validation (λ1)"},
  who:"Sprinklr schema changes; fixed by Asad",
  b:"Mapped the dropped Sustainability prefix and the renamed PRIMARY_REPUTATIONAL_TOPIC field.",
  r:"PR #121"},
 
 {d:"2026-08-02",t:"17:46",s:"pipeline",ti:"Schema fix — EU5 prefix dropped on two sub-topic fields",
+ go:{g:"cur",v:"docs",a:"d-l1",lbl:"Stage 1 validation (λ1)"},
  who:"Sprinklr schema changes; fixed by Asad",
  b:"First of the batch. Sprinklr began sending two sub-topic fields without their EU5 prefix, which failed validation in lambda_1.",
  r:"PR #120"},
 
 {d:"2026-07-28",t:"—",s:"incident",ti:"Schema mismatch — six days of data did not load",
+ go:{g:"cur",v:"docs",a:"d-fail",lbl:"Known failure modes"},
  who:"Sprinklr renamed a batch of columns without notice",
  b:"Between 28 July and 2 August, renamed Sprinklr columns failed validation in lambda_1, so the daily chain stopped short of the database. Resolved by adding aliases for every renamed field (PRs #120 to #122), restoring RAWDATA from the untouched production copy, and replaying the missed dates. All six days were later confirmed present in sprinklr_table.",
  r:"PRs #120, #121, #122, #123",
  st:"Closed — gap verified as backfilled"},
 
 {d:"2026-07-21",t:"16:29",s:"pipeline",ti:"LinkedIn follower overrides updated",
+ go:{g:"cur",v:"docs",a:"d-side",lbl:"Side pipelines (λ8 / λ9 / λ10 / λ11)"},
  who:"David Lawton, 20 July",
  b:"Refreshed the LinkedIn follower override values used for engagement-rate denominators.",
  r:"PR #117"},
 
 {d:"2026-07-18",t:"02:58",s:"pipeline",ti:"Post Format safety net moved to lambda_10",
+ go:{g:"cur",v:"docs",a:"d-side",lbl:"Side pipelines (λ8 / λ9 / λ10 / λ11)"},
  who:"Asad, after review",
  b:"The database-level Post Format correction was moved out of lambda_7 and lambda_11 into lambda_10, so all corrections run from one place after the main upsert.",
  r:"PR #116"},
 
 {d:"2026-07-17",t:"20:18",s:"pipeline",ti:"Post Format normalisation and historic reclassification",
+ go:{g:"cur",v:"docs",a:"d-l5",lbl:"Stage 5 tagging (λ5)"},
  who:"David Lawton — mapping read from his Current State to Mapping columns",
  b:"lambda_5 now permanently normalises old Post Format values to the agreed new set, and historic rows were reclassified to match. Matching is case and space insensitive and canonicalises casing, so variants like Video/reel resolve to Video/Reel.",
  r:"PR #115"},
 
 {d:"2026-07-09",t:"11:39",s:"docs",ti:"Lambda 3 detail and diagram fixes",
+ go:{g:"cur",v:"docs",a:"d-l3",lbl:"Stage 3 merge (λ3)"},
  who:"Asad",
  b:"Added the paid region mapping and Paid_Reach handling to the Lambda 3 write-up, corrected the Lambda 4 line count, qualified Rule 3 as Facebook-only, resolved overlapping boxes in the flow diagram, and put lambda 10 and 11 in true run order.",
  r:"docs cb1faeb, c921964, 8644e42"},
 
 {d:"2026-07-09",t:"08:40",s:"docs",ti:"V2 Quality Console link card",
+ go:{g:"fut",v:"new-dash",lbl:"Future Dashboards"},
  who:"Asad",
  b:"Added a card linking to the V2 quality dashboard from the Dashboards tab.",
  r:"docs 5274c3c"},
 
 {d:"2026-06-22",t:"09:59",s:"docs",ti:"Filter Rules tab — all 22 rules from the code",
+ go:{g:"cur",v:"rules",lbl:"Filter Rules"},
  who:"Asad",
  b:"Every filter rule read directly out of the Lambda source and documented with its stage, exact condition and the filter_reason string it writes, so a missing post can be traced to the rule that removed it.",
  r:"docs a2f9bfb"},
 
 {d:"2026-06-18",t:"16:02",s:"docs",ti:"Roadmap status corrected — V2 is built and running",
+ go:{href:"roadmap.html",lbl:"Build Roadmap"},
  who:"Asad",
  b:"The roadmap still described V2 as Phase 0 planning long after the pipeline was built and running end to end. Status corrected across the roadmap and the explorer.",
  r:"docs 8639f7f, 3cb13e1"},
 
 {d:"2026-06-17",t:"14:24",s:"docs",ti:"Major documentation rebuild",
+ go:{g:"cur",v:"existing",lbl:"Current Pipeline"},
  who:"Asad",
  b:"Split every view into OLD and NEW, added the Human-in-the-Loop tab covering the Lambda 10 dedup review, gave each of the 14 lambdas a story and a technical explanation with input and output tables, added daily and Monday badges, and applied the Amazon theme.",
  r:"docs — 18 commits on 17 June"},
 
 {d:"2026-06-11",t:"11:38",s:"pipeline",ti:"V2 first end-to-end run succeeded",
+ go:{g:"fut",v:"new",lbl:"Future Architecture"},
  who:"Asad",
  b:"The new Fargate architecture completed a full run for the first time, from ingest through to the database.",
  r:"docs 60f01f4"},
 
 {d:"2026-04-23",t:"13:24",s:"docs",ti:"Operations Panel created",
+ go:{href:"ops.html",lbl:"Operations Panel"},
  who:"Asad",
  b:"ops.html — a working panel for the team: all 22 filter rules, reference table row counts, and SQL generators for the data-driven rules so an entry can be added without a code deploy.",
  r:"docs dd03a06"},
 ];
+
+CHANGELOG.forEach(function(e,i){e._i=i;});
+
+// Jump from a log entry to the exact place the change landed: switch group,
+// switch sub-tab, scroll the anchor clear of the sticky nav, then flash it.
+function goTo(go){
+  if(!go) return;
+  if(go.href){window.location.href=go.href;return;}
+  selectGroup(go.g);
+  selectSub(go.v);
+  setTimeout(function(){
+    var el=go.a?document.getElementById(go.a):null;
+    if(!el){window.scrollTo({top:0,behavior:'smooth'});return;}
+    // Offset by the sticky nav explicitly — a bare scrollIntoView can land the
+    // target underneath it, and table rows sit inside an overflow-x wrapper.
+    var nav=document.querySelector('.navwrap');
+    var pad=(nav?nav.getBoundingClientRect().height:0)+16;
+    var y=el.getBoundingClientRect().top+(window.pageYOffset||document.documentElement.scrollTop||0)-pad;
+    window.scrollTo({top:Math.max(0,y),behavior:'smooth'});
+    el.classList.remove('cl-flash');void el.offsetWidth;el.classList.add('cl-flash');
+  },70);
+}
+document.getElementById('cl-list').addEventListener('click',function(ev){
+  var b=ev.target.closest('button[data-go]');
+  if(b) goTo(CHANGELOG[+b.dataset.go].go);
+});
 
 function renderLog(){
   var q=(document.getElementById('cl-q').value||'').toLowerCase().trim();
@@ -2270,6 +2338,10 @@ function renderLog(){
       +'<p class="cl-b">'+e.b+'</p>'
       +(e.r?'<div class="cl-ref">'+e.r+'</div>':'')
       +(e.st?'<div class="cl-st">'+e.st+'</div>':'')
+      +(e.go?(e.go.href
+          ?'<a class="cl-go" href="'+e.go.href+'">'+e.go.lbl+' \u2192</a>'
+          :'<button class="cl-go" data-go="'+e._i+'">'+e.go.lbl+' \u2192</button>')
+        :'')
       +'</div>';
   });
   host.innerHTML=out;
