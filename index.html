@@ -23,18 +23,29 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .bdg span{width:5px;height:5px;border-radius:50%;background:#FF9900;animation:p 2s infinite}
 @keyframes p{0%,100%{opacity:1}50%{opacity:.3}}
 
+/* ── Two-level navigation: Current / Future / Change Log ── */
+.navwrap{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px solid var(--border)}
+.grpbar{display:flex;justify-content:center;align-items:stretch;gap:.55rem;flex-wrap:wrap;padding:.85rem 1rem .1rem}
+.gtab{display:flex;flex-direction:column;align-items:flex-start;gap:.1rem;min-width:200px;max-width:330px;padding:.55rem .95rem;border-radius:var(--r);background:var(--bg2);border:1px solid var(--border);cursor:pointer;transition:.18s;text-align:left;font-family:'Sora',sans-serif}
+.gtab:hover{border-color:var(--text3)}
+.gtab.active{background:rgba(255,153,0,.07);border-color:rgba(255,153,0,.45)}
+.gtab-t{display:flex;align-items:center;gap:.45rem;font-size:.92rem;font-weight:700;color:var(--text2)}
+.gtab.active .gtab-t{color:#FF9900}
+.gtab-s{font-size:.71rem;font-weight:400;color:var(--text3);line-height:1.4;font-family:'DM Sans',sans-serif;padding-left:1.05rem}
+.gdot{width:8px;height:8px;border-radius:50%;flex:none}
+.gdot.cur{background:#FF9900;box-shadow:0 0 0 3px rgba(255,153,0,.16)}
+.gdot.fut{background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.16)}
+.gdot.log{background:#8b949e;box-shadow:0 0 0 3px rgba(139,148,158,.16)}
+@media(max-width:768px){.gtab-s{display:none}.gtab{min-width:0;flex-direction:row;align-items:center}}
 .tabs{
   display:flex;
   gap:0;
-  padding:.5rem 1rem 0;
+  padding:.4rem 1rem 0;
   background:var(--bg);
-  position:sticky;
-  top:0;
-  z-index:100;
+  justify-content:center;
   overflow-x:auto;
   scrollbar-width:none;
   -ms-overflow-style:none;
-  border-bottom:1px solid var(--border);
 }
 .tabs::-webkit-scrollbar{display:none;}
 .tab{
@@ -128,17 +139,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .svg-wrap svg .erd-node:hover rect{stroke-opacity:.8!important;filter:brightness(1.3)}
 
 @media(max-width:768px){.hero,.vw{padding-left:1rem;padding-right:1rem}.hero h1{font-size:1.6rem}.nd{min-width:100px;padding:.5rem .7rem}}
-.tab-old{display:inline-block;padding:.1rem .4rem;border-radius:4px;font-size:.6rem;font-weight:800;background:rgba(255,153,0,.15);color:#FF9900;border:1px solid rgba(255,153,0,.4);margin-right:.4rem;letter-spacing:.05em;font-family:'Sora',sans-serif}
-.tab-new{display:inline-block;padding:.1rem .4rem;border-radius:4px;font-size:.6rem;font-weight:800;background:rgba(34,197,94,.12);color:#22c55e;border:1px solid rgba(34,197,94,.35);margin-right:.4rem;letter-spacing:.05em;font-family:'Sora',sans-serif}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
-.tab-group-new{
-  margin-left:.6rem;
-  border-left:1px solid var(--border);
-  padding-left:1rem;
-}
 /* ── Change Log tab ──────────────────────────────────────── */
-.tab-log{display:inline-block;padding:.1rem .4rem;border-radius:4px;font-size:.6rem;font-weight:800;background:rgba(139,148,158,.14);color:var(--text2);border:1px solid rgba(139,148,158,.32);margin-right:.4rem;letter-spacing:.05em;font-family:'Sora',sans-serif}
 .cl-wrap{max-width:1000px;margin:0 auto;padding-bottom:3rem}
 .cl-ctl{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin-bottom:1.4rem;padding-bottom:1.1rem;border-bottom:1px solid var(--border)}
 .cl-chip{padding:.32rem .8rem;border-radius:20px;font-size:.76rem;font-weight:600;font-family:'Sora',sans-serif;background:var(--bg2);color:var(--text2);border:1px solid var(--border);cursor:pointer;transition:.15s}
@@ -206,28 +209,39 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 <div class="bdg"><span></span>V1: 14 Lambdas · V2: 10 Fargate Tasks · Step Functions · Daily</div>
 <a href="roadmap.html" style="display:inline-flex;align-items:center;gap:.4rem;padding:.3rem .85rem;border-radius:20px;font-size:.78rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;background:rgba(34,197,94,.1);color:#22c55e;border:1px solid rgba(34,197,94,.25);font-family:'Sora',sans-serif;text-decoration:none;transition:.2s"><span style="display:inline-block;padding:.05rem .35rem;border-radius:3px;font-size:.6rem;font-weight:800;background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.35);margin-right:.3rem;letter-spacing:.05em">NEW</span>Build Roadmap →</a>
 </div>
-<div style="display:flex;align-items:center;justify-content:center;gap:1.2rem;margin-top:.6rem;font-size:.8rem;font-family:'Sora',sans-serif">
-  <div style="display:flex;align-items:center;gap:.4rem"><span style="display:inline-block;padding:.1rem .45rem;border-radius:4px;font-size:.62rem;font-weight:800;background:rgba(255,153,0,.15);color:#FF9900;border:1px solid rgba(255,153,0,.4)">OLD</span><span style="color:var(--text3)">= V1 Lambda Pipeline (live in production)</span></div>
-  <span style="color:var(--border)">·</span>
-  <div style="display:flex;align-items:center;gap:.4rem"><span style="display:inline-block;padding:.1rem .45rem;border-radius:4px;font-size:.62rem;font-weight:800;background:rgba(34,197,94,.12);color:#22c55e;border:1px solid rgba(34,197,94,.35)">NEW</span><span style="color:var(--text3)">= V2 Fargate + Step Functions (built · running daily · parallel-run with V1)</span></div>
 </div>
 </div>
 
-<div class="tabs">
-<button class="tab active" data-v="existing"><span class="tab-old">OLD</span>Pipeline — Lambdas</button>
-<button class="tab" data-v="flow"><span class="tab-old">OLD</span>Flow Diagram</button>
-<button class="tab" data-v="old-dash"><span class="tab-old">OLD</span>Dashboards</button>
-<button class="tab" data-v="old-analyst"><span class="tab-old">OLD</span>Analyst View</button>
-<button class="tab" data-v="old-hitl"><span class="tab-old">OLD</span>Human-in-Loop</button>
-<button class="tab" data-v="rules"><span class="tab-old">OLD</span>Filter Rules</button>
-<button class="tab" data-v="docs"><span class="tab-old">OLD</span>Written Docs</button>
-<button class="tab tab-group-new" data-v="new"><span class="tab-new">NEW</span>Architecture — Fargate</button>
-<button class="tab" data-v="diagram"><span class="tab-new">NEW</span>Flow Diagram</button>
-<button class="tab" data-v="erd"><span class="tab-new">NEW</span>Database ERD</button>
-<button class="tab" data-v="new-dash"><span class="tab-new">NEW</span>Dashboards</button>
-<button class="tab" data-v="new-analyst"><span class="tab-new">NEW</span>Analyst View</button>
-<button class="tab" data-v="new-hitl"><span class="tab-new">NEW</span>Human-in-Loop</button>
-<button class="tab tab-group-new" data-v="log"><span class="tab-log">LOG</span>Change Log</button>
+<div class="navwrap">
+<div class="grpbar">
+  <button class="gtab active" data-g="cur">
+    <span class="gtab-t"><span class="gdot cur"></span>Current</span>
+    <span class="gtab-s">V1 Lambda Pipeline — live in production</span>
+  </button>
+  <button class="gtab" data-g="fut">
+    <span class="gtab-t"><span class="gdot fut"></span>Future</span>
+    <span class="gtab-s">V2 Fargate + Step Functions — built · running daily · parallel-run with V1</span>
+  </button>
+  <button class="gtab" data-g="log">
+    <span class="gtab-t"><span class="gdot log"></span>Change Log</span>
+    <span class="gtab-s">What changed, when, and who asked for it</span>
+  </button>
+</div>
+<div class="tabs" id="subtabs">
+<button class="tab active" data-g="cur" data-v="existing">Pipeline — Lambdas</button>
+<button class="tab" data-g="cur" data-v="flow">Flow Diagram</button>
+<button class="tab" data-g="cur" data-v="old-dash">Dashboards</button>
+<button class="tab" data-g="cur" data-v="old-analyst">Analyst View</button>
+<button class="tab" data-g="cur" data-v="old-hitl">Human-in-Loop</button>
+<button class="tab" data-g="cur" data-v="rules">Filter Rules</button>
+<button class="tab" data-g="cur" data-v="docs">Written Docs</button>
+<button class="tab" data-g="fut" data-v="new">Architecture — Fargate</button>
+<button class="tab" data-g="fut" data-v="diagram">Flow Diagram</button>
+<button class="tab" data-g="fut" data-v="erd">Database ERD</button>
+<button class="tab" data-g="fut" data-v="new-dash">Dashboards</button>
+<button class="tab" data-g="fut" data-v="new-analyst">Analyst View</button>
+<button class="tab" data-g="fut" data-v="new-hitl">Human-in-Loop</button>
+</div>
 </div>
 
 <div class="vw active" id="vw-existing">
@@ -261,7 +275,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 
 
 <div class="vw" id="vw-old-dash">
-<div class="vi"><h2>OLD Pipeline — Dashboards</h2>
+<div class="vi"><h2>Current Pipeline — Dashboards</h2>
 <p>Two live S3-hosted dashboards monitoring the V1 Lambda pipeline. Login required.</p>
 </div>
 <div style="max-width:900px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;padding-bottom:3rem">
@@ -290,7 +304,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 </div>
 </div>
 <div class="vw" id="vw-new-dash">
-<div class="vi"><h2>NEW Architecture — Dashboards</h2>
+<div class="vi"><h2>Future Architecture — Dashboards</h2>
 <p>V2 monitoring lives in the qa.* schema in Aurora PostgreSQL — query directly — and in a live S3-hosted Quality Console with an Old DB ⇄ V2 parity tab.</p>
 </div>
 <div style="max-width:900px;margin:0 auto;padding-bottom:3rem">
@@ -321,29 +335,29 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 
 
 <div class="vw" id="vw-old-analyst">
-<div class="vi"><h2>OLD Pipeline — Analyst View</h2>
+<div class="vi"><h2>Current Pipeline — Analyst View</h2>
 <p>You don't touch a pipeline, a database, or a Lambda. Here's what the V1 architecture means for you as an analyst opening Tableau.</p>
 </div>
 <div id="old-analyst-content"></div>
 </div>
 <div class="vw" id="vw-new-analyst">
-<div class="vi"><h2>NEW Pipeline — Analyst View</h2><p>You won't touch a pipeline, a database, or a Lambda. Here's what the new architecture means for the person opening Tableau every morning.</p></div>
+<div class="vi"><h2>Future Pipeline — Analyst View</h2><p>You won't touch a pipeline, a database, or a Lambda. Here's what the new architecture means for the person opening Tableau every morning.</p></div>
 <div id="analyst-content"></div>
 </div>
 <div class="vw" id="vw-old-hitl">
-<div class="vi"><h2>OLD Pipeline — Human-in-the-Loop</h2>
+<div class="vi"><h2>Current Pipeline — Human-in-the-Loop</h2>
 <p>Manual review processes that run alongside the pipeline. Select a view below.</p></div>
 <div style="max-width:960px;margin:0 auto" id="hitl-old"></div>
 </div>
 <div class="vw" id="vw-new-hitl">
-<div class="vi"><h2>NEW Pipeline — Human-in-the-Loop</h2>
+<div class="vi"><h2>Future Pipeline — Human-in-the-Loop</h2>
 <p>In V2, Task 9 (Fargate) runs seven duplicate detection queries automatically every pipeline run. Human review is done via SQL helper functions — no CSV download needed.</p>
 </div>
 <div style="max-width:960px;margin:0 auto" id="hitl-new-content"></div>
 </div>
 
 <div class="vw" id="vw-docs">
-<div class="vi"><h2>OLD Pipeline — Written Documentation</h2>
+<div class="vi"><h2>Current Pipeline — Written Documentation</h2>
 <p>The V1 Lambda pipeline in full prose — every stage, every input and output, every rule, and every known failure mode. Written from the deployed source code and verified against it line by line. Where the pipeline does something surprising or undocumented, it says so.</p></div>
 
 <div class="doc">
@@ -508,7 +522,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 </div>
 
 <div class="vw" id="vw-rules">
-<div class="vi"><h2>OLD Pipeline — Filter & Transform Rules</h2>
+<div class="vi"><h2>Current Pipeline — Filter & Transform Rules</h2>
 <p>Every rule the V1 pipeline applies to posts, exactly as written in the Lambda code. Rules 1-22 remove or transform rows; each shows the stage, the precise condition, and the reason string the code logs to the filtered_posts CSVs.</p>
 </div>
 <div id="rules-content"></div>
@@ -1896,7 +1910,7 @@ function renderHITL(){
   function sect(t,c){return '<div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:'+(c||D)+';font-family:Sora,sans-serif;margin:1.2rem 0 .5rem;padding:.3rem .6rem;background:'+(c||D)+'12;border-radius:4px;display:inline-block">'+t+'</div>';}
 
   // ════════════════════════════════════════════
-  // OLD TAB — Lambda 10 Dedup Review
+  // CURRENT (V1) TAB — Lambda 10 Dedup Review
   // ════════════════════════════════════════════
   var h='<p style="color:'+D+';font-size:.88rem;line-height:1.6;margin-bottom:1.2rem">Every Monday, Lambda 10 runs after the main pipeline. Two jobs in sequence: (1) four custom data correction streams, then (2) registry-backed duplicate detection. Click any box for full story + technical detail.</p>';
 
@@ -1929,7 +1943,7 @@ function renderHITL(){
   h+='<div id="det-old"></div>';
   oldEl.innerHTML=h;
 
-  // OLD detail data
+  // CURRENT (V1) detail data
 
   var OD={
     sheet:['Google Sheet — Ad-hoc Corrections',A,'Anyone on the team can walk up to the complaints book (a shared Google Sheet) and write a correction: this post has the wrong impression count, please fix it. The book stays open all week. Every Monday the health inspector (Lambda 10) reads all outstanding complaints — rows where Updated Date is blank — and fixes them one by one in the database, then marks each complaint as resolved.','Lambda 10 reads Google Sheet ID 18W6Z1src75v4x6deGB9KChnth7095P49BtvWwEFyVbI (GID=0) via CSV export URL. Filters rows where Updated Date is blank. For each pending row: looks up the column name using resolve_newline_columns() to handle Sprinklr columns with literal newline chars in their names. Runs UPDATE on both sprinklr_table and sprinklr_lookup_check in one transaction. If any impression column changes, auto-recalculates Organic Impressions, Total Reach, Engagement Rate, Likes per Impression, and Comments per Impression in the same UPDATE.','Source: Google Sheets CSV export. One transaction per row. Auto-recalc triggered when impression column changes. After each row: Updated Date stamped. Audit entry with before/after written to custom_updates_audit_log/ in S3.',[['SOURCE','Google Sheet 18W6Z1src75v4x6deGB9KChnth7095P49BtvWwEFyVbI GID=0'],['FILTER','Rows where Updated Date is blank (pending only)'],['MATCH','TRIM("Permalink") exact match — updates all rows with that permalink'],['TABLES','sprinklr_table AND sprinklr_lookup_check — both in one transaction'],['AUTO-CALC','Impression column change → recalculates ER, Organic Impressions, Total Reach, LPI, CPI'],['AUDIT','Before/after written to custom_updates_audit_log/YYYY-MM-DD_audit.json']]],
@@ -1950,7 +1964,7 @@ function renderHITL(){
   window.showOldDet=function(k){var d=OD[k];if(!d)return;showDet('det-old',d[0],d[1],d[2],d[3],d[4],d[5]);};
 
   // ════════════════════════════════════════════
-  // NEW TAB — T9 Dedup Review
+  // FUTURE (V2) TAB — T9 Dedup Review
   // ════════════════════════════════════════════
   if(!newEl)return;
   var h2='<p style="color:'+D+';font-size:.88rem;line-height:1.6;margin-bottom:1.2rem">In the new v2 architecture, Task 9 (Fargate) runs seven detection queries automatically on every pipeline run. Candidates are staged in qa.duplicate_candidates. Operators review and approve via SQL helper functions — no CSV download needed.</p>';
@@ -2053,11 +2067,6 @@ renderRules();
 renderExistingFlow();
 renderHITL();
 renderExistingFlow();
-document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
-  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
-  document.querySelectorAll('.vw').forEach(x=>x.classList.remove('active'));
-  t.classList.add('active');document.getElementById('vw-'+t.dataset.v).classList.add('active');
-}));
 
 // ════════════════════════════════════════════
 // CHANGE LOG
@@ -2069,6 +2078,16 @@ document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
 //   st optional status line for anything still open
 // ════════════════════════════════════════════
 const CHANGELOG=[
+{d:"2026-08-11",t:"14:06",s:"docs",ti:"Navigation restructured into Current and Future",
+ who:"Asad",
+ b:"The tab bar was a single flat row of thirteen tabs with OLD and NEW stickers, which meant scrolling sideways to reach anything in V2. It is now two levels: pick Current, Future or Change Log at the top, and the sub-tabs underneath change to match. Current holds Pipeline, Flow Diagram, Dashboards, Analyst View, Human-in-Loop, Filter Rules and Written Docs; Future holds Architecture, Flow Diagram, Database ERD, Dashboards, Analyst View and Human-in-Loop. Each group remembers the sub-tab you were last on. The OLD and NEW labels are gone — the group you are in says which pipeline you are looking at, and the old legend now reads as the description under each group.",
+ r:"docs — index.html nav"},
+
+{d:"2026-08-11",t:"13:52",s:"docs",ti:"Change Log tab added",
+ who:"Asad",
+ b:"This tab. A dated record of every change to the pipeline, the dashboards and this documentation, with who asked for it and a reference to the PR, commit or file. Filter by scope or search across everything. Entries are a plain array in index.html so adding one is a copy-paste.",
+ r:"docs db4af7e"},
+
 {d:"2026-08-11",t:"13:42",s:"docs",ti:"Exclusion list / allow list terminology",
  who:"Amar Vyas raised it in Slack; David Lawton agreed on keeping the old word in brackets so the client still recognises it",
  b:"All prose across the Pipeline Explorer, Ops Panel and Roadmap now says exclusion list and allow list. The first mention reads exclusion list (formerly called the blacklist). Technical object names were deliberately left alone so the docs still match what is deployed — blacklist/Blacklist.csv in S3, blacklist_table in V1, ref.blacklist in V2 — and a terminology note in Written Docs explains why. Renaming the V2 table to ref.exclusion_list is queued on the roadmap.",
@@ -2263,6 +2282,48 @@ document.querySelectorAll('.cl-chip').forEach(function(c){
 });
 document.getElementById('cl-q').addEventListener('input',renderLog);
 renderLog();
+
+// ════════════════════════════════════════════
+// TWO-LEVEL NAV — Current / Future / Change Log, each with its own sub-tabs.
+// Each group remembers the sub-tab you were last on, so switching between
+// Current and Future and back returns you where you left off.
+// ════════════════════════════════════════════
+const LAST_SUB={cur:'existing',fut:'new'};
+function showView(v){
+  document.querySelectorAll('.vw').forEach(function(x){x.classList.remove('active');});
+  var el=document.getElementById('vw-'+v);
+  if(el) el.classList.add('active');
+}
+function selectSub(v){
+  var t=document.querySelector('#subtabs .tab[data-v="'+v+'"]');
+  if(!t) return;
+  document.querySelectorAll('#subtabs .tab').forEach(function(x){x.classList.remove('active');});
+  t.classList.add('active');
+  LAST_SUB[t.dataset.g]=v;
+  showView(v);
+}
+function selectGroup(g){
+  document.querySelectorAll('.gtab').forEach(function(x){x.classList.toggle('active',x.dataset.g===g);});
+  var bar=document.getElementById('subtabs');
+  if(g==='log'){
+    bar.style.display='none';
+    document.querySelectorAll('#subtabs .tab').forEach(function(x){x.classList.remove('active');});
+    showView('log');
+    return;
+  }
+  bar.style.display='flex';
+  document.querySelectorAll('#subtabs .tab').forEach(function(x){
+    x.style.display = x.dataset.g===g ? '' : 'none';
+  });
+  selectSub(LAST_SUB[g]);
+}
+document.querySelectorAll('.gtab').forEach(function(g){
+  g.addEventListener('click',function(){selectGroup(g.dataset.g);});
+});
+document.querySelectorAll('#subtabs .tab').forEach(function(t){
+  t.addEventListener('click',function(){selectSub(t.dataset.v);});
+});
+selectGroup('cur');
 </script>
 </body>
 </html>
