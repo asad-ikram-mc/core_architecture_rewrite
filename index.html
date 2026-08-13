@@ -36,6 +36,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .gdot.cur{background:#FF9900;box-shadow:0 0 0 3px rgba(255,153,0,.16)}
 .gdot.fut{background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.16)}
 .gdot.log{background:#8b949e;box-shadow:0 0 0 3px rgba(139,148,158,.16)}
+.gdot.ci{background:#f87171;box-shadow:0 0 0 3px rgba(248,113,113,.16)}
+.ci-pill{display:inline-block;font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;padding:.16rem .55rem;border-radius:5px}
+.ci-pill.fixed{background:rgba(34,197,94,.13);color:#22c55e;border:1px solid rgba(34,197,94,.35)}
+.ci-pill.open{background:rgba(210,153,34,.15);color:#d29922;border:1px solid rgba(210,153,34,.4)}
+.ci-said{margin:.45rem 0 .1rem;padding:.55rem .85rem;background:rgba(139,148,158,.07);border-left:3px solid var(--text3);border-radius:0 6px 6px 0;font-size:.86rem;color:var(--text2);font-style:italic}
 @media(max-width:768px){.gtab-s{display:none}.gtab{min-width:0;flex-direction:row;align-items:center}}
 .tabs{
   display:flex;
@@ -211,7 +216,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 <h1>Amazon CORE — Pipeline Explorer</h1>
 <p>Amazon CORE Social Media ETL · M+C Saatchi Fluency</p>
 <div class="hero-b">
-<div class="bdg bdg-upd"><span></span>Last updated: 11 August 2026</div>
+<div class="bdg bdg-upd"><span></span>Last updated: 13 August 2026</div>
 <div class="bdg"><span></span>V1: 14 Lambdas · V2: 10 Fargate Tasks · Step Functions · Daily</div>
 <a href="roadmap.html" style="display:inline-flex;align-items:center;gap:.4rem;padding:.3rem .85rem;border-radius:20px;font-size:.78rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;background:rgba(34,197,94,.1);color:#22c55e;border:1px solid rgba(34,197,94,.25);font-family:'Sora',sans-serif;text-decoration:none;transition:.2s"><span style="display:inline-block;padding:.05rem .35rem;border-radius:3px;font-size:.6rem;font-weight:800;background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.35);margin-right:.3rem;letter-spacing:.05em">NEW</span>Build Roadmap →</a>
 </div>
@@ -227,6 +232,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   <button class="gtab" data-g="fut">
     <span class="gtab-t"><span class="gdot fut"></span>Future</span>
     <span class="gtab-s">V2 Fargate + Step Functions — built · running daily · parallel-run with V1</span>
+  </button>
+  <button class="gtab" data-g="ci">
+    <span class="gtab-t"><span class="gdot ci"></span>Client Issues</span>
+    <span class="gtab-s">Everything the client has flagged, and where it stands</span>
   </button>
   <button class="gtab" data-g="log">
     <span class="gtab-t"><span class="gdot log"></span>Change Log</span>
@@ -532,6 +541,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 <p>Every rule the V1 pipeline applies to posts, exactly as written in the Lambda code. Rules 1-22 remove or transform rows; each shows the stage, the precise condition, and the reason string the code logs to the filtered_posts CSVs.</p>
 </div>
 <div id="rules-content"></div>
+</div>
+
+<div class="vw" id="vw-ci">
+<div class="vi"><h2>Client Issues Log</h2>
+<p>Every data issue or request the client has raised, newest first — what they flagged, what we found, and where it stands. Open items carry an amber badge until the team signs them off.</p>
+</div>
+<div class="cl-wrap"><div id="ci-list"></div></div>
 </div>
 
 <div class="vw" id="vw-log">
@@ -2084,6 +2100,23 @@ renderExistingFlow();
 //   st optional status line for anything still open
 // ════════════════════════════════════════════
 const CHANGELOG=[
+{d:"2026-08-13",t:"—",s:"docs",ti:"Client Issues tab added",
+ who:"Asad",
+ b:"A standing log of everything the client flags — what they said, what we found, and where each item stands. Open items stay amber until the team signs them off, so nothing raised in Slack can quietly disappear.",
+ r:"docs — index.html"},
+
+{d:"2026-08-13",t:"—",s:"pipeline",ti:"Rule 8 DB reconciliation merged (PR #130)",
+ who:"David Lawton flagged the symptom; reviewed and approved the fix",
+ b:"Posts deleted in Sprinklr after ingestion drop out of the metrics feed, so Rule 8 never saw them again and their DB rows survived forever. Now lambda_5 exports every permalink the tag pull marks deleted, and lambda_10 removes matching rows from both tables each Monday — logged to filtered_posts/lambda_10_<date>.csv and the custom-updates audit log. The 15 orphans found on 11 Aug (~1.6M impressions) were removed the same day with full before-snapshots.",
+ go:{g:"cur",v:"rules",a:"rule-8",lbl:"Rule 8 in Filter Rules"},
+ r:"PR #130 · custom_updates_audit_log/2026-08-11_deleted_posts_cleanup/"},
+
+{d:"2026-08-12",t:"—",s:"incident",ti:"11 posts vanished from Sprinklr without trace",
+ who:"David Lawton — a Facebook FR reel in CORE he could not find in Sprinklr",
+ b:"Sweeping 12 months of DB posts against Sprinklr's export — matching on URL, post_id AND post text, since each signal alone false-positives — found 11 posts (~1.7M impressions) absent from both the tag file and the metrics feed with no deletion tag. Some are dead on the platform, some still load, so this is part platform deletions, part Sprinklr coverage gap. Distinct from the tagged-deleted class PR #130 fixes: these leave no tag to reconcile against.",
+ r:"confirmed_vanished_final.csv",
+ st:"Open — team decision needed: remove like the tagged-deleted class, raise with Sprinklr support, or hold a monthly review list"},
+
 {d:"2026-08-11",t:"14:14",s:"docs",ti:"Change Log entries now jump to the change",
  who:"Asad",
  b:"Every entry that has a home in the docs carries a link to it. Clicking switches to the right group, opens the right sub-tab, scrolls the exact section clear of the sticky nav and flashes it, so you land on the paragraph rather than the top of a page. Rule entries go to the rule row itself, stage fixes to that stage in Written Docs, dashboard work to the Dashboards tab, and the two entries about other pages open ops.html and roadmap.html. 30 of the 32 entries are linked; the two about the Change Log itself are not.",
@@ -2356,6 +2389,86 @@ document.getElementById('cl-q').addEventListener('input',renderLog);
 renderLog();
 
 // ════════════════════════════════════════════
+// CLIENT ISSUES — what the client flagged, what we found, where it stands.
+// Fields: d date · who · said (their words, short) · found (our answer) ·
+// status 'fixed'|'open' · stlabel (badge text) · r reference · go (optional link)
+// ════════════════════════════════════════════
+const CLIENT_ISSUES=[
+{d:"2026-08-12",who:"David Lawton",
+ said:"Could you investigate this post — it's in CORE but I can't find it anywhere in Sprinklr.",
+ found:"The reel was purged from Sprinklr's exports within 4 days of posting, with no deletion tag. A 12-month sweep (matching URL + post_id + post text) found 11 such posts (~1.7M impressions) — part platform deletions, part Sprinklr coverage gaps: David spot-checked and several still load on the platform.",
+ status:"open",stlabel:"Open — needs team decision",
+ r:"confirmed_vanished_final.csv"},
+
+{d:"2026-08-11",who:"David Lawton",
+ said:"These URLs are in CORE but tagged as deleted in Sprinklr — could you review? (13 URLs + the tag-pull file)",
+ found:"Confirmed, plus 2 more (15 posts, ~1.6M impressions). Root cause: deleted posts leave the metrics feed, so Rule 8 never re-sees them and the pipeline never deletes DB rows. The 15 were removed same day with full audit snapshots, and PR #130 added a weekly reconciliation (lambda_5 exports the deleted tags, lambda_10 removes matching rows).",
+ status:"fixed",stlabel:"Fixed — PR #130 merged",
+ go:{g:"cur",v:"rules",a:"rule-8",lbl:"Rule 8 in Filter Rules"},
+ r:"PR #130"},
+
+{d:"2026-08-11",who:"Amar Vyas (David concurred)",
+ said:"It's not good practice to use blacklist/whitelist terminology — the team should update all Amazon documentation.",
+ found:"All prose across this site now says exclusion list / allow list, with the first mention keeping '(formerly called the blacklist)' for client recognition. Technical object names (Blacklist.csv, blacklist_table, ref.blacklist) deliberately unchanged so docs match what is deployed; V2 rename queued.",
+ status:"fixed",stlabel:"Fixed — docs updated",
+ go:{g:"cur",v:"docs",a:"d-term",lbl:"Terminology note"},
+ r:"docs 370ab8a"},
+
+{d:"2026-08-10",who:"David Lawton",
+ said:"We seem to have lost 23m organic impressions… and 42m YouTube impressions in June.",
+ found:"No data lost. YouTube re-attributed June's campaign views as paid in late June, but lambda_4's snapshot-picker rule ('organic for >5 days keeps the organic snapshot') republished the stale pre-attribution snapshot for four weekly loads. On 10 Aug the 45-day window rolled past it and the corrected Boosted rows won — the 'drop' was 5 weeks of stale attribution correcting at once. Totals on the 15 videos rose 42.6M → 58.7M.",
+ status:"open",stlabel:"Open — fix awaiting team approval",
+ go:{g:"cur",v:"docs",a:"d-l4",lbl:"Stage 4 (λ4) in Written Docs"},
+ r:"youtube_reclassification_evidence.csv · lambda_4 filter_latest_pull_dates"},
+
+{d:"2026-08-03",who:"David Lawton",
+ said:"On this, how do we go about doing further checks? (plus: is the filtered-posts rise real? are we losing posts week on week?)",
+ found:"Added the drill-down he was missing: every failing DQ check on the quality console now opens the actual flagged rows with RowID + post_id_key and CSV/Excel export, so 'further checks' is a button, not a database query. Filtered-posts rise = tracking start, not a data change; WoW dip = rolling-window arithmetic, not lost posts.",
+ status:"fixed",stlabel:"Fixed — dashboard shipped",
+ go:{href:"http://amazon-core-v1-quality-dashboard.s3-website.eu-west-2.amazonaws.com/",lbl:"V1 Quality Console"},
+ r:"dashboard/index.html · dq_runner.py"},
+
+{d:"2026-07-20",who:"David Lawton",
+ said:"LinkedIn follower numbers need updating (Campaign Manager export attached).",
+ found:"Follower overrides refreshed per his export — these drive engagement-rate denominators for LinkedIn accounts.",
+ status:"fixed",stlabel:"Fixed — PR #117 merged",
+ r:"PR #117"},
+
+{d:"2026-07-17",who:"David Lawton",
+ said:"The Post Format mapping should be read from my 'Current State' to 'Mapping' columns — some historic values are wrong.",
+ found:"lambda_5 now permanently normalises legacy Post Format values to the agreed set (case/space-insensitive), historic rows were reclassified, and lambda_10 carries a DB-level safety net for anything that slips past.",
+ status:"fixed",stlabel:"Fixed — PRs #115/#116 merged",
+ go:{g:"cur",v:"docs",a:"d-l5",lbl:"Stage 5 (λ5) in Written Docs"},
+ r:"PRs #115, #116"},
+];
+CLIENT_ISSUES.forEach(function(e,i){e._i=i;});
+function renderCI(){
+  var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var out='',host=document.getElementById('ci-list');
+  CLIENT_ISSUES.forEach(function(e){
+    var p=e.d.split('-');
+    out+='<div class="cl-item s-'+(e.status==='fixed'?'dashboard':'incident')+'">'
+      +'<div class="cl-head"><span class="cl-time">'+parseInt(p[2],10)+' '+MON[parseInt(p[1],10)-1]+' '+p[0]+'</span>'
+      +'<span class="ci-pill '+e.status+'">'+e.stlabel+'</span></div>'
+      +'<div class="cl-who">Raised by: <b>'+e.who+'</b></div>'
+      +'<div class="ci-said">“'+e.said+'”</div>'
+      +'<p class="cl-b"><b>What we found:</b> '+e.found+'</p>'
+      +(e.r?'<div class="cl-ref">'+e.r+'</div>':'')
+      +(e.go?(e.go.href
+          ?'<a class="cl-go" href="'+e.go.href+'" target="_blank" rel="noopener">'+e.go.lbl+' \u2192</a>'
+          :'<button class="cl-go" data-cigo="'+e._i+'">'+e.go.lbl+' \u2192</button>')
+        :'')
+      +'</div>';
+  });
+  host.innerHTML=out;
+}
+document.getElementById('vw-ci').addEventListener('click',function(ev){
+  var b=ev.target.closest('button[data-cigo]');
+  if(b) goTo(CLIENT_ISSUES[+b.dataset.cigo].go);
+});
+renderCI();
+
+// ════════════════════════════════════════════
 // TWO-LEVEL NAV — Current / Future / Change Log, each with its own sub-tabs.
 // Each group remembers the sub-tab you were last on, so switching between
 // Current and Future and back returns you where you left off.
@@ -2377,10 +2490,10 @@ function selectSub(v){
 function selectGroup(g){
   document.querySelectorAll('.gtab').forEach(function(x){x.classList.toggle('active',x.dataset.g===g);});
   var bar=document.getElementById('subtabs');
-  if(g==='log'){
+  if(g==='log'||g==='ci'){
     bar.style.display='none';
     document.querySelectorAll('#subtabs .tab').forEach(function(x){x.classList.remove('active');});
-    showView('log');
+    showView(g);
     return;
   }
   bar.style.display='flex';
