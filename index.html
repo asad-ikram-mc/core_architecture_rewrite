@@ -2100,6 +2100,13 @@ renderExistingFlow();
 //   st optional status line for anything still open
 // ════════════════════════════════════════════
 const CHANGELOG=[
+{d:"2026-08-13",t:"19:51",s:"incident",ti:"Schema rename #10 — Content Source moved to the NA_ prefix",
+ who:"Sprinklr renamed the field; caught day-one by the Slack alerts added in PR #128",
+ b:"Sprinklr renamed CCR_SOCIAL_MEDIA__CONTENT_SOURCE to CCR_NA_SOCIAL_MEDIA__CONTENT_SOURCE, rolling it out export by export: two files flipped on 11 Aug, the remaining three by 13 Aug. Validation failed for three mornings and the daily chain stopped — the movers had not run since Monday. Fixed in two waves matching the rollout: PR #131 added the alias in all five mapping blocks (covering not-yet-flipped exports in advance) and swapped the expected lists for the two flagged files; the follow-up PR swapped the remaining six expected-list lines in lambda_1 and lambda_2b once the other three exports flipped. Mapping uploaded to S3, both lambdas redeployed, validation green at 19:51. Content Source is the field DQ check TAG-6 guards — the Global-fallback share.",
+ go:{g:"cur",v:"docs",a:"d-l1",lbl:"Stage 1 validation (λ1)"},
+ r:"PRs #131, #132",
+ st:"Remaining: restore RAWDATA for 11–13 Aug (files were mapped in place), then replay each date with lambda_1b so master_table gets the missed snapshots"},
+
 {d:"2026-08-13",t:"—",s:"docs",ti:"Client Issues tab added",
  who:"Asad",
  b:"A standing log of everything the client flags — what they said, what we found, and where each item stands. Open items stay amber until the team signs them off, so nothing raised in Slack can quietly disappear.",
