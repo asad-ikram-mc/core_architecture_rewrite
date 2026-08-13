@@ -162,6 +162,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .cl-item.s-dashboard{border-left-color:#22c55e}
 .cl-item.s-docs{border-left-color:#a78bfa}
 .cl-item.s-incident{border-left-color:#f87171}
+.cl-item.s-schema{border-left-color:#f472b6}
 .cl-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:.55rem;margin-bottom:.2rem}
 .cl-time{font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--text3);white-space:nowrap}
 .cl-ti{font-family:'Sora',sans-serif;font-weight:600;color:var(--text);font-size:.95rem}
@@ -170,6 +171,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .cl-tag.s-dashboard{background:rgba(34,197,94,.12);color:#22c55e;border:1px solid rgba(34,197,94,.35)}
 .cl-tag.s-docs{background:rgba(167,139,250,.13);color:#a78bfa;border:1px solid rgba(167,139,250,.35)}
 .cl-tag.s-incident{background:rgba(248,113,113,.13);color:#f87171;border:1px solid rgba(248,113,113,.35)}
+.cl-tag.s-schema{background:rgba(244,114,182,.13);color:#f472b6;border:1px solid rgba(244,114,182,.35)}
 .cl-who{font-size:.83rem;color:var(--text3);margin:.32rem 0 .1rem}
 .cl-who b{color:#FF9900;font-weight:600}
 .cl-b{font-size:.87rem;line-height:1.62;color:var(--text2);margin:.35rem 0 0;font-family:'DM Sans',sans-serif}
@@ -561,6 +563,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <button class="cl-chip" data-s="dashboard">Dashboards</button>
     <button class="cl-chip" data-s="docs">Documentation</button>
     <button class="cl-chip" data-s="incident">Incidents</button>
+    <button class="cl-chip" data-s="schema">Schema mismatch</button>
     <input class="cl-search" id="cl-q" type="search" placeholder="Search — e.g. schema, David, YouTube, Slack">
     <span class="cl-count" id="cl-count"></span>
   </div>
@@ -2100,7 +2103,7 @@ renderExistingFlow();
 //   st optional status line for anything still open
 // ════════════════════════════════════════════
 const CHANGELOG=[
-{d:"2026-08-13",t:"19:51",s:"incident",ti:"Schema rename #10 — Content Source moved to the NA_ prefix",
+{d:"2026-08-13",t:"19:51",s:"schema",ti:"Schema rename #10 — Content Source moved to the NA_ prefix",
  who:"Sprinklr renamed the field; caught day-one by the Slack alerts added in PR #128",
  b:"Sprinklr renamed CCR_SOCIAL_MEDIA__CONTENT_SOURCE to CCR_NA_SOCIAL_MEDIA__CONTENT_SOURCE, rolling it out export by export: two files flipped on 11 Aug, the remaining three by 13 Aug. Validation failed for three mornings and the daily chain stopped — the movers had not run since Monday. Fixed in two waves matching the rollout: PR #131 added the alias in all five mapping blocks (covering not-yet-flipped exports in advance) and swapped the expected lists for the two flagged files; the follow-up PR swapped the remaining six expected-list lines in lambda_1 and lambda_2b once the other three exports flipped. Mapping uploaded to S3, both lambdas redeployed, validation green at 19:51. Content Source is the field DQ check TAG-6 guards — the Global-fallback share.",
  go:{g:"cur",v:"docs",a:"d-l1",lbl:"Stage 1 validation (λ1)"},
@@ -2159,7 +2162,7 @@ const CHANGELOG=[
  r:"youtube_reclassification_evidence.csv · lambda_4.py:653-744",
  st:"Fix not yet applied — proposal is that the latest snapshot's classification always wins, plus a DQ check for large organic-to-boosted flips"},
 
-{d:"2026-08-10",t:"13:02",s:"pipeline",ti:"Schema fix — CCR_SOCIAL_MEDIA__EVENTS renamed",
+{d:"2026-08-10",t:"13:02",s:"schema",ti:"Schema fix — CCR_SOCIAL_MEDIA__EVENTS renamed",
  go:{g:"cur",v:"docs",a:"d-l1",lbl:"Stage 1 validation (λ1)"},
  who:"Sprinklr renamed the field; found by Asad during the Monday outage investigation",
  b:"Sprinklr renamed the events column to the opaque id C_68F03C67941C930A586AA5DE. Added as an alias in COLUMN_MAPPINGS_sprinklr.json and to the expected-column lists in lambda_1 and lambda_2b, then uploaded the mapping to S3. Aliases are always added, never swapped, so older files keep validating.",
@@ -2171,13 +2174,13 @@ const CHANGELOG=[
  b:"Every alert that previously went out by SES email is now also posted to the Slack channel. Added a small fire-and-forget helper to lambdas 1, 2b, 7, 8, 9 and 10; the webhook is overridable by environment variable and a Slack failure can never break a pipeline run.",
  r:"PR #128 (supersedes #126)"},
 
-{d:"2026-08-10",t:"12:13",s:"pipeline",ti:"Schema fix — IF_GLOBAL renamed",
+{d:"2026-08-10",t:"12:13",s:"schema",ti:"Schema fix — IF_GLOBAL renamed",
  go:{g:"cur",v:"docs",a:"d-l1",lbl:"Stage 1 validation (λ1)"},
  who:"Sprinklr dropped the LINKEDIN_ prefix on 5 August; found by Asad on 10 August",
  b:"Added the renamed IF_GLOBAL field as an alias in three places in the column mapping plus the expected lists in lambda_1 and lambda_2b. Mapping file uploaded to S3 so the deployed lambdas pick it up.",
  r:"PR #127"},
 
-{d:"2026-08-10",t:"11:00",s:"incident",ti:"Monday outage — lambda_2a and 2b had not run since 5 August",
+{d:"2026-08-10",t:"11:00",s:"schema",ti:"Monday outage — lambda_2a and 2b had not run since 5 August",
  go:{g:"cur",v:"docs",a:"d-fail",lbl:"Known failure modes"},
  who:"Asad, on noticing Tableau had not moved",
  b:"Lambda 1 ran every day and sent no failure email, but validation was quietly failing on the two renamed Sprinklr columns, so the done.txt trigger that starts lambda_2a and 2b was never written. Fixed by the two schema PRs above. RAWDATA was restored from S3 object versions before re-running, because lambda_1 rewrites validated files in place and a re-run over already-mapped files fails.",
@@ -2238,25 +2241,25 @@ const CHANGELOG=[
  b:"A local-only copy of lambda_1 that can re-run validation and mapping for a specific past date, so a missed day can be recovered without touching the deployed daily function.",
  r:"PR #123"},
 
-{d:"2026-08-02",t:"18:26",s:"pipeline",ti:"Schema fixes — six EU5 sub-topics and Entertainment Sub Type",
+{d:"2026-08-02",t:"18:26",s:"schema",ti:"Schema fixes — six EU5 sub-topics and Entertainment Sub Type",
  go:{g:"cur",v:"docs",a:"d-l1",lbl:"Stage 1 validation (λ1)"},
  who:"Sprinklr schema changes; fixed by Asad",
  b:"Mapped the remaining six EU5 sub-topic fields and the Entertainment Sub Type id that Sprinklr had renamed.",
  r:"PR #122"},
 
-{d:"2026-08-02",t:"18:09",s:"pipeline",ti:"Schema fixes — Sustainability prefix and primary reputational topic",
+{d:"2026-08-02",t:"18:09",s:"schema",ti:"Schema fixes — Sustainability prefix and primary reputational topic",
  go:{g:"cur",v:"docs",a:"d-l1",lbl:"Stage 1 validation (λ1)"},
  who:"Sprinklr schema changes; fixed by Asad",
  b:"Mapped the dropped Sustainability prefix and the renamed PRIMARY_REPUTATIONAL_TOPIC field.",
  r:"PR #121"},
 
-{d:"2026-08-02",t:"17:46",s:"pipeline",ti:"Schema fix — EU5 prefix dropped on two sub-topic fields",
+{d:"2026-08-02",t:"17:46",s:"schema",ti:"Schema fix — EU5 prefix dropped on two sub-topic fields",
  go:{g:"cur",v:"docs",a:"d-l1",lbl:"Stage 1 validation (λ1)"},
  who:"Sprinklr schema changes; fixed by Asad",
  b:"First of the batch. Sprinklr began sending two sub-topic fields without their EU5 prefix, which failed validation in lambda_1.",
  r:"PR #120"},
 
-{d:"2026-07-28",t:"—",s:"incident",ti:"Schema mismatch — six days of data did not load",
+{d:"2026-07-28",t:"—",s:"schema",ti:"Schema mismatch — six days of data did not load",
  go:{g:"cur",v:"docs",a:"d-fail",lbl:"Known failure modes"},
  who:"Sprinklr renamed a batch of columns without notice",
  b:"Between 28 July and 2 August, renamed Sprinklr columns failed validation in lambda_1, so the daily chain stopped short of the database. Resolved by adding aliases for every renamed field (PRs #120 to #122), restoring RAWDATA from the untouched production copy, and replaying the missed dates. All six days were later confirmed present in sprinklr_table.",
