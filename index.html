@@ -2103,6 +2103,19 @@ renderExistingFlow();
 //   st optional status line for anything still open
 // ════════════════════════════════════════════
 const CHANGELOG=[
+{d:"2026-08-17",t:"—",s:"incident",ti:"Translator error page stored as translations (190 posts)",
+ who:"David Lawton — spotted ~200 posts whose Translated Post read \"Error 500 (Server Error)!!1500 … That's all we know.\", plus emoji-only posts translating inconsistently",
+ b:"All 382 rows came from the 17 Aug push. lambda_7 translates through deep_translator, which scrapes Google's free consumer web page (no API key, no SLA). deep_translator raises on a real HTTP 5xx, but that morning Google served its error page with a 200 and the parser returned the page text as the translation; our except branch never fired. Rate: 163 of 1,876 posts sent (8.7%), skewed to longer posts, first ever occurrence — the throttling fingerprint, aggravated by an unbounded ThreadPoolExecutor firing the whole batch at once. Emoji-only posts were a second gap: Google returns an empty result, the library returns None, and some rows stored NULL. Re-tested later the same day: 150/150 clean, including all 60 previously-failed posts — the endpoint recovered, confirming it is intermittent on Google's side.",
+ go:{g:"cur",v:"docs",a:"d-l7",lbl:"Stage 7 (λ7) in Written Docs"},
+ r:"branch fix/lambda7-translation-guard",
+ st:"PR open: response guard (empty / error page → keep source text), emoji-only skip, max_workers=8. Repair UPDATE for the 382 rows handed to owner. Bigger question for the team: this is a free scraping dependency in the client-facing path — official Cloud Translation or AWS Translate would give an error contract"},
+
+{d:"2026-08-17",t:"14:04",s:"pipeline",ti:"Rule 8 reconciliation — first live catch",
+ who:"Automatic (PR #130), verified by Asad",
+ b:"First Monday run of the deleted-post reconciliation. lambda_5 exported 171 deleted-tagged permalinks at 08:28; lambda_10 checked all 171 at 14:04 and removed one real case — a LinkedIn Global post published 5 Aug (106,771 impressions), pushed 10 Aug, deleted in Sprinklr during the week. Both rows gone from both tables, logged to filtered_posts/lambda_10_2026-08-17.csv and the custom-updates audit log. Under the old behaviour it would have sat in Tableau at 107k impressions indefinitely. Last week's two Twitter lookup orphans also confirmed cleared.",
+ go:{g:"cur",v:"rules",a:"rule-8",lbl:"Rule 8 in Filter Rules"},
+ r:"filtered_posts/lambda_10_2026-08-17.csv · custom_updates_audit_log/2026-08-17/"},
+
 {d:"2026-08-13",t:"19:51",s:"schema",ti:"Schema rename #10 — Content Source moved to the NA_ prefix",
  who:"Sprinklr renamed the field; caught day-one by the Slack alerts added in PR #128",
  b:"Sprinklr renamed CCR_SOCIAL_MEDIA__CONTENT_SOURCE to CCR_NA_SOCIAL_MEDIA__CONTENT_SOURCE, rolling it out export by export: two files flipped on 11 Aug, the remaining three by 13 Aug. Validation failed for three mornings and the daily chain stopped — the movers had not run since Monday. Fixed in two waves matching the rollout: PR #131 added the alias in all five mapping blocks (covering not-yet-flipped exports in advance) and swapped the expected lists for the two flagged files; the follow-up PR swapped the remaining six expected-list lines in lambda_1 and lambda_2b once the other three exports flipped. Mapping uploaded to S3, both lambdas redeployed, validation green at 19:51. Content Source is the field DQ check TAG-6 guards — the Global-fallback share.",
@@ -2404,6 +2417,13 @@ renderLog();
 // status 'fixed'|'open' · stlabel (badge text) · r reference · go (optional link)
 // ════════════════════════════════════════════
 const CLIENT_ISSUES=[
+{d:"2026-08-17",who:"David Lawton",
+ said:"Nearly 200 cases where the translation step failed — Translated Post comes through with 'Error 500 (Server Error)!!1500 … That's all we know.' Also some post text is just emoji and that is converting wrongly too.",
+ found:"Confirmed: 190 posts / 382 rows, all from that morning's push. Our translator scrapes Google's free consumer page; Google served its error page with a 200 status, so it was stored as a translation. Emoji-only posts came back empty (NULL) for the same reason — no validation of the response. Fix in PR: validate every response (error page / empty → keep source text), skip emoji-only text, cap concurrency at 8. Repair query for the 382 rows handed over; endpoint re-tested clean the same afternoon.",
+ status:"open",stlabel:"Open — PR raised, awaiting merge + repair UPDATE",
+ go:{g:"cur",v:"docs",a:"d-l7",lbl:"Stage 7 (λ7) in Written Docs"},
+ r:"branch fix/lambda7-translation-guard"},
+
 {d:"2026-08-12",who:"David Lawton",
  said:"Could you investigate this post — it's in CORE but I can't find it anywhere in Sprinklr.",
  found:"The reel was purged from Sprinklr's exports within 4 days of posting, with no deletion tag. A 12-month sweep (matching URL + post_id + post text) found 11 such posts (~1.7M impressions) — part platform deletions, part Sprinklr coverage gaps: David spot-checked and several still load on the platform.",
@@ -2413,7 +2433,7 @@ const CLIENT_ISSUES=[
 {d:"2026-08-11",who:"David Lawton",
  said:"These URLs are in CORE but tagged as deleted in Sprinklr — could you review? (13 URLs + the tag-pull file)",
  found:"Confirmed, plus 2 more (15 posts, ~1.6M impressions). Root cause: deleted posts leave the metrics feed, so Rule 8 never re-sees them and the pipeline never deletes DB rows. The 15 were removed same day with full audit snapshots, and PR #130 added a weekly reconciliation (lambda_5 exports the deleted tags, lambda_10 removes matching rows).",
- status:"fixed",stlabel:"Fixed — PR #130 merged",
+ status:"fixed",stlabel:"Fixed — PR #130 merged · first live catch 17 Aug",
  go:{g:"cur",v:"rules",a:"rule-8",lbl:"Rule 8 in Filter Rules"},
  r:"PR #130"},
 
