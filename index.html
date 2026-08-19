@@ -218,7 +218,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 <h1>Amazon CORE — Pipeline Explorer</h1>
 <p>Amazon CORE Social Media ETL · M+C Saatchi Fluency</p>
 <div class="hero-b">
-<div class="bdg bdg-upd"><span></span>Last updated: 13 August 2026</div>
+<div class="bdg bdg-upd"><span></span>Last updated: 19 August 2026</div>
 <div class="bdg"><span></span>V1: 14 Lambdas · V2: 10 Fargate Tasks · Step Functions · Daily</div>
 <a href="roadmap.html" style="display:inline-flex;align-items:center;gap:.4rem;padding:.3rem .85rem;border-radius:20px;font-size:.78rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;background:rgba(34,197,94,.1);color:#22c55e;border:1px solid rgba(34,197,94,.25);font-family:'Sora',sans-serif;text-decoration:none;transition:.2s"><span style="display:inline-block;padding:.05rem .35rem;border-radius:3px;font-size:.6rem;font-weight:800;background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.35);margin-right:.3rem;letter-spacing:.05em">NEW</span>Build Roadmap →</a>
 </div>
@@ -495,7 +495,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 <tr><td>18</td><td>λ7</td><td>Posts whose account + author appears in the exclusion mapping. <b>This is global</b> — only the mapping file is named "apac". Manual and LINE rows exempt.</td></tr>
 <tr><td>19</td><td>λ7</td><td>Branded-content posts (<code>is_branded_content = 1</code>) carrying no real metadata — Reputational Topic, who made it, Content Category Type, Is it XGC?, Tier 1 Event and Team all equal to <code>Global</code>. Sprinklr rows only. Removed rows are archived to <code>is_branded_true_table</code>.</td></tr>
 <tr><td>20</td><td>λ7</td><td>Posts whose permalink appears on the <b>exclusion list</b> (formerly called the blacklist) — the file <code>blacklist/Blacklist.csv</code> in S3. (The SQL <code>blacklist_table</code> is an audit sink written to, never read.)</td></tr>
-<tr><td>21</td><td>λ7</td><td>Eight XCM / Positive-Engagements campaign values. <b>Executes first</b> in λ7.</td></tr>
+<tr><td>21</td><td>λ7</td><td>Posts whose Post Message is on the removal list: eight XCM / Positive-Engagements campaign values, plus <code>Amazon JP - Non Reportable (Amazon Marketing)</code> (per David, 19 Aug 2026). <b>Executes first</b> in λ7.</td></tr>
 <tr><td>22</td><td>λ7</td><td>Collab duplicates: when a Sprinklr row and a collab row describe the same post, the collab copy is dropped. If no Sprinklr row exists, a collab Organic row beats a collab Boosted one. Paid rows are never dropped.</td></tr>
 </tbody>
 </table>
@@ -530,6 +530,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 <tr><td>Did a schema mismatch block ingestion?</td><td>The λ1 validation email, and whether <code>amazon_sprinklr_pull/fluency/</code> has a folder for the date. A healthy day validates 23 files.</td></tr>
 <tr><td>Is a missing day actually lost?</td><td>Usually not. Each pull is a rolling ~88-day window, so a later pull normally still contains the posts — only the daily metric snapshots are gone.</td></tr>
 <tr><td>How do I correct a wrong metric?</td><td>Add a row to the "Core: Custom Metrics Change" sheet with a blank Updated Date. λ10 applies it and writes a full before/after audit entry.</td></tr>
+<tr><td>How do I remove a post permanently?</td><td>Two lists, both applied every Monday. By <b>URL</b>: add a row to <code>custom_updates/remove_x_quote_posts.csv</code> in S3 (ID, Country, Region, Account, Post URL) — λ10 deletes matches from both DB tables with a before-snapshot; matching is trailing-slash tolerant since PR #134, so <code>…/reel/abc</code> and <code>…/reel/abc/</code> both work. By <b>Post Message</b>: add the value to Rule 21's <code>values_to_remove</code> in λ7 (a one-line PR). A one-off DELETE only lasts until the next upsert brings the post back — use the lists.</td></tr>
 <tr><td>Where did the collab rows go?</td><td>λ8 deletes them at the start of its run and only the downstream chain restores them. Its pre-delete backup is in <code>backup_sprinklr_table/</code>.</td></tr>
 </tbody>
 </table>
@@ -1035,7 +1036,7 @@ function renderRules(){
     ['18','APAC excluded author mappings','Lambda 7','filter',"Drops non-manual-tracker APAC rows whose author matches the APAC author-exclusion mapping.",'Rule 18: APAC excluded author mappings'],
     ['19','Branded content, all Global metadata','Lambda 7','filter',"Drops rows where If yes who made it / Content Category Type / Is it XGC / Tier 1 Event / Team are ALL 'Global' AND is_manual_tracker==0. (Appended to is_branded_true_table.)",'Rule 19: Branded content with all Global metadata'],
     ['20','Exclusion list — blocked permalinks','Lambda 7','filter',"Drops rows whose Permalink appears on the exclusion list (formerly the blacklist), read from blacklist/Blacklist.csv in S3. Removed rows are appended to blacklist_table, which is a write-only audit sink.",'Rule 20: Blacklisted permalinks'],
-    ['21','XCM Post Messages removed','Lambda 7','filter',"Drops rows whose Post Message is in the XCM values_to_remove list.",'Rule 21: XCM Post Messages removed'],
+    ['21','Post Message removal list','Lambda 7','filter',"Drops rows whose Post Message is in the values_to_remove list: eight XCM / Positive-Engagements campaign values, plus 'Amazon JP - Non Reportable (Amazon Marketing)' (added per David Lawton, 19 Aug 2026 — PR #134).",'Rule 21: XCM Post Messages removed'],
     ['22','Collab Priority dedup','Lambda 7','dedup',"Groups by (account, extracted post id). Mirrors Lambda 8 priority: when a Sprinklr row and a collab (is_manual_tracker=1) row are the same post, the collab duplicate is dropped (Sprinklr survives).",'Rule 22: Collab Priority - Sprinklr survived all rules'],
   ];
 
@@ -2103,6 +2104,12 @@ renderExistingFlow();
 //   st optional status line for anything still open
 // ════════════════════════════════════════════
 const CHANGELOG=[
+{d:"2026-08-19",t:"—",s:"pipeline",ti:"Rule 21 gains 'Amazon JP - Non Reportable' · URL removal list now slash-tolerant (PR #134)",
+ who:"David Lawton — remove one IG-DE reel, and all posts tagged 'Amazon JP - Non Reportable (Amazon Marketing)', permanently",
+ b:"Both requests mapped onto mechanisms that already existed, so no new machinery. The Post Message went into Rule 21's values_to_remove list in lambda_7 — one line; spelling verified against the single exact value in the DB (19 X-JP posts / 38 rows, 2 Jun–13 Aug, ~1.69M impressions). The reel went into lambda_10's standing URL-removal file (remove_x_quote_posts.csv on S3, now 20 rows). While doing that, found a latent bug: the X-quote deletion matched URLs with exact equality, and Instagram reels are stored WITH a trailing slash while Twitter ones are not — the reel would silently never have matched (proved read-only: 0 rows vs 2). All four match sites now rtrim('/') both sides; no behaviour change for existing entries. Rows already in the DB were removed the same day by the owner with a backup table (deleted_backup_2026_08_17); the rule and the list stop them re-entering on Monday.",
+ go:{g:"cur",v:"rules",a:"rule-21",lbl:"Rule 21 in Filter Rules"},
+ r:"PR #134 · custom_updates/remove_x_quote_posts.csv"},
+
 {d:"2026-08-17",t:"—",s:"incident",ti:"Translator error page stored as translations (190 posts)",
  who:"David Lawton — spotted ~200 posts whose Translated Post read \"Error 500 (Server Error)!!1500 … That's all we know.\", plus emoji-only posts translating inconsistently",
  b:"All 382 rows came from the 17 Aug push. lambda_7 translates through deep_translator, which scrapes Google's free consumer web page (no API key, no SLA). deep_translator raises on a real HTTP 5xx, but that morning Google served its error page with a 200 and the parser returned the page text as the translation; our except branch never fired. Rate: 163 of 1,876 posts sent (8.7%), skewed to longer posts, first ever occurrence — the throttling fingerprint, aggravated by an unbounded ThreadPoolExecutor firing the whole batch at once. Emoji-only posts were a second gap: Google returns an empty result, the library returns None, and some rows stored NULL. Re-tested later the same day: 150/150 clean, including all 60 previously-failed posts — the endpoint recovered, confirming it is intermittent on Google's side.",
@@ -2417,6 +2424,13 @@ renderLog();
 // status 'fixed'|'open' · stlabel (badge text) · r reference · go (optional link)
 // ════════════════════════════════════════════
 const CLIENT_ISSUES=[
+{d:"2026-08-19",who:"David Lawton",
+ said:"Can you delete this post from CORE — instagram.com/reel/DbAsgFrAGjE/ — and remove any post with the Post Message 'Amazon JP - Non Reportable (Amazon Marketing)', and have that as a rule in the pipeline.",
+ found:"Done same day, using the two existing mechanisms rather than anything new. Immediate: the reel (2+2 rows) and the 19 Non Reportable posts (38+38 rows, all Amazon X - JP, ~1.69M impressions) deleted from both tables with a backup table. Permanent: the Post Message added to Rule 21's removal list (PR #134), the reel added to lambda_10's weekly URL-removal file. Bonus fix from the same PR: URL matching was not trailing-slash tolerant, which would have made the reel entry silently miss — now it is.",
+ status:"fixed",stlabel:"Fixed — PR #134 merged, file updated on S3",
+ go:{g:"cur",v:"rules",a:"rule-21",lbl:"Rule 21 in Filter Rules"},
+ r:"PR #134 · deleted_backup_2026_08_17"},
+
 {d:"2026-08-17",who:"David Lawton",
  said:"Nearly 200 cases where the translation step failed — Translated Post comes through with 'Error 500 (Server Error)!!1500 … That's all we know.' Also some post text is just emoji and that is converting wrongly too.",
  found:"Confirmed: 190 posts / 382 rows, all from that morning's push. Our translator scrapes Google's free consumer page; Google served its error page with a 200 status, so it was stored as a translation. Emoji-only posts came back empty (NULL) for the same reason — no validation of the response. Fix in PR: validate every response (error page / empty → keep source text), skip emoji-only text, cap concurrency at 8. Repair query for the 382 rows handed over; endpoint re-tested clean the same afternoon.",
