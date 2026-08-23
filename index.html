@@ -218,7 +218,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 <h1>Amazon CORE — Pipeline Explorer</h1>
 <p>Amazon CORE Social Media ETL · M+C Saatchi Fluency</p>
 <div class="hero-b">
-<div class="bdg bdg-upd"><span></span>Last updated: 20 August 2026</div>
+<div class="bdg bdg-upd"><span></span>Last updated: 21 August 2026</div>
 <div class="bdg"><span></span>V1: 14 Lambdas · V2: 10 Fargate Tasks · Step Functions · Daily</div>
 <a href="roadmap.html" style="display:inline-flex;align-items:center;gap:.4rem;padding:.3rem .85rem;border-radius:20px;font-size:.78rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;background:rgba(34,197,94,.1);color:#22c55e;border:1px solid rgba(34,197,94,.25);font-family:'Sora',sans-serif;text-decoration:none;transition:.2s"><span style="display:inline-block;padding:.05rem .35rem;border-radius:3px;font-size:.6rem;font-weight:800;background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.35);margin-right:.3rem;letter-spacing:.05em">NEW</span>Build Roadmap →</a>
 </div>
@@ -2104,6 +2104,13 @@ renderExistingFlow();
 //   st optional status line for anything still open
 // ════════════════════════════════════════════
 const CHANGELOG=[
+{d:"2026-08-21",t:"—",s:"schema",ti:"Schema rename #11 — Content Source moved again, NA_ to EU_",
+ who:"Sprinklr renamed the field; caught day-one by the Slack alerts (PR #128)",
+ b:"The same field that moved on 11 Aug moved again on 18 Aug: CCR_NA_SOCIAL_MEDIA__CONTENT_SOURCE became CCR_EU_SOCIAL_MEDIA__CONTENT_SOURCE — base to NA_ to EU_ inside ten days, which looks like one custom field being shuffled between regional field-sets upstream. Validation failed for four mornings (18–21 Aug) and the movers had not run since 17 Aug; raw files kept landing in RAWDATA so nothing was lost. Fixed in a single wave this time: rather than trusting the alert, which named only two exports, all five files carrying the field were probed directly in S3 and all five had already flipped — so both the mapping aliases and every expected list moved together, avoiding the follow-up PR the NA_ rollout needed. EU_ alias added alongside the existing NA_ and original keys (nothing removed), expected lists swapped in lambda_1 (5) and lambda_2b (3). Verified against the real 21 Aug export: 41 actual vs 41 expected columns, zero missing, zero additional.",
+ go:{g:"cur",v:"docs",a:"d-l1",lbl:"Stage 1 validation (λ1)"},
+ r:"PR #136",
+ st:"Pattern now the real issue: 11 renames since 28 July, this field twice in ten days, roughly half the days since blocked. Detection is solved; the manual PR → merge → redeploy → replay round-trip is the remaining cost. Proposed for the team: treat a missing/additional pair as a warning rather than a block when the mapping already resolves both to the same canonical column"},
+
 {d:"2026-08-20",t:"—",s:"pipeline",ti:"Collab Engagement Rate now derived weekly, not copied from the sheets (PR #135)",
  who:"David Lawton — data-entry errors in the collab tracker; needed sprinklr_table corrected same morning for QBR",
  b:"Investigation first: of 31 collab posts with bad ER, 28 were typing errors in the tracker sheets themselves (the keyed ER contradicts the same row's own engagements ÷ impressions — worst case keyed 115.12% where the row's numbers give 1.45%, some back to 2024) and 3 were stale imports where the sheet had since been corrected. lambda_8 always had the derived formula but only used it when the typed cell was blank, so typos flowed straight through. Two-part fix: a same-morning one-off recalc of all ~2,888 collab rows in both tables (backup table er_backup_2026_08_20) so the QBR ran on correct numbers, and PR #135 — one logic line in lambda_8 making the derived value authoritative whenever engagements and impressions exist (also closes a div-by-zero gap). The sheets' typed ER column is now display-only; future typos cannot reach CORE.",
