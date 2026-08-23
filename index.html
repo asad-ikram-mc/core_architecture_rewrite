@@ -218,7 +218,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 <h1>Amazon CORE — Pipeline Explorer</h1>
 <p>Amazon CORE Social Media ETL · M+C Saatchi Fluency</p>
 <div class="hero-b">
-<div class="bdg bdg-upd"><span></span>Last updated: 21 August 2026</div>
+<div class="bdg bdg-upd"><span></span>Last updated: 23 August 2026</div>
 <div class="bdg"><span></span>V1: 14 Lambdas · V2: 10 Fargate Tasks · Step Functions · Daily</div>
 <a href="roadmap.html" style="display:inline-flex;align-items:center;gap:.4rem;padding:.3rem .85rem;border-radius:20px;font-size:.78rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;background:rgba(34,197,94,.1);color:#22c55e;border:1px solid rgba(34,197,94,.25);font-family:'Sora',sans-serif;text-decoration:none;transition:.2s"><span style="display:inline-block;padding:.05rem .35rem;border-radius:3px;font-size:.6rem;font-weight:800;background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.35);margin-right:.3rem;letter-spacing:.05em">NEW</span>Build Roadmap →</a>
 </div>
@@ -2104,6 +2104,19 @@ renderExistingFlow();
 //   st optional status line for anything still open
 // ════════════════════════════════════════════
 const CHANGELOG=[
+{d:"2026-08-23",t:"—",s:"pipeline",ti:"Lambda 10 now runs automatically after Lambda 7",
+ who:"Asad — the last manual step in the Monday chain",
+ b:"lambda_10 had no trigger at all (no resource policy), so the corrections, deleted-post reconciliation, translation retry and dedup monitor only ran when invoked by hand. It now fires on an S3 event: lambda_7's final act is writing check/finalsql_<date>.csv, so that key is the completion signal — the same chaining idiom the rest of the pipeline already uses (done.txt, finalmaster/, tableau_layer/). Added an S3 invoke permission on lambda_10 and appended the notification rule (prefix check/finalsql_, suffix .csv). Note for anyone repeating this: put-bucket-notification-configuration REPLACES the whole config, so the new rule was merged into the existing ten and all eleven verified afterwards. The Monday chain is now automatic end to end with no manual step.",
+ go:{g:"cur",v:"docs",a:"d-side",lbl:"Side pipelines (λ10) in Written Docs"},
+ r:"S3 notification on wikitablescrapexample · sprinklr-custom-updates"},
+
+{d:"2026-08-23",t:"—",s:"pipeline",ti:"Lambda 9 (LINE) fixed — had never once run on Lambda",
+ who:"Asad — noticed it always failed",
+ b:"Every scheduled Sunday run had failed at init with Runtime.ImportModuleError since at least 27 July: the function was on the Python 3.14 runtime while its layer (dev_3_layer:2) carries numpy 1.25.2, whose C-extensions only build for 3.9–3.11. Proof it was the runtime and not the layer: lambda_10 uses the same layer on 3.11 and works. Two further landmines sat behind it, both still at AWS defaults — 128 MB memory and a 3 second timeout — against peers allocated 10240 MB. All three corrected (3.11 / 10240 MB / 900 s) and the first successful run followed: 2,165 rows aggregated to 84 posts, 100% tag coverage, all data-quality checks passed, processed_line_data.csv written, in 15.6s using 1,519 MB peak. No code change was needed. LINE data had stayed current only because the job was being run by hand locally.",
+ go:{g:"cur",v:"docs",a:"d-side",lbl:"Side pipelines (λ9) in Written Docs"},
+ r:"line_manual_tracker config",
+ st:"Two follow-ups surfaced now the code actually executes: a swallowed KeyError on PERMALINK means the post-aggregation validation has never run, and the deployed env vars point at a different Google Sheet from the one the repo code references — worth confirming which is the source of truth before Sunday"},
+
 {d:"2026-08-21",t:"—",s:"schema",ti:"Schema rename #11 — Content Source moved again, NA_ to EU_",
  who:"Sprinklr renamed the field; caught day-one by the Slack alerts (PR #128)",
  b:"The same field that moved on 11 Aug moved again on 18 Aug: CCR_NA_SOCIAL_MEDIA__CONTENT_SOURCE became CCR_EU_SOCIAL_MEDIA__CONTENT_SOURCE — base to NA_ to EU_ inside ten days, which looks like one custom field being shuffled between regional field-sets upstream. Validation failed for four mornings (18–21 Aug) and the movers had not run since 17 Aug; raw files kept landing in RAWDATA so nothing was lost. Fixed in a single wave this time: rather than trusting the alert, which named only two exports, all five files carrying the field were probed directly in S3 and all five had already flipped — so both the mapping aliases and every expected list moved together, avoiding the follow-up PR the NA_ rollout needed. EU_ alias added alongside the existing NA_ and original keys (nothing removed), expected lists swapped in lambda_1 (5) and lambda_2b (3). Verified against the real 21 Aug export: 41 actual vs 41 expected columns, zero missing, zero additional.",
