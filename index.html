@@ -218,7 +218,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 <h1>Amazon CORE — Pipeline Explorer</h1>
 <p>Amazon CORE Social Media ETL · M+C Saatchi Fluency</p>
 <div class="hero-b">
-<div class="bdg bdg-upd"><span></span>Last updated: 23 August 2026</div>
+<div class="bdg bdg-upd"><span></span>Last updated: 25 August 2026</div>
 <div class="bdg"><span></span>V1: 14 Lambdas · V2: 10 Fargate Tasks · Step Functions · Daily</div>
 <a href="roadmap.html" style="display:inline-flex;align-items:center;gap:.4rem;padding:.3rem .85rem;border-radius:20px;font-size:.78rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;background:rgba(34,197,94,.1);color:#22c55e;border:1px solid rgba(34,197,94,.25);font-family:'Sora',sans-serif;text-decoration:none;transition:.2s"><span style="display:inline-block;padding:.05rem .35rem;border-radius:3px;font-size:.6rem;font-weight:800;background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.35);margin-right:.3rem;letter-spacing:.05em">NEW</span>Build Roadmap →</a>
 </div>
@@ -2104,6 +2104,20 @@ renderExistingFlow();
 //   st optional status line for anything still open
 // ════════════════════════════════════════════
 const CHANGELOG=[
+{d:"2026-08-24",t:"22:01",s:"incident",ti:"Translation failure marker reached Tableau at scale",
+ who:"Found during the post-push health check",
+ b:"PR #133 made lambda_7 store the marker TRANSLATION_FAILED when the translator returns junk, so failures would be visible and lambda_10 could retry them. That was the wrong mechanism for a client-facing column. On the 24 Aug re-run Google refused 1,146 posts (overwhelmingly Japanese), so 2,714 rows in sprinklr_table carried the literal string TRANSLATION_FAILED into Tableau. lambda_10 auto-fired correctly 16 minutes later and retried, but recovered only 6 of 1,146 - Google is refusing the Lambda datacenter IP outright, while the same texts translate fine from a normal connection, so no concurrency setting fixes it. Rows restored to their original text by hand. The redesign: lambda_7 keeps the original text as it always did, and writes the failed permalinks to S3 for lambda_10 to retry - the same pattern the deleted-post reconciliation uses - so failures stay visible and retryable without ever putting a sentinel where the client can see it.",
+ go:{g:"cur",v:"docs",a:"d-l7",lbl:"Stage 7 (λ7) in Written Docs"},
+ r:"PR #133 · lambda_7 translate_text",
+ st:"Open - marker revert PR to raise. Also note lambda_7 ran 612s against a 900s timeout because every refused post costs a failed round trip; if the refusal rate keeps climbing it will eventually be killed mid-upsert"},
+
+{d:"2026-08-24",t:"20:20",s:"pipeline",ti:"LINE data loss and restore — lambda_9 was reading an abandoned sheet",
+ who:"David Lawton spotted it after the refresh",
+ b:"lambda_9 had never once run on Lambda - it died at init every week on a Python 3.14 / numpy runtime mismatch - so LINE only ever worked because it was run by hand with the repo defaults. Fixing the runtime on 23 Aug meant it ran unattended for the first time, and the deployed env vars still pointed at an old copy of the LINE sheet that stopped updating in May rather than the live JP workbook. Its first automatic run replaced 110 posts with 84 and pulled the latest LINE post back from 20 Jul to 30 Apr. David guessed the JP tag update; the real cause was the sheet drift, and his own observation that the live sheet runs to mid-August is what confirmed it. Env vars repointed at 1zVmGa5CaW7f7iQiLUQbiNF4G8ZgCvZVNdaY-iduXRso (gid 825056575 data, 808551509 tags), lambda_9 re-run, chain re-run - LINE back to 220 rows / 110 posts, verified in the table.",
+ go:{g:"cur",v:"docs",a:"d-side",lbl:"Side pipelines (λ9) in Written Docs"},
+ r:"branch fix/lambda9-sheet-provenance · line_manual_tracker env vars",
+ st:"PR open to log which sheet is read and warn when the newest post is over 30 days old - that one line would have caught this on the Sunday run"},
+
 {d:"2026-08-23",t:"—",s:"pipeline",ti:"Lambda 10 now runs automatically after Lambda 7",
  who:"Asad — the last manual step in the Monday chain",
  b:"lambda_10 had no trigger at all (no resource policy), so the corrections, deleted-post reconciliation, translation retry and dedup monitor only ran when invoked by hand. It now fires on an S3 event: lambda_7's final act is writing check/finalsql_<date>.csv, so that key is the completion signal — the same chaining idiom the rest of the pipeline already uses (done.txt, finalmaster/, tableau_layer/). Added an S3 invoke permission on lambda_10 and appended the notification rule (prefix check/finalsql_, suffix .csv). Investigating also turned up the trigger that did exist: an EventBridge Scheduler entry, sprinklr-custom-updates-weekly, firing cron(30 4 ? * MON *) Asia/Karachi — Monday 04:30 PKT, about sixteen hours BEFORE lambda_7 finishes (~20:20). So the scheduled run had been processing the previous week's data and every useful run was the manual afternoon one. It was invisible to lambda get-policy because EventBridge Scheduler invokes through an execution role rather than a resource policy. Schedule deleted; lambda_10 now has exactly one, correctly-ordered trigger. Note for anyone repeating this: put-bucket-notification-configuration REPLACES the whole config, so the new rule was merged into the existing ten and all eleven verified afterwards. The Monday chain is now automatic end to end with no manual step.",
@@ -2450,6 +2464,13 @@ renderLog();
 // status 'fixed'|'open' · stlabel (badge text) · r reference · go (optional link)
 // ════════════════════════════════════════════
 const CLIENT_ISSUES=[
+{d:"2026-08-24",who:"David Lawton",
+ said:"I just realised we lost a lot of Line data with this weeks update. I do not think the Gsheet has been updated since August 15th, so my best guess is it is an unintended side effect of the JP tag update we ran last week.",
+ found:"Not the tag update. The LINE job had been failing at startup every week for months, so it only ever worked when run by hand; fixing that crash meant it ran automatically for the first time on 23 Aug, and the deployed configuration pointed at an old copy of the LINE sheet abandoned in May rather than the live JP workbook. That first unattended run replaced 110 posts with 84 and pulled the latest LINE post back to 30 April. Nothing was lost at source. Config repointed at the live workbook, job re-run, chain re-run - LINE verified back at 220 rows / 110 posts. A freshness check has been added so the job now logs which sheet it read and flags data more than 30 days stale.",
+ status:"fixed",stlabel:"Fixed — LINE restored to 110 posts",
+ go:{g:"cur",v:"docs",a:"d-side",lbl:"Side pipelines (λ9) in Written Docs"},
+ r:"branch fix/lambda9-sheet-provenance"},
+
 {d:"2026-08-20",who:"David Lawton",
  said:"Some data entry errors are causing issues in the Collab tracker. Could you recalculate the Engagement Rate for all the collab tracker entries in CORE? No need to re-run — just update sprinklr_table this morning so I can do QBR, and add it to the pipeline so we calculate it each week rather than rely on the Google Sheet values.",
  found:"Traced all 31 bad ERs: 28 were typing errors in the tracker sheets (keyed ER contradicting the row's own engagements ÷ impressions, some back to 2024), 3 were stale imports. Same morning: all ~2,888 collab rows recalculated in both tables with a backup, in time for QBR. Permanent: PR #135 makes lambda_8 derive ER from engagements ÷ impressions every week — the typed sheet column is now a fallback only, so future typos can't reach CORE.",
