@@ -218,7 +218,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 <h1>Amazon CORE — Pipeline Explorer</h1>
 <p>Amazon CORE Social Media ETL · M+C Saatchi Fluency</p>
 <div class="hero-b">
-<div class="bdg bdg-upd"><span></span>Last updated: 25 August 2026</div>
+<div class="bdg bdg-upd"><span></span>Last updated: 31 August 2026</div>
 <div class="bdg"><span></span>V1: 14 Lambdas · V2: 10 Fargate Tasks · Step Functions · Daily</div>
 <a href="roadmap.html" style="display:inline-flex;align-items:center;gap:.4rem;padding:.3rem .85rem;border-radius:20px;font-size:.78rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;background:rgba(34,197,94,.1);color:#22c55e;border:1px solid rgba(34,197,94,.25);font-family:'Sora',sans-serif;text-decoration:none;transition:.2s"><span style="display:inline-block;padding:.05rem .35rem;border-radius:3px;font-size:.6rem;font-weight:800;background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.35);margin-right:.3rem;letter-spacing:.05em">NEW</span>Build Roadmap →</a>
 </div>
@@ -2104,6 +2104,26 @@ renderExistingFlow();
 //   st optional status line for anything still open
 // ════════════════════════════════════════════
 const CHANGELOG=[
+{d:"2026-08-31",t:"—",s:"pipeline",ti:"LINE regressed a second time — the config was never changed, only the data",
+ who:"Found in the Monday verification sweep",
+ b:"LINE was back to 84 posts with nothing newer than 30 April, exactly the state fixed a week earlier. Cause: last week the data was repaired by running lambda_9 locally, where the repo defaults point at the live JP workbook, but the deployed function's env vars were never updated - so Sunday's scheduled run rebuilt processed_line_data.csv from the abandoned sheet and Monday's chain carried it back in. The lesson is that a restored row count verified the data, not the configuration that produces it. Env vars repointed at the live workbook (gid 825056575 data / 808551509 tags), lambda_8, lambda_9 then lambda_5-6-7 re-run: LINE back to 220 rows / 110 posts, and this time the scheduled run will read the right sheet. Full sweep afterwards passed 16 of 16 checks.",
+ go:{g:"cur",v:"docs",a:"d-side",lbl:"Side pipelines (λ9) in Written Docs"},
+ r:"line_manual_tracker env vars · PR #139"},
+
+{d:"2026-08-28",t:"—",s:"incident",ti:"Translation throttling cleared — 1,140 posts recovered by pacing the retry",
+ who:"David Lawton asked for the TRANSLATION FAILED text to be cleaned up",
+ b:"Google throttles the free translate endpoint by IP reputation, and the throttle builds within a session. Measured across the day: the Lambda recovered 6 of 1,146 (datacenter IPs are refused outright), local runs 37%, then 20%, then 48% - the last improved only because there was a pause before it. Reworking the retry into batches with a pause between them and an early stop took recovery to 69%, then 97%, clearing all 1,140 posts with proper translations rather than falling back to source text. Root cause underneath: lambda_7 re-translates every post in the push, so 1,855 posts are translated weekly to do about 297 posts of new work - 84% waste, and that volume is what invites the throttling.",
+ go:{g:"cur",v:"docs",a:"d-l7",lbl:"Stage 7 (λ7) in Written Docs"},
+ r:"PR #138 + batching commit",
+ st:"Open: lambda_7 still writes the TRANSLATION_FAILED marker into a client-facing column, so it can reappear on any heavily-throttled Monday. Two changes still to make - skip already-translated posts, and keep the original text on failure with the failed list written to S3 instead. Paid Cloud Translation or AWS Translate would remove the dependency for about $30/month, less once the re-translation waste is fixed"},
+
+{d:"2026-08-28",t:"—",s:"pipeline",ti:"LinkedIn post-count investigation — and a drop path that leaves no trace",
+ who:"Courtney via Madhuri Goenka: LI post count in CORE looks lower than it should be",
+ b:"Checked independently against the raw Sprinklr export rather than the CORE extract. For 18 Jul to 21 Aug Sprinklr sends 136 LinkedIn posts, all under the Global account, and CORE keeps 60. Every one of the 76 differences is accounted for: 37 dropped by Rule 5 (under 250 impressions), 3 by Rule 7 (targeted at Poland, outside CORE scope), 1 by Rule 8 (deleted), and 35 with no filter record at all. Those 35 turned out to be the least alarming - all under 250 impressions, 30 of them exactly zero, and 33 are dark posts - but they are dropped by an unlogged line in lambda_4 that removes zero-impression rows before the numbered rules run. Also verified David's account-to-geography mapping file: 62 posts compared, zero mismatches, so the mapping logic is sound.",
+ go:{g:"cur",v:"rules",a:"rule-5a",lbl:"Rule 5 in Filter Rules"},
+ r:"lambda_4.py:648 · raw LinkedIn_5_FluencyMonthly.json",
+ st:"Two follow-ups: confirm with Courtney whether dark posts should be counted (they are the bulk of the gap, and that is a scope decision rather than a bug), and log the zero-impression drops so every exclusion is answerable from the Filtered Posts Dashboard instead of needing raw-file archaeology"},
+
 {d:"2026-08-24",t:"22:01",s:"incident",ti:"Translation failure marker reached Tableau at scale",
  who:"Found during the post-push health check",
  b:"PR #133 made lambda_7 store the marker TRANSLATION_FAILED when the translator returns junk, so failures would be visible and lambda_10 could retry them. That was the wrong mechanism for a client-facing column. On the 24 Aug re-run Google refused 1,146 posts (overwhelmingly Japanese), so 2,714 rows in sprinklr_table carried the literal string TRANSLATION_FAILED into Tableau. lambda_10 auto-fired correctly 16 minutes later and retried, but recovered only 6 of 1,146 - Google is refusing the Lambda datacenter IP outright, while the same texts translate fine from a normal connection, so no concurrency setting fixes it. Rows restored to their original text by hand. The redesign: lambda_7 keeps the original text as it always did, and writes the failed permalinks to S3 for lambda_10 to retry - the same pattern the deleted-post reconciliation uses - so failures stay visible and retryable without ever putting a sentinel where the client can see it.",
@@ -2464,6 +2484,20 @@ renderLog();
 // status 'fixed'|'open' · stlabel (badge text) · r reference · go (optional link)
 // ════════════════════════════════════════════
 const CLIENT_ISSUES=[
+{d:"2026-08-28",who:"Courtney via Madhuri Goenka",
+ said:"Courtney flagged that some LinkedIn data in CORE appears incorrect - she believes the actual post count should be higher than what is currently showing. She also mentioned there might be another LI Sprinklr data inflation issue too.",
+ found:"Checked straight from the raw Sprinklr export rather than the CORE extract. For 18 Jul to 21 Aug Sprinklr sends 136 LinkedIn posts and CORE keeps 60 - and all 76 of the difference are accounted for: 35 dark posts or zero-impression rows (30 have literally zero impressions, 33 are dark posts), 37 under the 250-impression threshold, 3 targeted at Poland which is outside CORE scope, and 1 deleted in Sprinklr. So the count is behaving as designed. David's account-to-geography mapping file also checks out - 62 posts compared, zero mismatches.",
+ status:"open",stlabel:"Open — needs Courtney's baseline",
+ go:{g:"cur",v:"rules",a:"rule-5a",lbl:"Rule 5 in Filter Rules"},
+ r:"raw export vs sprinklr_table"},
+
+{d:"2026-08-28",who:"David Lawton",
+ said:"One thing I did notice is that we still have a lot of TRANSLATION FAILED in the translated post message, can we try and get that cleaned up today please.",
+ found:"Cleared - all 1,140 affected posts now carry proper English translations rather than the marker or a fallback to source text. Cause was Google throttling our requests to the free translate endpoint, which refuses AWS datacenter IPs almost entirely (6 recovered out of 1,146 from the pipeline). Reworking the retry to run in paced batches took the recovery rate from about 20% to 97%. Verified zero markers in both tables afterwards.",
+ status:"fixed",stlabel:"Fixed — all 1,140 posts translated",
+ go:{g:"cur",v:"docs",a:"d-l7",lbl:"Stage 7 (λ7) in Written Docs"},
+ r:"PR #138 + batching commit"},
+
 {d:"2026-08-24",who:"David Lawton",
  said:"I just realised we lost a lot of Line data with this weeks update. I do not think the Gsheet has been updated since August 15th, so my best guess is it is an unintended side effect of the JP tag update we ran last week.",
  found:"Not the tag update. The LINE job had been failing at startup every week for months, so it only ever worked when run by hand; fixing that crash meant it ran automatically for the first time on 23 Aug, and the deployed configuration pointed at an old copy of the LINE sheet abandoned in May rather than the live JP workbook. That first unattended run replaced 110 posts with 84 and pulled the latest LINE post back to 30 April. Nothing was lost at source. Config repointed at the live workbook, job re-run, chain re-run - LINE verified back at 220 rows / 110 posts. A freshness check has been added so the job now logs which sheet it read and flags data more than 30 days stale.",
