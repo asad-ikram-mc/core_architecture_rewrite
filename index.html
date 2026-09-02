@@ -218,7 +218,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 <h1>Amazon CORE — Pipeline Explorer</h1>
 <p>Amazon CORE Social Media ETL · M+C Saatchi Fluency</p>
 <div class="hero-b">
-<div class="bdg bdg-upd"><span></span>Last updated: 31 August 2026</div>
+<div class="bdg bdg-upd"><span></span>Last updated: 1 September 2026</div>
 <div class="bdg"><span></span>V1: 14 Lambdas · V2: 10 Fargate Tasks · Step Functions · Daily</div>
 <a href="roadmap.html" style="display:inline-flex;align-items:center;gap:.4rem;padding:.3rem .85rem;border-radius:20px;font-size:.78rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;background:rgba(34,197,94,.1);color:#22c55e;border:1px solid rgba(34,197,94,.25);font-family:'Sora',sans-serif;text-decoration:none;transition:.2s"><span style="display:inline-block;padding:.05rem .35rem;border-radius:3px;font-size:.6rem;font-weight:800;background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.35);margin-right:.3rem;letter-spacing:.05em">NEW</span>Build Roadmap →</a>
 </div>
@@ -2104,6 +2104,12 @@ renderExistingFlow();
 //   st optional status line for anything still open
 // ════════════════════════════════════════════
 const CHANGELOG=[
+{d:"2026-09-01",t:"—",s:"pipeline",ti:"Instagram reel added to the permanent removal list",
+ who:"David Lawton",
+ b:"Amazon IG - DE reel from 20 Jul (Glueckwunsch Spanien, 8,490 impressions) added to lambda_10's standing URL-removal file, custom_updates/remove_x_quote_posts.csv, now 21 entries. lambda_10 reads it every Monday and deletes any matching rows from sprinklr_table and sprinklr_lookup_check with a before-snapshot in the audit log, so the post cannot return on a later upsert. This is the first entry to depend on the trailing-slash matching fix from PR #134 - Instagram reels are stored with a trailing slash and the previous exact-match comparison would have silently missed it.",
+ go:{g:"cur",v:"docs",a:"d-side",lbl:"Side pipelines (λ10) in Written Docs"},
+ r:"custom_updates/remove_x_quote_posts.csv · PR #134"},
+
 {d:"2026-08-31",t:"—",s:"pipeline",ti:"LINE regressed a second time — the config was never changed, only the data",
  who:"Found in the Monday verification sweep",
  b:"LINE was back to 84 posts with nothing newer than 30 April, exactly the state fixed a week earlier. Cause: last week the data was repaired by running lambda_9 locally, where the repo defaults point at the live JP workbook, but the deployed function's env vars were never updated - so Sunday's scheduled run rebuilt processed_line_data.csv from the abandoned sheet and Monday's chain carried it back in. The lesson is that a restored row count verified the data, not the configuration that produces it. Env vars repointed at the live workbook (gid 825056575 data / 808551509 tags), lambda_8, lambda_9 then lambda_5-6-7 re-run: LINE back to 220 rows / 110 posts, and this time the scheduled run will read the right sheet. Full sweep afterwards passed 16 of 16 checks.",
@@ -2484,6 +2490,13 @@ renderLog();
 // status 'fixed'|'open' · stlabel (badge text) · r reference · go (optional link)
 // ════════════════════════════════════════════
 const CLIENT_ISSUES=[
+{d:"2026-09-01",who:"David Lawton",
+ said:"Can this be added to the deleted list — https://www.instagram.com/reel/Da_YNydl0sQ/",
+ found:"Added to lambda_10's permanent removal list (custom_updates/remove_x_quote_posts.csv, now 21 entries). The post is an Amazon IG - DE reel from 20 July with 8,490 impressions, held as 2 rows in each table. lambda_10 reads that file every Monday and removes matching rows from both tables with a before-snapshot, so a one-off delete cannot be undone by a later upsert.",
+ status:"fixed",stlabel:"Fixed — added to removal list",
+ go:{g:"cur",v:"docs",a:"d-side",lbl:"Side pipelines (λ10) in Written Docs"},
+ r:"custom_updates/remove_x_quote_posts.csv"},
+
 {d:"2026-08-28",who:"Courtney via Madhuri Goenka",
  said:"Courtney flagged that some LinkedIn data in CORE appears incorrect - she believes the actual post count should be higher than what is currently showing. She also mentioned there might be another LI Sprinklr data inflation issue too.",
  found:"Checked straight from the raw Sprinklr export rather than the CORE extract. For 18 Jul to 21 Aug Sprinklr sends 136 LinkedIn posts and CORE keeps 60 - and all 76 of the difference are accounted for: 35 dark posts or zero-impression rows (30 have literally zero impressions, 33 are dark posts), 37 under the 250-impression threshold, 3 targeted at Poland which is outside CORE scope, and 1 deleted in Sprinklr. So the count is behaving as designed. David's account-to-geography mapping file also checks out - 62 posts compared, zero mismatches.",
