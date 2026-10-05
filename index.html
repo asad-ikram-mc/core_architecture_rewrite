@@ -218,7 +218,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 <h1>Amazon CORE — Pipeline Explorer</h1>
 <p>Amazon CORE Social Media ETL · M+C Saatchi Fluency</p>
 <div class="hero-b">
-<div class="bdg bdg-upd"><span></span>Last updated: 15 September 2026</div>
+<div class="bdg bdg-upd"><span></span>Last updated: 5 October 2026</div>
 <div class="bdg"><span></span>V1: 14 Lambdas · V2: 10 Fargate Tasks · Step Functions · Daily</div>
 <a href="roadmap.html" style="display:inline-flex;align-items:center;gap:.4rem;padding:.3rem .85rem;border-radius:20px;font-size:.78rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;background:rgba(34,197,94,.1);color:#22c55e;border:1px solid rgba(34,197,94,.25);font-family:'Sora',sans-serif;text-decoration:none;transition:.2s"><span style="display:inline-block;padding:.05rem .35rem;border-radius:3px;font-size:.6rem;font-weight:800;background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.35);margin-right:.3rem;letter-spacing:.05em">NEW</span>Build Roadmap →</a>
 </div>
@@ -2112,6 +2112,87 @@ renderExistingFlow();
 //   st optional status line for anything still open
 // ════════════════════════════════════════════
 const CHANGELOG=[
+{d:"2026-10-05",t:"—",s:"docs",ti:"Docs refreshed for 16 Sep – 5 Oct: Change Log and Client Issues",
+ who:"Asad",
+ b:"Change Log and Client Issues brought up to date for the three weeks since 15 Sep: the λ3b out-of-memory failures and the chunked fix, the explicit trial-reel tag replacing shared_to_feed, four translation repairs, the LinkedIn engagement spike, the LI-ES geotargeting freeze and the λ1 same-day re-run recovery.",
+ r:"index.html"},
+
+{d:"2026-10-05",t:"—",s:"incident",ti:"Translation refused again (6th time) - 1,913 posts restored in one self-checking pass",
+ who:"Asad",
+ b:"Google's free endpoint refused λ7 again (2,911 errors) and λ10's retry fixed none, leaving 4,464 rows / 1,913 posts at TRANSLATION_FAILED. Because a clean snapshot had been taken after last week's repair, 1,853 posts came straight back from it and older backups; the other 60 were new this week and were translated by hand (JP, FR, IT, ES, DE; 6 already English). Applied as one script that saves only if both tables reach zero failed rows, then takes a fresh clean snapshot for next week. Verified 0 / 0 from a separate connection.",
+ go:{g:"cur",v:"docs",a:"d-l7",lbl:"Stage 7 (λ7) in Written Docs"},
+ r:"repair_translations_2026_10_05_ONE_SHOT.sql · sprinklr_table_backup_2026_10_05_clean",
+ st:"Root cause unchanged: the free endpoint. A paid translation API (AWS Translate recommended) is still a team decision - 6 incidents in 7 weeks"},
+
+{d:"2026-10-05",t:"—",s:"incident",ti:"λ3b out of memory for the 4th Monday - run by hand again",
+ who:"Monday run",
+ b:"λ3b (post-id-permalink-resolver) hit Lambda's 10,240 MB ceiling on all three attempts again; its input has grown to 709 MB (570 MB on 21 Sep). The step was run off-Lambda and the rest of the chain completed. The fix (PR #157) is written and measured but not yet merged.",
+ go:{g:"cur",v:"docs",a:"d-l3b",lbl:"Stage 3b (λ3b) in Written Docs"},
+ r:"PR #157",
+ st:"Open: merge PR #157 before the next Monday run"},
+
+{d:"2026-10-02",t:"—",s:"pipeline",ti:"LI-ES post frozen at last week's figures after it lost its Spain geotargeting",
+ who:"Amazon Spain social team, via Maddie and David",
+ b:"A LinkedIn ES post geotargeted to Spain lost its targeting, so its new figures stopped being usable for Spain. Eight rows were added to the Custom Metrics Change sheet that λ10 applies every run (total impressions 39,420, engagements 1,524, likes, comments, shares, organic reach, video views). Rows apply for as long as Updated Date stays blank. Checked after the 5 Oct run: λ7 rewrote the row and λ10 put the frozen values back in both tables.",
+ go:{g:"cur",v:"docs",a:"d-side",lbl:"Side pipelines (λ10) in Written Docs"},
+ r:"Core: Custom Metrics Change sheet · urn:li:ugcPost:7509129634291146752"},
+
+{d:"2026-09-28",t:"—",s:"incident",ti:"Translation refused (5th time) - first repair silently discarded, redone as a self-committing script",
+ who:"Asad · flagged by Jouzou",
+ b:"λ7 left 4,298 rows / 1,891 posts at TRANSLATION_FAILED. The first repair showed 0 / 0 inside the editor session but was never committed, so Postgres discarded it - Jouzou then saw failed translations on all 8 LI - Global posts in the NA monthly slicer. Redone as a single script that restores 1,836 posts from backups, adds 55 hand translations, and commits only if both tables reach zero. Verified from a separate connection, and a clean snapshot was taken afterwards (it made the 5 Oct repair one pass).",
+ go:{g:"cur",v:"docs",a:"d-l7",lbl:"Stage 7 (λ7) in Written Docs"},
+ r:"repair_translations_2026_09_28_ONE_SHOT.sql · sprinklr_table_backup_2026_09_28_clean"},
+
+{d:"2026-09-28",t:"—",s:"incident",ti:"λ3b out of memory for the 3rd time - run by hand",
+ who:"Monday run",
+ b:"Same failure as 21 Sep with a larger input (668 MB). λ3b was run off-Lambda and the chain completed.",
+ go:{g:"cur",v:"docs",a:"d-l3b",lbl:"Stage 3b (λ3b) in Written Docs"},
+ r:"PR #157"},
+
+{d:"2026-09-22",t:"—",s:"pipeline",ti:"Trial-reel tag values matched on Sprinklr's full answer text",
+ who:"Found while checking why the new tag column was empty",
+ b:"Sprinklr exports the tag as \"Yes - This is a trial reel\", but λ5 only accepted a bare yes/true/1, so every tagged post read as blank and Rule 23 would have reported zero forever. λ5 now matches on the leading word. The re-run identified 10 rows (5 posts) in Rule 23's dry run; nothing is removed or deleted.",
+ go:{g:"cur",v:"rules",a:"rule-23",lbl:"Rule 23 in Filter Rules"},
+ r:"PR #158"},
+
+{d:"2026-09-22",t:"—",s:"incident",ti:"Translation refused (4th time) - repaired from the 21 Sep backup in one pass",
+ who:"Asad",
+ b:"The 21 Sep evening re-run lost translations again. 4,220 rows came back from the 21 Sep v2 backup and the last 3 texts were filled by hand. 0 / 0 afterwards.",
+ go:{g:"cur",v:"docs",a:"d-l7",lbl:"Stage 7 (λ7) in Written Docs"},
+ r:"repair_translations_2026_09_22.sql"},
+
+{d:"2026-09-21",t:"—",s:"pipeline",ti:"Rule 23 now uses the client's explicit trial-reel tag instead of shared_to_feed",
+ who:"Courtney / Maddie (client tag \"CCR - Is this a Trial Reel?\")",
+ b:"The new tag arrived as CCR_-_IS_THIS_A_TRIAL_REEL___OUTBOUND_MESSAGE, taking the Tags-Only file from 63 to 64 fields. λ1 and λ2b each check the exact field count, so both were updated or every new export would have been rejected. λ5 carries the tag, λ7's Rule 23 matches tag = Yes (the polarity is the reverse of shared_to_feed, where No meant trial reel). Collab and LINE rows stay exempt. The column was added to sprinklr_table, sprinklr_lookup_check, blacklist_table and is_branded_true_table; the ColumnAlignment.csv row was swapped first, because λ7 recreates any missing Final column; shared_to_feed was then dropped. Rule 23 runs as a dry run: it lists what it would remove in the filtered_posts audit file and deletes nothing.",
+ go:{g:"cur",v:"rules",a:"rule-23",lbl:"Rule 23 in Filter Rules"},
+ r:"PR #156 · trial_reel_column_swap_2026_09_21.sql · ColumnAlignment.csv",
+ st:"Deletion stays off until the client finishes back-tagging - only 5 posts carry the tag so far"},
+
+{d:"2026-09-21",t:"—",s:"pipeline",ti:"λ3b out of memory - the proposed fix measured worse, chunked rewrite written instead",
+ who:"Monday run",
+ b:"λ3b had been finishing within a few hundred MB of Lambda's 10,240 MB hard limit for weeks (15 Sep cleared by 8 MB); a 570 MB input pushed it over. The older PR #119 (stream the CSV read) was benchmarked on the Lambda's exact pandas 2.0.3 and peaked 0.5-1.5 GB higher than production, so it was not merged. PR #157 instead downloads to /tmp, reads in 100k-row chunks as text, maps each chunk and uploads the result: peak 1,128 MB vs 4,213 MB, 16.7 s vs 28.6 s, output identical (the 3 columns that differ now match the source exactly, where the old code had added .0). Moving λ3b to Fargate was considered and rejected: it is a row-by-row lookup and does not need the whole dataset in memory.",
+ go:{g:"cur",v:"docs",a:"d-l3b",lbl:"Stage 3b (λ3b) in Written Docs"},
+ r:"PR #157 · PR #119 (to close)"},
+
+{d:"2026-09-21",t:"—",s:"incident",ti:"Same-day λ1 re-run blocked - pristine raw files recovered from S3 versions",
+ who:"Asad",
+ b:"λ1 writes its mapped output back over the raw file and backs up at the start of every run, so a second run on the same day both failed validation (it saw already-mapped names) and overwrote the morning's pristine backup. The documented restore copied the mapped backup and deleted files it had no backup for. Recovered from S3 versioning: a helper picks each object's last version before the failed re-run and lifts the delete markers. λ1's full validation then passed on all 23 required files.",
+ go:{g:"cur",v:"docs",a:"d-l1",lbl:"Stage 1 (λ1) in Written Docs"},
+ r:"core_helpers/schema_mismatch_solver/1b_restore_pristine_versions.py",
+ st:"Worth fixing: λ1 should not overwrite a backup that already exists for the folder"},
+
+{d:"2026-09-21",t:"—",s:"incident",ti:"Translation refused (3rd time) - restored from five backups, 43 texts by hand",
+ who:"Asad",
+ b:"2,828 translation errors in λ7; λ10's retry fixed none. Restored in three passes: each table's own good rows, then five backups in priority order (3,724 → 96 rows), then 43 hand translations. 0 / 0.",
+ go:{g:"cur",v:"docs",a:"d-l7",lbl:"Stage 7 (λ7) in Written Docs"},
+ r:"repair_translations_2026_09_21*.sql"},
+
+{d:"2026-09-16",t:"—",s:"pipeline",ti:"Rule 23 paused for the re-run",
+ who:"Asad",
+ b:"Shared-to-feed filtering and deletion were switched off so the 16 Sep re-run would remove nothing; later superseded by the explicit trial-reel tag (PR #156), which runs as a dry run.",
+ go:{g:"cur",v:"rules",a:"rule-23",lbl:"Rule 23 in Filter Rules"},
+ r:"PR #155"},
+
 {d:"2026-09-15",t:"—",s:"docs",ti:"Docs refreshed: Rule 23, same-day re-exports, 60 GB merge task, translation reuse; three explainer sheets",
  who:"Asad",
  b:"Written Docs updated for the week: Rule 23 in the filter-rule reference (23 rules now), λ4/λ5 carrying shared_to_feed from the Instagram file, the merge task at 8 vCPU / 60 GB, the newest-folder rule for same-day re-exports and the parking step before a replay, λ7's translation reuse, and a new failure mode (report filtering by field). Three one-page sheets produced: the tags-reset incident review (for David), translation options with first-year costs (for the team), and the collab metric estimation explainer plus its AWS architecture, Amazon-themed (for the client).",
@@ -2591,6 +2672,39 @@ renderLog();
 // status 'fixed'|'open' · stlabel (badge text) · r reference · go (optional link)
 // ════════════════════════════════════════════
 const CLIENT_ISSUES=[
+{d:"2026-10-02",who:"Amazon Spain social team (via Maddie, David Lawton)",
+ said:"A LinkedIn post that was geotargeted for Spain lost its targeting and current results are not usable for us in Spain. We would need to maintain last week's results for the post, just like we currently have them on CORE.",
+ found:"Frozen at the figures CORE held before the targeting was lost: 39,420 impressions, 1,524 engagements, 42 likes, 2 comments, 3 shares, 29,910 organic reach, 20,760 video views, via the Custom Metrics Change sheet that λ10 applies every run. Checked after the 5 Oct run: the post still shows those values in both tables.",
+ status:"fixed",stlabel:"Fixed — verified after the 5 Oct run",
+ go:{g:"cur",v:"docs",a:"d-side",lbl:"Side pipelines (λ10) in Written Docs"},
+ r:"urn:li:ugcPost:7509129634291146752"},
+
+{d:"2026-09-28",who:"David Lawton",
+ said:"A 1M jump in engagements is punchy, could you take a look and see if maybe a collab tracker post is behind that?",
+ found:"Mostly not collab. Of the +1.03M, 508k is a single LinkedIn India carousel (22 Sep): Sprinklr reports 508,108 clicks on 417,499 impressions, a 122% engagement rate, with the same ratio in every daily export, so CORE was reporting Sprinklr's figure unchanged. The LinkedIn channel lead later confirmed carousels count every frame clicked as a click. About 322k is collab tracker posts entered 23-27 Sep, and about 170k is the week's other new Sprinklr posts.",
+ status:"fixed",stlabel:"Explained — carousel clicks, not a pipeline issue",
+ r:"LinkedIn_5_FluencyWeekly.json (23-28 Sep exports)"},
+
+{d:"2026-09-28",who:"Jouzou",
+ said:"'Translated Post' is coming through as failed on all 8 Amazon LI - Global posts in the Slicer. Pretty sure this happened after today's refresh because some posts had translations on previous exports.",
+ found:"Right: that week's translation repair had not been committed when the slicer was exported. The repair was redone as a self-committing script; all LI - Global posts have their translations back.",
+ status:"fixed",stlabel:"Fixed — translations restored",
+ go:{g:"cur",v:"docs",a:"d-l7",lbl:"Stage 7 (λ7) in Written Docs"},
+ r:"repair_translations_2026_09_28_ONE_SHOT.sql"},
+
+{d:"2026-09-22",who:"David Lawton",
+ said:"Organic impressions went up, is that because we refreshed the collab tracker?",
+ found:"Yes, entirely the collab tracker: 3 new collab posts (~1.44M) and one existing IG-IN post that went from 259,032 to 2,590,320 impressions. Maddie checked the reel natively: it really has 2.5M views, so the earlier tracker figure was the error and CORE is faithful to the tracker.",
+ status:"fixed",stlabel:"Explained — tracker refresh",
+ r:"core_manual_tracker/processed_data.csv"},
+
+{d:"2026-09-21",who:"Courtney / Maddie",
+ said:"New custom Sprinklr tag \"CCR - Is this a Trial Reel?\" - exclude Yes. Back-tagging is underway.",
+ found:"Wired through the pipeline (PR #156) and the value matching fixed (PR #158). Rule 23 now identifies tagged posts in a dry run and deletes nothing. Only 5 posts carry the tag so far (the old inferred signal flagged about 58), all 5 already removed by λ10's standing list.",
+ status:"open",stlabel:"Open — waiting on back-tagging before deletion is switched on",
+ go:{g:"cur",v:"rules",a:"rule-23",lbl:"Rule 23 in Filter Rules"},
+ r:"PR #156 · PR #158"},
+
 {d:"2026-09-15",who:"David Lawton",
  said:"I just spotted this caused a misalignment with the H1 report we delivered earlier.",
  found:"Checked Jouzou's H1 file (1,578 Slicer posts) against CORE now: aligned. All posts match on Reputational Topic, Content Source, Sub Campaign, PR Team, Post Format and Collab flag bar 1-2 posts per field that Sprinklr has edited since; 25 posts have refreshed impressions; one LI-FR post (26 May) has since been deleted in Sprinklr. The misalignment was against Monday's state, when ~209 of those posts had been reset to Global/Untagged by the incomplete tag export - the 15 Sep replay put them back. Nothing in the H1 needs re-running.",
