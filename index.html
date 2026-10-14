@@ -218,7 +218,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 <h1>Amazon CORE — Pipeline Explorer</h1>
 <p>Amazon CORE Social Media ETL · M+C Saatchi Fluency</p>
 <div class="hero-b">
-<div class="bdg bdg-upd"><span></span>Last updated: 5 October 2026</div>
+<div class="bdg bdg-upd"><span></span>Last updated: 14 October 2026</div>
 <div class="bdg"><span></span>V1: 14 Lambdas · V2: 10 Fargate Tasks · Step Functions · Daily</div>
 <a href="roadmap.html" style="display:inline-flex;align-items:center;gap:.4rem;padding:.3rem .85rem;border-radius:20px;font-size:.78rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;background:rgba(34,197,94,.1);color:#22c55e;border:1px solid rgba(34,197,94,.25);font-family:'Sora',sans-serif;text-decoration:none;transition:.2s"><span style="display:inline-block;padding:.05rem .35rem;border-radius:3px;font-size:.6rem;font-weight:800;background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.35);margin-right:.3rem;letter-spacing:.05em">NEW</span>Build Roadmap →</a>
 </div>
@@ -2112,6 +2112,82 @@ renderExistingFlow();
 //   st optional status line for anything still open
 // ════════════════════════════════════════════
 const CHANGELOG=[
+{d:"2026-10-14",t:"—",s:"docs",ti:"Docs refreshed for 6 – 14 Oct: Change Log and Client Issues",
+ who:"Asad",
+ b:"Change Log and Client Issues brought up to date: the Instagram photo-post gap and its fix, the Monday-style replay switch, the Facebook share-link duplicate, the Delivery Experience sub-topic, the λ8 double run, translation repairs #7–#9, the λ3b out-of-memory runs and the draft move of CORE onto the Fluency data platform. The 15 Sep photo/carousel issue and the CollabBoost entry in Client Issues were updated to their current state.",
+ r:"index.html"},
+
+{d:"2026-10-14",t:"—",s:"incident",ti:"Facebook share link let a collab post be counted twice - tracker copy removed",
+ who:"David Lawton",
+ b:"A US collab-tracker row (facebook.com/share/r/19Sfn1LV9f, 24 Sep) was the same reel Sprinklr already reports (facebook.com/reel/1709214550183598, 116,454 impressions on both), so CORE counted it twice. The tracker copy was removed: 1 post, stored as a Median and an Average row in sprinklr_table and in sprinklr_lookup_check, so 4 rows. The Sprinklr reel stays. Why the existing checks missed it: λ10 already turns Facebook URLs into stable post IDs with Apify (permalink_registry) and the weekly dedup monitor uses those IDs, but both only look at Sprinklr rows, not collab-tracker rows. λ8's own duplicate check compares the last part of the URL, and a share link is a random short code, not the post ID. Verified afterwards: 0 share-link rows in either table, the reel still has its 2 rows in each.",
+ go:{g:"cur",v:"docs",a:"d-side",lbl:"Side pipelines (λ8, λ10) in Written Docs"},
+ r:"permalink_registry · lambda_8.py extract_post_identifier · lambda_10.py dedup monitor",
+ st:"Open: the US team to set Upload to CORE = No on that tracker row, or Monday's λ8 adds it back. Follow-up: run the Apify ID check and the dedup monitor on tracker rows too"},
+
+{d:"2026-10-14",t:"—",s:"incident",ti:"Translation refused (9th time) and 126 HILC rows removed after the replay",
+ who:"Asad",
+ b:"The replay's λ7 left 4,604 rows / 1,972 posts at TRANSLATION_FAILED in each table. One self-checking script restored 1,934 posts from the live rows and the clean snapshots, and filled the last 38 by hand (32 translated: JP, ES, IT, FR, DE; 6 already English). 0 / 0 from a separate connection, new clean snapshot taken. λ10's dedup monitor listed 126 rows (63 posts) for human review; all removed, including 20 that were left in sprinklr_lookup_check after the first pass.",
+ go:{g:"cur",v:"docs",a:"d-l7",lbl:"Stage 7 (λ7) in Written Docs"},
+ r:"repair_translations_2026_10_14_ONE_SHOT.sql · rows_to_remove_2026-10-14.csv · sprinklr_table_backup_2026_10_14_clean"},
+
+{d:"2026-10-14",t:"—",s:"pipeline",ti:"Wednesday pull replayed as a Monday so the photo posts reached CORE the same day",
+ who:"Asad, for David",
+ b:"The database only moves on a Monday pull date: the merge task writes weeklybackup/ (which starts λ3b → λ10) only for Monday. PR #163 adds a MERGE_AS_MONDAY=1 switch to the merge task; scheduled runs never set it, so nothing changes for them. Image rebuilt and task definition revision 8 registered with deploy.sh, then one replay of the 14 Oct pull: λ8 and λ9 first, merge (Monday path), λ3b run off-Lambda again (out of memory, PR #157 still open), then λ4 → λ10. Result: sprinklr_table 79,284 → 79,458 after HILC, 151 new posts including 35 photo/carousel posts, all 9 of David's posts in CORE. Final checks green: translations 0, Median = Average, no duplicate keys, all λ10 overrides and removal lists holding.",
+ go:{g:"cur",v:"docs",a:"d-l3",lbl:"Stage 3 (merge) in Written Docs"},
+ r:"PR #163 · task_old_lambda_3/task.py · task definition rev 8"},
+
+{d:"2026-10-14",t:"—",s:"schema",ti:"λ1 accepts the Instagram file with or without SHARED_TO_FEED",
+ who:"David Lawton (asked to drop the field and re-ingest)",
+ b:"λ1's field check is exact, so an Instagram file without SHARED_TO_FEED would have been rejected and held the whole day. PR #162 marks it as an optional column: present (43 fields) or absent (42) both pass, any other missing or extra field still fails. Nothing downstream reads SHARED_TO_FEED; Rule 23 uses the trial-reel tag. David's new export (42 fields, 1,860 photo/carousel posts back) was then ingested the same day. Re-running λ1 on the same day needed the raw files restored first, because λ1 renames columns inside them; the documented restore (script 1) deletes its destination folder and would have removed 5 un-backed-up files including PostIDLookup_15, so the restore was done overwrite-only.",
+ go:{g:"cur",v:"docs",a:"d-l1",lbl:"Stage 1 (λ1) in Written Docs"},
+ r:"PR #162 · RAWDATA/Fluency-Monthly/2026-10-14_11-14-37_990",
+ st:"Worth fixing: λ1 should be safe to re-run on the same day, and script 1 should not delete files it has no backup for"},
+
+{d:"2026-10-14",t:"—",s:"incident",ti:"Instagram photo and carousel posts missing since 15 Sep - Sprinklr's report had gone reels-only",
+ who:"David Lawton (9 posts flagged: DE, UK, ES, IT)",
+ b:"Since Sprinklr's 15 Sep re-export added SHARED_TO_FEED (a reels-only field) to the Instagram metrics report, that file held only reels: about 2,000 photo/carousel rows a day before, 0 in all 45 daily exports after. The photos were still in the tag files, but CORE builds a post from the metrics file and only adds tags to it, so they never entered. 624 photo posts since 15 Sep were missing and 1,234 older ones had metrics frozen at 15 Sep. Of the 634 not in CORE before the fix: 35 are in now, 130 are removed by the normal audited rules, and 469 arrive from Sprinklr with no metrics at all (mostly [Auto Import] Amazon.com IG US posts) and are dropped by λ4's zero-impressions check. That last group is not new (the pre-break export had the same pattern), but the drop leaves no audit record.",
+ go:{g:"cur",v:"docs",a:"d-l4",lbl:"Stage 4 (λ4) in Written Docs"},
+ r:"Instagram_3_FluencyMonthly.json · CORE_IG_photo_posts_missing.png",
+ st:"Follow-up: write λ4's zero-impressions drop to the filtered_posts audit; alert if the Instagram file ever has 0 photo/carousel posts"},
+
+{d:"2026-10-13",t:"—",s:"pipeline",ti:"λ8 ran twice per Monday run - fixed; flagging Lambda brought into the repo",
+ who:"Found while reviewing the Lambdas for the platform move",
+ b:"lambda_8.py ended with a module-level lambda_handler call, so each Monday invocation ran the tracker during init (timing out at 10 s) and then again: CloudWatch showed three backups for one run since 5 Aug. PR #160 removes the call; on 14 Oct λ8 ran once with one backup. PR #161 adds the source of core_sprinklr_flagging_system (daily 09:00, until now only in the AWS console) as lambda_12.py, and UNMANAGED_LAMBDAS.md lists the Lambdas not in the repo: two fail on every run and can be retired.",
+ go:{g:"cur",v:"docs",a:"d-side",lbl:"Side pipelines (λ8) in Written Docs"},
+ r:"PR #160 · PR #161 · UNMANAGED_LAMBDAS.md"},
+
+{d:"2026-10-13",t:"—",s:"docs",ti:"Draft: run CORE on the Fluency data platform (Fargate + Step Functions)",
+ who:"Asad",
+ b:"Draft PR in fluency_data_platform moves the CORE Lambdas onto the shared platform as two pipelines: amazon-core (λ1 → move files → post IDs, latest tags, followers → merge → λ3b → λ4 → λ8 + λ9 → λ5 → λ6 → λ7 → λ10, one run per trigger, non-Monday runs end green after the merge) and amazon-core-flagging. Handler code is copied unchanged and secrets move to environment variables. Own image pinned to the Lambda library versions. A local shadow run on copies of the real data (production untouched) completed every step with output matching production. It also showed that the placeholder flips seen after re-runs ('Untagged' → blank) come from running λ5 locally on pandas 3, so local re-runs must use the pinned versions.",
+ r:"fluency_data_platform PR #9 · MIGRATION.md",
+ st:"Open: platform team review; cutover plan in MIGRATION.md; schedules stay off until then"},
+
+{d:"2026-10-13",t:"—",s:"incident",ti:"Re-run from λ5 brought back translation failures and 24 HILC rows (8th repair)",
+ who:"Asad",
+ b:"A re-run from λ5 (to pick up the India collab-tracker update: 23 posts, +44.8M impressions) left 4,520 rows / 1,948 posts at TRANSLATION_FAILED and re-inserted 24 rows that had been removed in Monday's human review. Repair: 1,925 posts from the clean snapshots and 23 India collab posts by hand (8 Hinglish translated, 15 English). 0 / 0, HILC 24/24 removed, all checks green.",
+ go:{g:"cur",v:"docs",a:"d-l7",lbl:"Stage 7 (λ7) in Written Docs"},
+ r:"repair_translations_2026_10_13_ONE_SHOT.sql · sprinklr_table_backup_2026_10_13_clean"},
+
+{d:"2026-10-12",t:"—",s:"incident",ti:"Monday run: λ3b out of memory (5th time), translation repair #7, 50 HILC rows; λ10 checked in the database",
+ who:"Monday run",
+ b:"λ3b hit the 10,240 MB ceiling again and was run off-Lambda. λ7 left 4,458 rows / 1,917 posts at TRANSLATION_FAILED: 1,862 restored from snapshots, 55 by hand; 0 / 0. 50 dedup-monitor rows removed after human review. Every λ10 action was checked in the database rather than the log: 10/10 sheet overrides (LI-ES still frozen), 0 of 26 X-quote URLs left, 0 of 55 deleted permalinks left. The MBS bulk update showing 0 of 954 is expected: it only counts rows still at the old value; 906 are at the new value and 21 are skipped because Sprinklr's figure is already higher.",
+ go:{g:"cur",v:"docs",a:"d-l3b",lbl:"Stage 3b (λ3b) in Written Docs"},
+ r:"PR #157 · repair_translations_2026_10_12_ONE_SHOT.sql",
+ st:"Open: merge PR #157 (λ3b chunked rewrite) - 5 Mondays in a row out of memory"},
+
+{d:"2026-10-11",t:"—",s:"schema",ti:"New Delivery Experience sub-topic field - Tags-Only file 64 → 65 fields",
+ who:"λ1 alert (10 and 11 Oct)",
+ b:"Sprinklr added a tenth reputational sub-topic field (Delivery Experience: Drones, Drivers, Special Deliveries…), so λ1 rejected the Tags-Only file two days running. PR #159 updates the expected structure in λ1 and λ2b and maps the field in λ5 into the existing Reputational Sub Topic column, so no database or column-alignment change. Merged before the 12 Oct run: the file passed and all 10 tagged posts carry their sub-topic in CORE.",
+ go:{g:"cur",v:"docs",a:"d-l5",lbl:"Stage 5 (λ5) in Written Docs"},
+ r:"PR #159"},
+
+{d:"2026-10-07",t:"—",s:"pipeline",ti:"CollabBoost (collab metric estimates) signed off by the client",
+ who:"David Lawton",
+ b:"The client signed off the estimate work. Agreed design: estimates written once into the trackers in purple with a note, Reach and Likes first, owner edits always win and are never re-estimated, plus an estimated flag in CORE. PR #68 (May) infills inside λ8 on every run and fills all five metrics, so it will not be merged as-is; its prediction code and model are reused. Estimate about 6 hours of build (2-3 days calendar), optional retraining for Comments/Shares quoted separately.",
+ go:{g:"cur",v:"docs",a:"d-side",lbl:"Side pipelines (λ8) in Written Docs"},
+ r:"PR #68 · CollabBoost_Explained.png",
+ st:"Open: deployment timeline with Maddie"},
+
 {d:"2026-10-05",t:"—",s:"docs",ti:"Docs refreshed for 16 Sep – 5 Oct: Change Log and Client Issues",
  who:"Asad",
  b:"Change Log and Client Issues brought up to date for the three weeks since 15 Sep: the λ3b out-of-memory failures and the chunked fix, the explicit trial-reel tag replacing shared_to_feed, four translation repairs, the LinkedIn engagement spike, the LI-ES geotargeting freeze and the λ1 same-day re-run recovery.",
@@ -2672,6 +2748,26 @@ renderLog();
 // status 'fixed'|'open' · stlabel (badge text) · r reference · go (optional link)
 // ════════════════════════════════════════════
 const CLIENT_ISSUES=[
+{d:"2026-10-14",who:"David Lawton",
+ said:"Could you remove this row? We'll need to think about how to handle this double counting, given URLs on Facebook are way worse. May have to use an Apify scraper to get some kind of post ID.",
+ found:"Removed. The collab-tracker row (a facebook.com/share/r/ link) was the same reel Sprinklr already reports, with the same 116,454 impressions. Only the tracker copy was deleted (its Median and Average rows in both tables); the Sprinklr reel stays, so the post now counts once. An Apify step already exists: λ10 turns Facebook URLs into stable post IDs and the weekly dedup monitor uses them, but only for Sprinklr rows, and the tracker's own check compares URL text, where a share link is a random code. The fix is to run that same Apify check on tracker rows; no new scraper needed.",
+ status:"open",stlabel:"Removed — waiting on Upload to CORE = No; Apify check for tracker rows to build",
+ go:{g:"cur",v:"docs",a:"d-side",lbl:"Side pipelines (λ8, λ10) in Written Docs"},
+ r:"permalink_registry · facebook.com/reel/1709214550183598"},
+
+{d:"2026-10-14",who:"David Lawton",
+ said:"These 9 Instagram posts are missing from CORE (DE, UK, ES, IT). Can we drop the column from the data and re-ingest? How long from our side?",
+ found:"Since 15 Sep Sprinklr's Instagram metrics report held only reels, because the SHARED_TO_FEED field it added applies only to reels; CORE builds each post from that report, so photos and carousels never entered. λ1 was changed to accept the file with or without the field (PR #162), David's new export was ingested and replayed as a Monday (PR #163) the same day. All 9 posts are in CORE with metrics, tags and translations, plus 26 other photo posts. Of the rest, 130 are removed by the normal filter rules and 469 come from Sprinklr with no metrics at all (mostly auto-imported Amazon.com US posts), which CORE has always dropped.",
+ status:"fixed",stlabel:"Fixed — all 9 in CORE on 14 Oct",
+ go:{g:"cur",v:"docs",a:"d-l1",lbl:"Stage 1 (λ1) in Written Docs"},
+ r:"PR #162 · PR #163 · CORE_IG_photo_posts_missing.png"},
+
+{d:"2026-10-12",who:"David Lawton",
+ said:"Is Courtney's affordability tag coming through?",
+ found:"Not yet: no field and no tag value containing 'afford' exists in any Sprinklr export (Tags-Only, Tag Pull, Weekly and Monthly all checked); it only appears in post text. So no post carries the tag in Sprinklr's exports yet, rather than CORE dropping it. A post link that should carry it would let us check that post's raw tags. If it is a new custom field, λ1 will flag the extra field the day it appears, as it did for Delivery Experience.",
+ status:"fixed",stlabel:"Answered — not in Sprinklr's exports yet",
+ r:"Tags-Only 2026-10-12 · Tag-Pull 2026-10-12"},
+
 {d:"2026-10-02",who:"Amazon Spain social team (via Maddie, David Lawton)",
  said:"A LinkedIn post that was geotargeted for Spain lost its targeting and current results are not usable for us in Spain. We would need to maintain last week's results for the post, just like we currently have them on CORE.",
  found:"Frozen at the figures CORE held before the targeting was lost: 39,420 impressions, 1,524 engagements, 42 likes, 2 comments, 3 shares, 29,910 organic reach, 20,760 video views, via the Custom Metrics Change sheet that λ10 applies every run. Checked after the 5 Oct run: the post still shows those values in both tables.",
@@ -2729,14 +2825,14 @@ const CLIENT_ISSUES=[
 {d:"2026-09-15",who:"David Lawton",
  said:"Sprinklr re-exported the tag reports after the Instagram-only problem. SHARED_TO_FEED is present in the dashboard but I can't see it in the export?",
  found:"The field moved: it is now on the Instagram file in all three reports, not on Tags-Only, which is back to all platforms. The pipeline was adapted the same day (PRs #146, #151) and the corrected export replayed. Side effect found while verifying: the Instagram file now contains Reels only - photos and carousels (1,981 posts in the monthly pull, 7,569 in Tag Pull) have dropped out, the same platform-filter effect one level down. Their metrics are one day stale so far and nothing is deleted, but from the next scheduled pull they stop updating.",
- status:"open",stlabel:"Open — Sprinklr Instagram report needs photos/carousels back",
+ status:"fixed",stlabel:"Fixed 14 Oct — photos back in the export, λ1 accepts it with or without the field (PR #162)",
  go:{g:"cur",v:"docs",a:"d-l1",lbl:"Stage 1 (λ1) in Written Docs"},
  r:"RAWDATA/Fluency-Monthly/2026-09-15_09-38-20_839/Instagram_3_FluencyMonthly.json"},
 
 {d:"2026-09-15",who:"David Lawton",
  said:"For the collab infill model: what is the impact if it had run (impressions rise x%, y values filled), by account? And an explainer for Craig - the inputs, and a deployment plan that writes estimates into the trackers in purple.",
  found:"Tested against the 14 Sep trackers (1,500 posts): impressions unchanged; Reach +83% (1,045 filled, nearly all Reels - no 2026 collab post has reach today), Likes +3.7% (162), Engagements +1.2% (17), Comments +16% (167), Shares +14% (332). Accuracy on posts with a known value: Reach 23% typical miss / 88% within 2×, Likes similar; Comments and Shares unreliable until retrained on our data (the model was trained on anonymised accounts and never saw Reels). Per-account breakdown and a post-level workbook with every filled value delivered. Purple write-back is feasible: Sheets API with a service account, blank cells only, note with the date, estimate made once and kept, users overwrite freely. Client explainer plus a process diagram and an AWS architecture diagram delivered, Amazon-themed.",
- status:"open",stlabel:"Open — client decision on rollout",
+ status:"open",stlabel:"Signed off 7 Oct — deployment timeline with Maddie",
  go:{g:"cur",v:"docs",a:"d-side",lbl:"Side pipelines (λ8) in Written Docs"},
  r:"PR #68 · collab_infill_what_gets_filled.xlsx · CollabBoost_accuracy_vs_actuals.xlsx · CORE_collab_estimation_flow.png · CORE_collab_estimation_architecture.png"},
 
