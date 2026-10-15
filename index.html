@@ -235,21 +235,38 @@ setTimeout(function(){hero.classList.add('open');},reduce?0:1250);
 var SESSION_SECONDS=3600, LOGIN_TOKEN_SECONDS=7*86400;  // must match core_docs_data.py
 function tokInfo(t){try{var p=atob(t.replace(/-/g,'+').replace(/_/g,'/')).split('|');
   return {user:p[0],ends:(+p[1]-LOGIN_TOKEN_SECONDS+SESSION_SECONDS)*1000};}catch(e){return null;}}
-// Signed-in bar added to every page: user, time left, Sign out. Auto signs out at the end.
+// Signed-in bar added to every page: avatar with a ring for time left, name, Sign out.
+// Signs out automatically when the hour is up.
 function bar(info){
-  return '<style>#cdx-bar{position:fixed;top:12px;right:12px;z-index:2147483000;display:flex;align-items:center;gap:10px;'
-   +'padding:6px 6px 6px 12px;border-radius:999px;background:rgba(19,26,34,.92);border:1px solid rgba(255,153,0,.35);'
-   +'box-shadow:0 8px 24px rgba(0,0,0,.4);color:#e6edf3;font:500 12.5px/1 Inter,-apple-system,Segoe UI,Arial,sans-serif;backdrop-filter:blur(8px)}'
-   +'#cdx-bar b{font-weight:600}#cdx-bar .cdx-t{color:#9aa7b4}#cdx-bar .cdx-t.low{color:#ffb84d}'
-   +'#cdx-bar button{border:0;border-radius:999px;padding:7px 12px;background:#ff9900;color:#111;font:700 12px Inter,Arial,sans-serif;cursor:pointer}'
-   +'#cdx-bar button:hover{background:#ffad33}@media (max-width:600px){#cdx-bar .cdx-u{display:none}}@media print{#cdx-bar{display:none}}</style>'
-   +'<div id="cdx-bar" role="region" aria-label="Session"><span class="cdx-u">&#128100; <b>'+String(info.user).replace(/[<>&"]/g,'')+'</b></span>'
-   +'<span class="cdx-t" id="cdx-t"></span><button type="button" id="cdx-out">Sign out</button></div>'
-   +'<script>(function(){var K="'+KEY+'",E='+info.ends+',t=document.getElementById("cdx-t");'
+  var name=String(info.user).replace(/[<>&"']/g,''),ini=name.split(/[.\s_-]+/).filter(Boolean).slice(0,2).map(function(x){return x[0];}).join('').toUpperCase()||'?';
+  return '<style>'
+   +'#cdx-bar{position:fixed;top:14px;right:16px;z-index:2147483000;display:flex;align-items:center;gap:10px;padding:5px 5px 5px 5px;border-radius:999px;'
+   +'background:linear-gradient(180deg,rgba(35,47,62,.96),rgba(19,26,34,.96));border:1px solid rgba(255,153,0,.35);box-shadow:0 10px 30px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.06);'
+   +'color:#eef2f6;font:500 12.5px/1.15 Inter,-apple-system,Segoe UI,Arial,sans-serif;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);animation:cdxin .5s cubic-bezier(.2,.9,.3,1.2) both}'
+   +'@keyframes cdxin{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:none}}'
+   +'#cdx-bar .cdx-av{position:relative;width:34px;height:34px;flex:none}'
+   +'#cdx-bar .cdx-av svg{position:absolute;inset:0;transform:rotate(-90deg)}'
+   +'#cdx-bar .cdx-av i{position:absolute;inset:4px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:800 11.5px Inter,Arial,sans-serif;font-style:normal;color:#111;background:linear-gradient(135deg,#ffb84d,#ff9900)}'
+   +'#cdx-bar .cdx-who{display:flex;flex-direction:column;gap:2px;padding-right:2px}#cdx-bar .cdx-who b{font-weight:700;font-size:12.5px}'
+   +'#cdx-bar .cdx-t{color:#9fb0c0;font-size:11px}#cdx-bar .cdx-t.low{color:#ffb84d}'
+   +'#cdx-out{display:flex;align-items:center;gap:6px;border:1px solid rgba(255,153,0,.55);border-radius:999px;padding:8px 13px 8px 11px;background:rgba(255,153,0,.1);'
+   +'color:#ffb84d;font:700 12px Inter,Arial,sans-serif;cursor:pointer;transition:background .15s,color .15s,transform .15s}'
+   +'#cdx-out:hover{background:#ff9900;color:#111;transform:translateY(-1px)}#cdx-out:focus-visible{outline:2px solid #ff9900;outline-offset:2px}'
+   +'#cdx-out svg{transition:transform .2s}#cdx-out:hover svg{transform:translateX(2px)}'
+   +'@media (max-width:640px){#cdx-bar .cdx-who{display:none}#cdx-out span{display:none}#cdx-out{padding:8px}}@media print{#cdx-bar{display:none}}'
+   +'</style>'
+   +'<div id="cdx-bar" role="region" aria-label="Your session">'
+   +'<div class="cdx-av" title="Session time left"><svg viewBox="0 0 36 36" width="34" height="34"><circle cx="18" cy="18" r="16" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="3"/>'
+   +'<circle id="cdx-ring" cx="18" cy="18" r="16" fill="none" stroke="#ff9900" stroke-width="3" stroke-linecap="round" stroke-dasharray="100.5" stroke-dashoffset="0"/></svg><i>'+ini+'</i></div>'
+   +'<div class="cdx-who"><b>'+name+'</b><span class="cdx-t" id="cdx-t"></span></div>'
+   +'<button type="button" id="cdx-out" title="Sign out"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg><span>Sign out</span></button></div>'
+   +'<script>(function(){var K="'+KEY+'",E='+info.ends+',L='+SESSION_SECONDS+',t=document.getElementById("cdx-t"),ring=document.getElementById("cdx-ring");'
    +'function out(m){try{localStorage.removeItem(K);if(m)sessionStorage.setItem("cdx_msg",m);}catch(e){}location.reload();}'
    +'document.getElementById("cdx-out").onclick=function(){out("You have signed out.");};'
    +'function tick(){var s=Math.round((E-Date.now())/1000);if(s<=0){out("Your 1-hour session ended. Please sign in again.");return;}'
-   +'var m=Math.ceil(s/60);t.textContent=m+" min left";t.className="cdx-t"+(m<=5?" low":"");}tick();setInterval(tick,15000);})();<\/script>';
+   +'var m=Math.ceil(s/60);t.textContent=m+" min left";t.className="cdx-t"+(m<=5?" low":"");'
+   +'ring.setAttribute("stroke-dashoffset",(100.5*(1-Math.min(1,s/L))).toFixed(1));ring.setAttribute("stroke",m<=5?"#ff6b6b":"#ff9900");}'
+   +'tick();setInterval(tick,15000);})();<\/script>';
 }
 function render(html){
   var info=tokInfo(getTok());
