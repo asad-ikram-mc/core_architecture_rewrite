@@ -190,7 +190,7 @@ label{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:upperca
       <div class="err" id="err" role="alert"></div>
     </form>
     <div class="status" id="status" aria-live="polite"><b id="st1">Packing your docs…</b><span id="st2">Checking your sign-in</span><div class="track"><i></i></div></div>
-    <div class="foot">Same login as the CORE dashboards</div>
+    <div class="foot">Same login as the CORE dashboards · sessions last 1 hour</div>
   </section>
 </main>
 
@@ -232,7 +232,30 @@ function fail(msg){
 })();
 setTimeout(function(){hero.classList.add('open');},reduce?0:1250);
 
-function render(html){document.open();document.write(html);document.close();}
+var SESSION_SECONDS=3600, LOGIN_TOKEN_SECONDS=7*86400;  // must match core_docs_data.py
+function tokInfo(t){try{var p=atob(t.replace(/-/g,'+').replace(/_/g,'/')).split('|');
+  return {user:p[0],ends:(+p[1]-LOGIN_TOKEN_SECONDS+SESSION_SECONDS)*1000};}catch(e){return null;}}
+// Signed-in bar added to every page: user, time left, Sign out. Auto signs out at the end.
+function bar(info){
+  return '<style>#cdx-bar{position:fixed;top:12px;right:12px;z-index:2147483000;display:flex;align-items:center;gap:10px;'
+   +'padding:6px 6px 6px 12px;border-radius:999px;background:rgba(19,26,34,.92);border:1px solid rgba(255,153,0,.35);'
+   +'box-shadow:0 8px 24px rgba(0,0,0,.4);color:#e6edf3;font:500 12.5px/1 Inter,-apple-system,Segoe UI,Arial,sans-serif;backdrop-filter:blur(8px)}'
+   +'#cdx-bar b{font-weight:600}#cdx-bar .cdx-t{color:#9aa7b4}#cdx-bar .cdx-t.low{color:#ffb84d}'
+   +'#cdx-bar button{border:0;border-radius:999px;padding:7px 12px;background:#ff9900;color:#111;font:700 12px Inter,Arial,sans-serif;cursor:pointer}'
+   +'#cdx-bar button:hover{background:#ffad33}@media (max-width:600px){#cdx-bar .cdx-u{display:none}}@media print{#cdx-bar{display:none}}</style>'
+   +'<div id="cdx-bar" role="region" aria-label="Session"><span class="cdx-u">&#128100; <b>'+String(info.user).replace(/[<>&"]/g,'')+'</b></span>'
+   +'<span class="cdx-t" id="cdx-t"></span><button type="button" id="cdx-out">Sign out</button></div>'
+   +'<script>(function(){var K="'+KEY+'",E='+info.ends+',t=document.getElementById("cdx-t");'
+   +'function out(m){try{localStorage.removeItem(K);if(m)sessionStorage.setItem("cdx_msg",m);}catch(e){}location.reload();}'
+   +'document.getElementById("cdx-out").onclick=function(){out("You have signed out.");};'
+   +'function tick(){var s=Math.round((E-Date.now())/1000);if(s<=0){out("Your 1-hour session ended. Please sign in again.");return;}'
+   +'var m=Math.ceil(s/60);t.textContent=m+" min left";t.className="cdx-t"+(m<=5?" low":"");}tick();setInterval(tick,15000);})();<\/script>';
+}
+function render(html){
+  var info=tokInfo(getTok());
+  if(info){var b=bar(info),i=html.lastIndexOf('</body>');html=i>=0?html.slice(0,i)+b+html.slice(i):html+b;}
+  document.open();document.write(html);document.close();
+}
 function deliver(html){
   if(reduce){render(html);return;}
   busy(true,'Delivered!','Opening the docs');
@@ -242,6 +265,8 @@ function deliver(html){
 }
 function fetchPage(){
   var t=getTok();if(!t)return;
+  var info=tokInfo(t);
+  if(!info||Date.now()>=info.ends){putTok('');fail('Your 1-hour session ended. Please sign in again.');return;}
   busy(true,'Packing your docs…','Fetching the '+PAGE.replace('.html','').replace('index','pipeline')+' page');
   fetch(DATA_URL,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({token:t,page:PAGE})})
     .then(function(r){
@@ -270,6 +295,8 @@ $('eye').addEventListener('click',function(){
   this.setAttribute('aria-label',show?'Hide password':'Show password');this.title=this.getAttribute('aria-label');
 });
 
+var note='';try{note=sessionStorage.getItem('cdx_msg')||'';sessionStorage.removeItem('cdx_msg');}catch(e){}
+if(note)errEl.textContent=note;
 if(getTok())fetchPage();else setTimeout(function(){$('u').focus();},reduce?0:1300);
 })();
 </script>
