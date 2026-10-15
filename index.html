@@ -6,72 +6,272 @@
 <meta name="robots" content="noindex, nofollow">
 <title>Amazon CORE — Sign in</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23131A22'/%3E%3Ctext x='32' y='30' text-anchor='middle' fill='%23FFFFFF' font-family='Arial,sans-serif' font-size='22' font-weight='700'%3Eazn%3C/text%3E%3Cpath d='M12 42 Q32 54 52 42' fill='none' stroke='%23FF9900' stroke-width='4' stroke-linecap='round'/%3E%3Cpath d='M48 40 L53 44 L52 38' fill='%23FF9900'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#0d1117;--card:#161b22;--line:rgba(148,163,184,.28);--ink:#e6edf3;--muted:#8b949e;--accent:#ff9900;--err:#f87171}
-@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#f6f8fa;--card:#fff;--line:#d0d7de;--ink:#1f2328;--muted:#57606a;--err:#cf222e}}
+:root{
+  --night:#0b1118;--orange:#ff9900;--orange2:#ffb84d;
+  --ink:#f3f6f9;--muted:#9aa7b4;--line:rgba(255,255,255,.10);--card:rgba(19,26,34,.78);--err:#ff6b6b;
+}
 *{box-sizing:border-box}
-body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
-form{width:100%;max-width:340px;display:flex;flex-direction:column;gap:12px;padding:28px;background:var(--card);border:1px solid var(--line);border-radius:14px}
-h1{margin:0;font-size:20px}
-p{margin:0 0 4px;color:var(--muted);font-size:14px}
-input{padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:transparent;color:inherit;font:inherit}
-input:focus{outline:2px solid var(--accent);outline-offset:1px}
-button{padding:10px;border:0;border-radius:8px;background:var(--accent);color:#111;font-weight:700;font-size:15px;cursor:pointer}
-button[disabled]{opacity:.6;cursor:default}
-.pw{position:relative;display:flex}.pw input{flex:1;min-width:0;width:100%;padding-right:44px}
-.eye{position:absolute;right:4px;top:50%;transform:translateY(-50%);padding:6px;background:none;color:var(--muted);border-radius:6px;display:flex}
-.eye:hover{color:var(--ink)}
-.err{min-height:1.2em;color:var(--err);font-size:14px}
-.loading{color:var(--muted)}
+html,body{height:100%}
+body{margin:0;min-height:100vh;overflow-x:hidden;background:var(--night);color:var(--ink);
+  font:15px/1.5 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+
+/* sky: glow, perspective grid, rising sparks */
+.sky{position:fixed;inset:0;overflow:hidden;z-index:0;
+  background:radial-gradient(1200px 600px at 50% 115%,rgba(255,153,0,.18),transparent 60%),
+             radial-gradient(900px 500px at 15% -10%,rgba(35,47,62,.9),transparent 70%),
+             linear-gradient(180deg,#0b1118 0%,#0f1720 55%,#131a22 100%)}
+.grid{position:absolute;inset:-50% -50% 0;transform:perspective(600px) rotateX(62deg) translateY(30%);
+  background-image:linear-gradient(rgba(255,153,0,.10) 1px,transparent 1px),linear-gradient(90deg,rgba(255,153,0,.10) 1px,transparent 1px);
+  background-size:60px 60px;-webkit-mask-image:linear-gradient(to top,#000 10%,transparent 65%);mask-image:linear-gradient(to top,#000 10%,transparent 65%);
+  animation:gridrun 6s linear infinite}
+@keyframes gridrun{to{background-position:0 60px,0 0}}
+.dot{position:absolute;bottom:-10px;width:3px;height:3px;border-radius:50%;background:var(--orange2);opacity:0;
+  box-shadow:0 0 8px var(--orange);animation:rise linear infinite}
+@keyframes rise{0%{transform:translateY(0);opacity:0}10%{opacity:.8}100%{transform:translateY(-105vh);opacity:0}}
+
+/* conveyor belt with parcels */
+.belt{position:fixed;left:0;right:0;bottom:0;height:120px;z-index:1;pointer-events:none}
+.rail{position:absolute;left:0;right:0;bottom:22px;height:14px;border-radius:7px;
+  background:repeating-linear-gradient(90deg,#2b3846 0 18px,#1c2631 18px 36px);
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.06),0 6px 18px rgba(0,0,0,.5);animation:belt .9s linear infinite}
+@keyframes belt{to{background-position:36px 0}}
+.rollers{position:absolute;left:0;right:0;bottom:8px;height:14px;
+  background:radial-gradient(circle at 7px 7px,#3a4a5b 5px,transparent 6px) 0 0/60px 14px repeat-x}
+.parcel{position:absolute;bottom:36px;left:-120px;animation:ride linear infinite}
+.parcel svg{display:block;filter:drop-shadow(0 8px 10px rgba(0,0,0,.45))}
+.parcel .bob{animation:bob .45s ease-in-out infinite alternate}
+@keyframes ride{to{transform:translateX(calc(100vw + 240px))}}
+@keyframes bob{to{transform:translateY(-2px)}}
+
+/* stage + hero parcel */
+.stage{position:relative;z-index:2;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 16px 150px}
+.hero{position:relative;width:150px;height:150px;margin-bottom:-22px;z-index:3}
+.hero>svg{width:100%;height:100%;overflow:visible}
+.drop{animation:drop .9s cubic-bezier(.3,1.4,.5,1) both}
+@keyframes drop{0%{transform:translateY(-140vh) rotate(-8deg)}70%{transform:translateY(0) rotate(0)}80%{transform:translateY(0) scale(1.08,.9)}100%{transform:none}}
+.shadow{position:absolute;left:50%;bottom:4px;width:116px;height:16px;margin-left:-58px;border-radius:50%;
+  background:rgba(0,0,0,.55);filter:blur(6px);animation:shadowin .9s ease-out both}
+@keyframes shadowin{0%{transform:scale(.2);opacity:0}70%{transform:scale(1);opacity:1}}
+.flap{transform-box:fill-box;transition:transform .7s cubic-bezier(.5,1.6,.5,1)}
+.flap.l{transform-origin:0% 100%}.flap.r{transform-origin:100% 100%}
+.hero.open .flap.l{transform:rotate(-150deg)}.hero.open .flap.r{transform:rotate(150deg)}
+.smile{stroke-dasharray:120;stroke-dashoffset:120;animation:draw 1s .9s ease-out forwards}
+.smilehead{opacity:0;animation:fadein .2s 1.8s forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes fadein{to{opacity:1}}
+.glint{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0}
+.hero.open .glint{animation:glint 1.2s .25s ease-out}
+@keyframes glint{0%{opacity:0;transform:translateY(10px) scale(.6)}30%{opacity:1}100%{opacity:0;transform:translateY(-60px) scale(1.4)}}
+.hero.shake{animation:shake .5s}
+@keyframes shake{20%,60%{transform:translateX(-8px) rotate(-3deg)}40%,80%{transform:translateX(8px) rotate(3deg)}}
+.tapeTop{transform-box:fill-box;transform-origin:0 50%;transform:scaleX(0)}
+.hero.seal .tapeTop{animation:tape .4s .25s ease-out forwards}
+@keyframes tape{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.hero.ship{animation:ship .9s cubic-bezier(.6,-.3,.7,.3) forwards}
+@keyframes ship{to{transform:translateX(120vw) rotate(12deg)}}
+
+/* card */
+.card{position:relative;width:100%;max-width:380px;padding:36px 28px 24px;border-radius:20px;
+  background:var(--card);border:1px solid var(--line);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  box-shadow:0 30px 80px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.06);
+  animation:cardin .7s 1.05s cubic-bezier(.2,.9,.3,1.2) both}
+.card::before{content:"";position:absolute;inset:-1px;border-radius:20px;padding:1px;pointer-events:none;
+  background:conic-gradient(from var(--a),transparent 0 70%,rgba(255,153,0,.9) 80%,transparent 90%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;
+  animation:spin 4s linear infinite}
+@property --a{syntax:"<angle>";inherits:false;initial-value:0deg}
+@keyframes spin{to{--a:360deg}}
+@keyframes cardin{from{opacity:0;transform:translateY(24px) scale(.96)}to{opacity:1;transform:none}}
+.card.bump{animation:bump .45s}
+@keyframes bump{20%,60%{transform:translateX(-7px)}40%,80%{transform:translateX(7px)}}
+.brand{display:flex;flex-direction:column;align-items:center;gap:2px;margin-bottom:18px;text-align:center}
+.word{font-weight:800;font-size:28px;letter-spacing:-.5px}
+.word b{color:var(--orange)}
+.sub{color:var(--muted);font-size:13.5px}
+form{display:flex;flex-direction:column;gap:12px}
+label{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:-6px}
+.field{position:relative;display:flex}
+.field input{flex:1;min-width:0;width:100%;padding:12px 14px;border-radius:11px;border:1px solid rgba(255,255,255,.14);
+  background:rgba(11,17,24,.65);color:var(--ink);font:inherit;transition:border-color .2s,box-shadow .2s}
+.field input::placeholder{color:#5f6d7a}
+.field input:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 4px rgba(255,153,0,.18)}
+.field.pw input{padding-right:46px}
+.eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);display:flex;padding:7px;border:0;border-radius:8px;
+  background:none;color:var(--muted);cursor:pointer}
+.eye:hover{color:var(--ink);background:rgba(255,255,255,.06)}
+.eye:focus-visible{outline:2px solid var(--orange)}
+.go{position:relative;overflow:hidden;margin-top:6px;padding:13px;border:0;border-radius:11px;cursor:pointer;
+  background:linear-gradient(180deg,#ffad33,#ff9900);color:#111;font:700 15px Inter,sans-serif;
+  box-shadow:0 10px 24px rgba(255,153,0,.28),inset 0 1px 0 rgba(255,255,255,.4);transition:transform .15s,box-shadow .15s}
+.go:hover{transform:translateY(-1px);box-shadow:0 14px 30px rgba(255,153,0,.38),inset 0 1px 0 rgba(255,255,255,.4)}
+.go:active{transform:translateY(1px)}
+.go::after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;
+  background:linear-gradient(100deg,transparent,rgba(255,255,255,.55),transparent);animation:sheen 3.2s 2s infinite}
+@keyframes sheen{0%{left:-60%}35%,100%{left:130%}}
+.go[disabled]{opacity:.75;cursor:default;transform:none}
+.err{min-height:20px;font-size:13.5px;color:var(--err);text-align:center}
+.status{display:none;text-align:center;padding:14px 0 6px}
+.status b{display:block;font-size:17px;margin-bottom:4px}
+.status span{color:var(--muted);font-size:13.5px}
+.track{height:4px;margin:16px auto 0;width:80%;border-radius:2px;background:rgba(255,255,255,.08);overflow:hidden}
+.track i{display:block;height:100%;width:35%;border-radius:2px;background:var(--orange);animation:track 1.1s ease-in-out infinite}
+@keyframes track{0%{transform:translateX(-110%)}100%{transform:translateX(300%)}}
+.busy form{display:none}.busy .status{display:block}
+.foot{margin-top:16px;color:#5f6d7a;font-size:12px;text-align:center}
+
+@media (max-width:420px){.hero{width:120px;height:120px}.card{padding:30px 20px 20px}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-delay:0s!important;animation-iteration-count:1!important;transition:none!important}
+  .smile{stroke-dashoffset:0}.smilehead{opacity:1}.parcel{display:none}}
 </style>
 </head>
 <body>
-<div id="loading" class="loading" hidden>Loading…</div>
-<form id="f" hidden>
-  <h1>Amazon CORE docs</h1>
-  <p>Sign in with your CORE dashboard login.</p>
-  <input name="u" autocomplete="username" placeholder="Username" required>
-  <div class="pw"><input name="p" type="password" autocomplete="current-password" placeholder="Password" required><button type="button" class="eye" id="eye" aria-label="Show password" title="Show password"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/><line id="eye-off" x1="3" y1="3" x2="21" y2="21" style="display:none"/></svg></button></div>
-  <button type="submit">Sign in</button>
-  <div class="err" id="err"></div>
-</form>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="kf" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#d4a467"/><stop offset="1" stop-color="#b98649"/></linearGradient>
+    <linearGradient id="ks" x1="0" x2="1"><stop offset="0" stop-color="#a87840"/><stop offset="1" stop-color="#8f6535"/></linearGradient>
+    <symbol id="parcel" viewBox="0 0 64 56">
+      <path d="M8 16 L40 16 L40 54 L8 54 Z" fill="url(#kf)"/>
+      <path d="M40 16 L58 8 L58 46 L40 54 Z" fill="url(#ks)"/>
+      <path d="M8 16 L26 8 L58 8 L40 16 Z" fill="#e2bd86"/>
+      <path d="M21 16 L39 8 L45 8 L27 16 Z" fill="#7fc4e8" opacity=".9"/>
+      <path d="M14 38 Q24 45 34 38" fill="none" stroke="#1b1b1b" stroke-width="2.4" stroke-linecap="round"/>
+      <path d="M31.5 35.6 L35 37.6 L33 41" fill="none" stroke="#1b1b1b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="sky" aria-hidden="true"><div class="grid"></div><div id="dots"></div></div>
+<div class="belt" aria-hidden="true"><div class="rollers"></div><div class="rail"></div><div id="parcels"></div></div>
+
+<main class="stage">
+  <div class="hero" id="hero" aria-hidden="true">
+    <div class="shadow"></div>
+    <svg viewBox="0 0 200 200" class="drop">
+      <!-- inside of the box, seen when the flaps open -->
+      <path d="M30 72 L72 52 L172 52 L130 72 Z" fill="#6e4a22"/>
+      <!-- front and side -->
+      <path d="M30 72 L130 72 L130 182 L30 182 Z" fill="url(#kf)"/>
+      <path d="M130 72 L172 52 L172 160 L130 182 Z" fill="url(#ks)"/>
+      <path d="M30 72 L130 72 L130 79 L30 79 Z" fill="#000" opacity=".10"/>
+      <path d="M130 98 L172 78 L172 90 L130 110 Z" fill="#7fc4e8" opacity=".55"/>
+      <!-- the smile -->
+      <path class="smile" d="M48 140 Q80 162 112 140" fill="none" stroke="#151515" stroke-width="7" stroke-linecap="round"/>
+      <path class="smilehead" d="M104 132.5 L114 139 L108 149" fill="none" stroke="#151515" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+      <!-- top flaps -->
+      <path class="flap l" d="M30 72 L51 62 L101 62 L80 72 Z" fill="#e2bd86"/>
+      <path class="flap r" d="M80 72 L101 62 L172 52 L130 72 Z" fill="#d9b177"/>
+      <!-- tape that seals the box on sign-in -->
+      <path class="tapeTop" d="M72 72 L93 62 L105 62 L84 72 Z" fill="#7fc4e8"/>
+    </svg>
+    <svg class="glint" viewBox="0 0 200 200" aria-hidden="true">
+      <g fill="#ffb84d"><circle cx="90" cy="60" r="3"/><circle cx="120" cy="40" r="2"/><circle cx="70" cy="35" r="2.5"/><circle cx="140" cy="62" r="2"/><circle cx="105" cy="20" r="1.8"/></g>
+    </svg>
+  </div>
+
+  <section class="card" id="card">
+    <div class="brand">
+      <div class="word">amazon <b>CORE</b></div>
+      <div class="sub">Pipeline docs · sign in to unpack</div>
+    </div>
+    <form id="f" autocomplete="on" novalidate>
+      <label for="u">Username</label>
+      <div class="field"><input id="u" name="u" autocomplete="username" placeholder="your.name" required></div>
+      <label for="p">Password</label>
+      <div class="field pw"><input id="p" name="p" type="password" autocomplete="current-password" placeholder="••••••••••" required>
+        <button type="button" class="eye" id="eye" aria-label="Show password" title="Show password">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/><line id="eyeoff" x1="3" y1="3" x2="21" y2="21" style="display:none"/></svg>
+        </button>
+      </div>
+      <button class="go" type="submit" id="go">Sign in</button>
+      <div class="err" id="err" role="alert"></div>
+    </form>
+    <div class="status" id="status" aria-live="polite"><b id="st1">Packing your docs…</b><span id="st2">Checking your sign-in</span><div class="track"><i></i></div></div>
+    <div class="foot">Same login as the CORE dashboards</div>
+  </section>
+</main>
+
 <script>
-// Sign-in shell. The site content is not in this public repo: after sign-in it
-// is fetched from the core-docs-data API, which checks the token on every request.
+(function(){
+// Sign-in shell. The site content is not in this public repo: after sign-in it is
+// fetched from the core-docs-data API, which checks the token on every request.
+// Everything is scoped to this function: the loaded page is written into this same
+// document, so any global declared here would clash with the page's own scripts.
 var PAGE='index.html';
-var AUTH_LOGIN='https://3dn21iibth.execute-api.eu-west-2.amazonaws.com/auth-login';
-var DOCS_DATA='https://3qmgew3tfq54o4ditybr4raasu0sihil.lambda-url.eu-west-2.on.aws/';
+var LOGIN_URL='https://3dn21iibth.execute-api.eu-west-2.amazonaws.com/auth-login';
+var DATA_URL='https://3qmgew3tfq54o4ditybr4raasu0sihil.lambda-url.eu-west-2.on.aws/';
 var KEY='core_docs_token';
-var f=document.getElementById('f'),err=document.getElementById('err'),ld=document.getElementById('loading');
-function tok(){try{return localStorage.getItem(KEY)||'';}catch(e){return '';}}
-function setTok(t){try{t?localStorage.setItem(KEY,t):localStorage.removeItem(KEY);}catch(e){}}
-function showForm(msg){ld.hidden=true;f.hidden=false;err.textContent=msg||'';f.u.focus();}
-function load(){
-  var t=tok(); if(!t){showForm();return;}
-  f.hidden=true;ld.hidden=false;
-  fetch(DOCS_DATA,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({token:t,page:PAGE})})
+var $=function(id){return document.getElementById(id);};
+var form=$('f'),card=$('card'),hero=$('hero'),errEl=$('err'),goBtn=$('go');
+var reduce=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+function getTok(){try{return localStorage.getItem(KEY)||'';}catch(e){return '';}}
+function putTok(t){try{t?localStorage.setItem(KEY,t):localStorage.removeItem(KEY);}catch(e){}}
+function busy(on,a,b){card.classList.toggle('busy',on);if(a)$('st1').textContent=a;if(b)$('st2').textContent=b;}
+function fail(msg){
+  busy(false);errEl.textContent=msg||'';
+  hero.className='hero shake';card.classList.remove('bump');void card.offsetWidth;card.classList.add('bump');
+  setTimeout(function(){hero.className='hero open';},520);
+  $(getTok()?'p':'u').focus();
+}
+
+// scenery: sparks and parcels on the belt
+(function(){
+  var d=$('dots');
+  for(var i=0;i<26;i++){var s=document.createElement('span');s.className='dot';
+    s.style.left=(Math.random()*100)+'vw';s.style.animationDuration=(8+Math.random()*10)+'s';
+    s.style.animationDelay=(-Math.random()*16)+'s';d.appendChild(s);}
+  var p=$('parcels'),small=window.innerWidth<600,n=small?3:6,dur=small?11:16;
+  for(var j=0;j<n;j++){var w=34+Math.round(Math.random()*26),el=document.createElement('div');el.className='parcel';
+    el.style.animationDuration=dur+'s';el.style.animationDelay=(-j*dur/n)+'s';
+    el.innerHTML='<div class="bob" style="animation-delay:'+(-Math.random()).toFixed(2)+'s"><svg width="'+w+'" height="'+Math.round(w*.875)+'"><use href="#parcel"/></svg></div>';
+    p.appendChild(el);}
+})();
+setTimeout(function(){hero.classList.add('open');},reduce?0:1250);
+
+function render(html){document.open();document.write(html);document.close();}
+function deliver(html){
+  if(reduce){render(html);return;}
+  busy(true,'Delivered!','Opening the docs');
+  hero.className='hero seal';
+  setTimeout(function(){hero.className='hero seal ship';},700);
+  setTimeout(function(){render(html);},1450);
+}
+function fetchPage(){
+  var t=getTok();if(!t)return;
+  busy(true,'Packing your docs…','Fetching the '+PAGE.replace('.html','').replace('index','pipeline')+' page');
+  fetch(DATA_URL,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({token:t,page:PAGE})})
     .then(function(r){
-      if(r.status===401){setTok('');throw new Error('Please sign in again.');}
-      if(!r.ok) throw new Error('Could not load the page ('+r.status+').');
+      if(r.status===401){putTok('');throw new Error('Your session has ended. Please sign in again.');}
+      if(!r.ok)throw new Error('Could not load the page ('+r.status+').');
       return r.json();
     })
-    .then(function(d){document.open();document.write(d.html);document.close();})
-    .catch(function(e){showForm(e.message);});
+    .then(function(d){deliver(d.html);})
+    .catch(function(e){fail(e.message);});
 }
-f.addEventListener('submit',function(ev){
-  ev.preventDefault();var b=f.querySelector('button[type=submit]');b.disabled=true;err.textContent='';
-  fetch(AUTH_LOGIN,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({username:f.u.value,password:f.p.value})})
+
+form.addEventListener('submit',function(ev){
+  ev.preventDefault();errEl.textContent='';
+  var u=form.u.value.trim(),pw=form.p.value;
+  if(!u||!pw){fail('Enter your username and password.');return;}
+  goBtn.disabled=true;busy(true,'Checking your label…','Signing in');
+  fetch(LOGIN_URL,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({username:u,password:pw})})
     .then(function(r){return r.json().then(function(j){if(!r.ok||!j.token)throw new Error(j.error||'Sign-in failed');return j;});})
-    .then(function(j){setTok(j.token);f.p.value='';load();})
-    .catch(function(e){err.textContent=e.message;})
-    .then(function(){b.disabled=false;});
+    .then(function(j){putTok(j.token);form.p.value='';fetchPage();})
+    .catch(function(e){fail(e.message==='invalid username or password'?'That username and password don’t match.':e.message);})
+    .then(function(){goBtn.disabled=false;});
 });
-document.getElementById('eye').addEventListener('click',function(){
-  var show=f.p.type==='password';f.p.type=show?'text':'password';
-  document.getElementById('eye-off').style.display=show?'':'none';
+$('eye').addEventListener('click',function(){
+  var show=form.p.type==='password';form.p.type=show?'text':'password';
+  $('eyeoff').style.display=show?'':'none';
   this.setAttribute('aria-label',show?'Hide password':'Show password');this.title=this.getAttribute('aria-label');
 });
-load();
+
+if(getTok())fetchPage();else setTimeout(function(){$('u').focus();},reduce?0:1300);
+})();
 </script>
 </body>
 </html>
